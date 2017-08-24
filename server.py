@@ -1,8 +1,8 @@
 #!/usr/bin/env python3.5
 from flask import Flask, render_template, Response
 import json
-from time import time as now
-from time import sleep
+from time import gmtime as now
+from time import sleep, strftime
 
 app = Flask(__name__)
 
@@ -21,7 +21,7 @@ class LogRow():
         # Parse feed message
         
         # Assign potential supplied values
-        self.time = time if time != '' else now()
+        self.time = time if time != '' else strftime("%H:%M:%S", now())
         self.level = level
         self.source = src
         self.name = name
