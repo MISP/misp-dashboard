@@ -1,19 +1,104 @@
+//color: #5f6062
+var updateInterval = 1000; // 1s
+var numPoint = 60;
 
-var updateInterval = 30; // 30ms
-var numPoint = 10;
 var emptyArray = [];
+var dataNumLog = [];
 for(i=0; i<numPoint; i++) {
-    emptyArray.push(0);
+    dataNumLog.push([i, 0]);
+    emptyArray.push([i, 0]);
 }
-var data = { 'undefined': { label: 'undefined', data: [] } };
-var curMax = { 'undefined': [] };
+
+class Sources {
+    constructor() {
+        this._sourcesArray = {};
+        this._sourcesCount = {};
+        this._sourcesCountMax = {};
+        this._globalMax = 0;
+        this._sourceNames = [];
+    }
+
+    addSource(sourceName) {
+        this._sourcesArray[sourceName] = emptyArray;
+        this._sourcesCount[sourceName] = 0;
+        this._sourcesCountMax[sourceName] = 0;
+        this._sourceNames.push(sourceName);
+    }
+
+    addIfNotPresent(sourceName) {
+        if (this._sourceNames.indexOf(sourceName) == -1) {
+            this.addSource(sourceName);
+        }
+    }
+
+    incCountOnSource(sourceName) {
+        this._sourcesCount[sourceName] += 1;
+    }
+
+    resetCountOnSource() {
+        for (var src of this._sourceNames) {
+            this._sourcesCount[src] = 0;
+        }
+    }
+
+    slideSource() {
+        var globMax = 0;
+        for (var src of this._sourceNames) {
+            // res[0] = max, res[1] = slidedArray
+            var res = slide(this._sourcesArray[src], this._sourcesCount[src]);
+            // max
+            this._sourcesCountMax[src] = res[0];
+            globMax = globMax > res[0] ? globMax : res[0];
+            // data
+            this._sourcesArray[src] = res[1];
+        }
+        this._globalMax = globMax;
+    }
+
+    toArray() {
+        var to_return = [];
+        for (var src of this._sourceNames) {
+            to_return.push({
+                label: src,
+                data: this._sourcesArray[src]
+            });
+        }
+        return to_return;
+    }
+
+    getGlobalMax() {
+        return this._globalMax;
+    }
+
+    getSingleSource(sourceName) {
+        return this._sourcesArray[sourceName];
+    }
+
+    getEmptyData() {
+        return [{label: 'no data', data: emptyArray}];
+    }
+}
+
+var sources = new Sources();
+sources.addSource('global');
+
+var curNumLog = 0;
+var curMaxDataNumLog = 0;
+
 var optionsGraph = {
     series: {
                 shadowSize: 0 ,
-                lines: { fill: true, fillColor: { colors: [ { opacity: 1 }, { opacity: 0.1 } ] }}
+                lines: { 
+                    fill: true, 
+                    fillColor: { 
+                        colors: [ { opacity: 1 }, { opacity: 0.1 } ]
+                    }
+                }
             },
+    //colors: ["#2fa1db"],
     yaxis: { min: 0, max: 20 },
-    xaxis: { ticks: [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7], [8, 8], [9, 9], [10, 10]] },
+    xaxis: { min: 0, max: numPoint-1 },
+    ticks: numPoint,
     grid: {
         tickColor: "#dddddd",
         borderWidth: 0 
@@ -39,8 +124,7 @@ $(document).ready(function () {
 
             source.onmessage = function(event) {
                 var json = jQuery.parseJSON( event.data );
-                updateLogTable(json.log);
-                //updateChartData(json.chart);
+                updateLogTable(json.feedName, json.log);
             };
         
         } else {
@@ -50,37 +134,39 @@ $(document).ready(function () {
 });
 
 
-//var plot = $.plot("#placeholder", [ [] ], optionsGraph);
-//updateChart()
+//var plot1 = $.plot("#feedDiv1", [ { label: "Number of log messages", data: dataNumLog } ], optionsGraph);
+var plot1 = $.plot("#feedDiv1", sources.getEmptyData(), optionsGraph);
+updateChart()
 
 function updateChart() {
-    plot.setData(data);
-    plot.getOptions().yaxes[0].max = curMax[dataset];
-    plot.setupGrid();
-    plot.draw();
-    setTimeout(update, updateInterval);
+    updateChart1();
+    updateChart2();
+    setTimeout(updateChart, updateInterval);
 }
 
-function updateChartData(feed) {
-    if (feed.length == 0)
-        return;
+function updateChart1() {
+    sources.slideSource();
+    sources.resetCountOnSource();
+    plot1.setData(sources.toArray());
+    plot1.getOptions().yaxes[0].max = sources.getGlobalMax();
+    plot1.setupGrid();
+    plot1.draw();
+}
 
-    for (feedName in feed) {
-        console.log(feedName.name);
-        if (data[feedName.name] === undefined) {
-            data[feedName.name] = {};
-        }
-        data[feedName.name].data = slide(data[feedName.name].data, feedName.data)
-    }
+function updateChart2() {
 
 }
 
-function updateLogTable(log) {
+function updateLogTable(feedName, log) {
     if (log.length == 0)
         return;
 
     // Create new row
     tableBody = document.getElementById('table_log_body');
+    //curNumLog++;
+    sources.addIfNotPresent(feedName);
+    sources.incCountOnSource(feedName);
+    sources.incCountOnSource('global');
     createRow(tableBody, log);
 
     // Remove old row
@@ -94,10 +180,16 @@ function updateLogTable(log) {
 }
 
 function slide(orig, newData) {
-    var slided = orig;
-    slided.slice(newData.length);
-    slided.concat(newData);
-    return slided
+    var slided = [];
+    var max = newData;
+    for (i=1; i<orig.length; i++) {
+        y = orig[i][1];
+        slided.push([i-1, y]);
+        max = y > max ? y : max;
+    }
+    slided.push([orig.length-1, newData]);
+    curMaxDataNumLog = max;
+    return [curMaxDataNumLog, slided];
 }
 
 function createRow(tableBody, log) {
