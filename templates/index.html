@@ -33,7 +33,7 @@
         </nav>
 
         <!-- Page Content -->
-        <div id="page-wrapper">
+        <div id="page-wrapper" style="margin: 0px;">
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-lg-6">
@@ -125,8 +125,11 @@
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <!-- Index -->
     <script> 
+        /* URL */
         var urlForLogs = "{{ url_for('logs') }}";
         var urlForHead = "{{ url_for('getLogHead') }}";
+        /* DATA */
+        var graph_log_refresh_rate = {{ graph_log_refresh_rate }};
     </script>
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 

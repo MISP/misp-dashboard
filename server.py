@@ -91,7 +91,9 @@ class EventMessage():
 
 @app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template('index.html', 
+            graph_log_refresh_rate=cfg.getint('Dashboard' ,'graph_log_refresh_rate')
+            )
 
 @app.route("/_logs")
 def logs():

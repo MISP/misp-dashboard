@@ -1,5 +1,5 @@
 //color: #5f6062
-var updateInterval = 1000; // 1s
+var updateInterval = 1000*graph_log_refresh_rate; // 1s
 var numPoint = 60;
 
 var emptyArray = [];
