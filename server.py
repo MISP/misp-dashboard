@@ -24,7 +24,9 @@ eventNumber = 0
 
 class LogItem():
 
-    FIELDNAME_ORDER = [ 'time', 'level', 'source', 'name', 'message' ]
+    FIELDNAME_ORDER = []
+    for item in json.loads(cfg.get('Log', 'fieldname_order')):
+        FIELDNAME_ORDER.append(item)
 
     #def __init__(self, feed='', time='', level='level', src='source', name='name', message='wonderful meesage'):
     def __init__(self, feed):
@@ -38,10 +40,10 @@ class LogItem():
         #self.message = message
 
         self.time = strftime("%H:%M:%S", now())
-        self.level = 'level'
-        self.source = 'src'
-        self.name = 'name'
-        self.message = feed
+        #FIXME later
+        self.fields = []
+        for f in feed:
+            self.fields.append(f)
 
     def get_head_row(self):
         to_ret = []
@@ -52,11 +54,12 @@ class LogItem():
     def get_row(self):
         to_ret = {}
         #Number to keep them sorted (jsonify sort keys)
-        to_ret[1] = self.time
-        to_ret[2] = self.level
-        to_ret[3] = self.source
-        to_ret[4] = self.name
-        to_ret[5] = self.message
+        to_ret[0] = self.time
+        for i in range(len(LogItem.FIELDNAME_ORDER)):
+            try:
+                to_ret[i+1] = self.fields[i]
+            except IndexError: # not enough field in rcv item
+                to_ret[i+1] = ''
         return to_ret
 
 
@@ -67,11 +70,12 @@ class EventMessage():
         try:
             jsonMsg = json.loads(msg)
         except json.JSONDecodeError:
-            jsonMsg = { 'name': "undefined" ,'log': msg }
+            print('json decode error')
+            jsonMsg = { 'name': "undefined" ,'log': json.loads(msg) }
 
         self.feedName = jsonMsg['name']
-        self.feed = jsonMsg['log']
-        self.feed = LogItem(jsonMsg['log']).get_row()
+        self.feed = json.loads(jsonMsg['log'])
+        self.feed = LogItem(self.feed).get_row()
 
         #get type of message: log or feed, then create
         #if self.isLog:
