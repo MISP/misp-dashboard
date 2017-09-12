@@ -292,15 +292,19 @@ function createHead(callback) {
 //var val = [5,7];
 //
 var mapObj;
+var curNumMarker = 0;
+var allMarker = [curNumMarker];
 
 function popupCoord(coord) {
-    mapCoord = mapCoord.slice(1);
-    mapCoord.push(coord);
-    mapVal = mapVal.slice(1);
-    mapVal.push(coord[0]+coord[1]);
-    console.log(coord[0]+coord[1]);
-    mapObj.addMarkers(mapCoord, []);
-    mapObj.series.markers[0].setValues(mapVal);
+    var value = coord[0]+coord[1];
+    mapObj.addMarker(curNumMarker, coord, [value]);
+    curNumMarker = curNumMarker>=maxNumCoord ? 0 : curNumMarker+1;
+    allMarker.push(curNumMarker)
+    if (allMarker.length >= maxNumCoord) {
+        to_remove = allMarker[0];
+        mapObj.removeMarkers([to_remove]);
+        allMarker.slice(1);
+    }
 }
 
 $(function(){
@@ -317,6 +321,5 @@ $(function(){
           }],
         },
     })
-    //mapObj = $('#feedDiv2 .jvectormap-container').data('mapObject');
     mapObj = $("#feedDiv2").vectorMap('get','mapObject');
 });
