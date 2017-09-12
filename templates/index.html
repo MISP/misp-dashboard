@@ -21,8 +21,10 @@
 
 <style>
 table {
-      overflow-y: scroll;
+    overflow-y: scroll;
 }
+
+
 </style>
 
 <body>
@@ -152,26 +154,7 @@ table {
     <script src="{{ url_for('static', filename='js/jquery-jvectormap-2.0.3.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery-jvectormap-world-mill.js') }}"></script>
     <script type="text/javascript">
-        $(function(){
-            $('#feedDiv2').vectorMap({
-                map: 'world_mill',
-                series: {
-                  markers: [{
-                    attribute: 'fill',
-                    scale: ['#FEE5D9', '#A50F15'],
-                    values: { "AF": 16.63, "AL": 11.58, "DZ": 158.97},
-                    min: 11,
-                    max: 160
-                  },{
-                    attribute: 'r',
-                    scale: [5, 20],
-                    values: { "BE": 16.63, "DE": 11.58, "IT": 158.97},
-                    min: 11,
-                    max: 160
-                  }],
-                }
-            })
-        });       
+
     </script>
 
 </body>

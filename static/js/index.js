@@ -1,12 +1,17 @@
 //color: #5f6062
 var updateInterval = 1000*graph_log_refresh_rate; // 1s
-var numPoint = 60;
+var maxNumPoint = 60;
+var maxNumCoord = 20;
 
 var emptyArray = [];
-var dataNumLog = [];
-for(i=0; i<numPoint; i++) {
-    dataNumLog.push([i, 0]);
+var mapCoord = [];
+var mapVal = [];
+for(i=0; i<maxNumPoint; i++) {
     emptyArray.push([i, 0]);
+    if (i<20) {
+        mapCoord.push([]);
+        mapVal.push(0);
+    }
 }
 
 class Sources {
@@ -45,7 +50,7 @@ class Sources {
         var globMax = 0;
         for (var src of this._sourceNames) {
             // res[0] = max, res[1] = slidedArray
-            var res = slide(this._sourcesArray[src], this._sourcesCount[src]);
+            var res = slideAndMax(this._sourcesArray[src], this._sourcesCount[src]);
             // max
             this._sourcesCountMax[src] = res[0];
             globMax = globMax > res[0] ? globMax : res[0];
@@ -97,8 +102,8 @@ var optionsLineChart = {
             },
     //colors: ["#2fa1db"],
     yaxis: { min: 0, max: 20 },
-    xaxis: { min: 0, max: numPoint-1 },
-    ticks: numPoint,
+    xaxis: { min: 0, max: maxNumPoint-1 },
+    ticks: maxNumPoint,
     grid: {
         tickColor: "#dddddd",
         borderWidth: 0 
@@ -213,15 +218,9 @@ function updateLogTable(feedName, log) {
         }
     }
 
-    //if (tableBody.rows.length > logSel.options[logSel.options.selectedIndex].value){
-    //    while (tableBody.rows.length != logSel.options[logSel.options.selectedIndex].value){
-    //        tableBody.deleteRow(0);
-    //    }
-    //}
-
 }
 
-function slide(orig, newData) {
+function slideAndMax(orig, newData) {
     var slided = [];
     var max = newData;
     for (i=1; i<orig.length; i++) {
@@ -237,6 +236,9 @@ function slide(orig, newData) {
 function createRow(tableBody, log) {
     var tr = document.createElement('TR');
     var action = document.createElement('TD');
+    var x = log[1];
+    var y = log[2];
+    popupCoord([x,y]);
 
     for (var key in log) {
         if (log.hasOwnProperty(key)) {
@@ -282,3 +284,39 @@ function createHead(callback) {
         callback();
     });
 }
+
+
+/* MAP */
+//var coord = [[30, -84], [-12, 20]];
+//var names = ['name1', 'name2'];
+//var val = [5,7];
+//
+var mapObj;
+
+function popupCoord(coord) {
+    mapCoord = mapCoord.slice(1);
+    mapCoord.push(coord);
+    mapVal = mapVal.slice(1);
+    mapVal.push(coord[0]+coord[1]);
+    console.log(coord[0]+coord[1]);
+    mapObj.addMarkers(mapCoord, []);
+    mapObj.series.markers[0].setValues(mapVal);
+}
+
+$(function(){
+    $('#feedDiv2').vectorMap({
+        map: 'world_mill',
+        markers: [],
+        series: {
+          markers: [{
+            attribute: 'fill',
+            scale: ['#1A0DAB', '#e50000', '#62ff41'],
+            values: [],
+            min: -180,
+            max: 180
+          }],
+        },
+    })
+    //mapObj = $('#feedDiv2 .jvectormap-container').data('mapObject');
+    mapObj = $("#feedDiv2").vectorMap('get','mapObject');
+});

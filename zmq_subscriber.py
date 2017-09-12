@@ -31,8 +31,11 @@ pubsub = redis_server.pubsub(ignore_subscribe_messages=True)
 
 while True:
     rdm = random.randint(1,3)
-    time.sleep(float(rdm / 10))
+    time.sleep(float(rdm / 3))
+    lat = random.randint(-90,90)
+    lon = random.randint(-90,90)
     content = ["rdm "+str(rdm)]
+    content = [lat,lon]
     jsonContent = json.dumps(content)
     to_send = { 'name': 'feeder'+str(rdm), 'log': jsonContent }
     redis_server.publish(channel, json.dumps(to_send))
