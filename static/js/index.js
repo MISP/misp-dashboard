@@ -85,7 +85,7 @@ sources.addSource('global');
 var curNumLog = 0;
 var curMaxDataNumLog = 0;
 
-var optionsGraph = {
+var optionsLineChart = {
     series: {
                 shadowSize: 0 ,
                 lines: { 
@@ -106,6 +106,31 @@ var optionsGraph = {
     legend: {
         show: true,
         position: "nw"
+    }
+};
+
+function labelFormatter(label, series) {
+    return "<div style='font-size:8pt; text-align:center; padding:2px; color:white;'>"
++ label + "<br/>" + Math.round(series.percent) + "%</div>";
+}
+var optionsPieChart = {
+    series: {
+        pie: {
+            innerRadius: 0.5,
+            show: true,
+            label: {
+                show: true,
+                radius: 1,
+                formatter: labelFormatter,
+                background: {
+                    opacity: 0.7,
+                    color: '#000'
+                }
+            }
+        }
+    },
+    legend: {
+        show: false
     }
 };
 
@@ -133,9 +158,13 @@ $(document).ready(function () {
     });
 });
 
-
-//var plot1 = $.plot("#feedDiv1", [ { label: "Number of log messages", data: dataNumLog } ], optionsGraph);
-var plot1 = $.plot("#feedDiv1", sources.getEmptyData(), optionsGraph);
+    var rData = [
+        { label: "Series1",  data: 10},
+        { label: "Series2",  data: 30},
+        { label: "Series3",  data: 60}
+    ];
+var plotLineChart = $.plot("#feedDiv3", sources.getEmptyData(), optionsLineChart);
+var plotPieChart = $.plot("#feedDiv1", rData, optionsPieChart);
 updateChart()
 
 function updateChart() {
@@ -147,10 +176,10 @@ function updateChart() {
 function updateChart1() {
     sources.slideSource();
     sources.resetCountOnSource();
-    plot1.setData(sources.toArray());
-    plot1.getOptions().yaxes[0].max = sources.getGlobalMax();
-    plot1.setupGrid();
-    plot1.draw();
+    plotLineChart.setData(sources.toArray());
+    plotLineChart.getOptions().yaxes[0].max = sources.getGlobalMax();
+    plotLineChart.setupGrid();
+    plotLineChart.draw();
 }
 
 function updateChart2() {
@@ -171,11 +200,23 @@ function updateLogTable(feedName, log) {
 
     // Remove old row
     var logSel = document.getElementById("log_select");
-    if (tableBody.rows.length > logSel.options[logSel.options.selectedIndex].value){
-        while (tableBody.rows.length != logSel.options[logSel.options.selectedIndex].value){
+    //get height of pannel, find max num of item
+    var maxNumLogItem = document.getElementById('divLogTable').clientHeight/37;
+    maxNumLogItem -= 2; //take heading/padding/... into account
+    if (maxNumLogItem - parseInt(maxNumLogItem) < 0.5) { //beautifier
+        maxNumLogItem -= 1;
+    }
+    if (tableBody.rows.length > maxNumLogItem) {
+        while (tableBody.rows.length >= maxNumLogItem){
             tableBody.deleteRow(0);
         }
     }
+
+    //if (tableBody.rows.length > logSel.options[logSel.options.selectedIndex].value){
+    //    while (tableBody.rows.length != logSel.options[logSel.options.selectedIndex].value){
+    //        tableBody.deleteRow(0);
+    //    }
+    //}
 
 }
 
