@@ -30,18 +30,10 @@ class LogItem():
 
     #def __init__(self, feed='', time='', level='level', src='source', name='name', message='wonderful meesage'):
     def __init__(self, feed):
-        # Parse feed message
-        
-        ## Assign potential supplied values
-        #self.time = time if time != '' else strftime("%H:%M:%S", now())
-        #self.level = level
-        #self.source = src
-        #self.name = name
-        #self.message = message
-
         self.time = strftime("%H:%M:%S", now())
-        #FIXME later
+        #FIXME Parse feed message?
         self.fields = []
+        self.fields.append(self.time)
         for f in feed:
             self.fields.append(f)
 
@@ -54,12 +46,11 @@ class LogItem():
     def get_row(self):
         to_ret = {}
         #Number to keep them sorted (jsonify sort keys)
-        to_ret[0] = self.time
         for i in range(len(LogItem.FIELDNAME_ORDER)):
             try:
-                to_ret[i+1] = self.fields[i]
+                to_ret[i] = self.fields[i]
             except IndexError: # not enough field in rcv item
-                to_ret[i+1] = ''
+                to_ret[i] = ''
         return to_ret
 
 
@@ -76,18 +67,6 @@ class EventMessage():
         self.feedName = jsonMsg['name']
         self.feed = json.loads(jsonMsg['log'])
         self.feed = LogItem(self.feed).get_row()
-
-        #get type of message: log or feed, then create
-        #if self.isLog:
-        #    self.feed = msg
-        #    #FIXME do parser
-        #    self.feed = LogItem(feed=msg).get_row()
-        #else:
-        #    #FIXME do parser
-        #    temp = []
-        #    for feed in msg:
-        #        temp.append(feed.name, feed.data)
-        #    self.feed = temp
 
     def to_json(self):
         to_ret = { 'log': self.feed, 'feedName': self.feedName }
