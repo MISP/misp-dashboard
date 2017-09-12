@@ -164,7 +164,8 @@ $(document).ready(function () {
         { label: "Series3",  data: 60}
     ];
 var plotLineChart = $.plot("#feedDiv3", sources.getEmptyData(), optionsLineChart);
-var plotPieChart = $.plot("#feedDiv1", rData, optionsPieChart);
+var plotPieChartA = $.plot("#feedDiv1A", rData, optionsPieChart);
+var plotPieChartB = $.plot("#feedDiv1B", rData, optionsPieChart);
 updateChart()
 
 function updateChart() {
