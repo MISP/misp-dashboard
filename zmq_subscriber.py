@@ -47,8 +47,7 @@ while True:
     #FIXME check if sock.recv is blocking
     time.sleep(0.1)
     content = socket.recv()
-    console.log('sending')
-    print(content)
+    print('sending', (content))
     redis_server.publish(channel, content)
 
     if random.randint(1,10)<5:

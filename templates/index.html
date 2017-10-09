@@ -24,6 +24,19 @@ table {
     overflow-y: scroll;
 }
 
+.marker_animation {
+  stroke: darkred;
+  position: absolute;
+  opacity: 1;
+  border-radius: 80px;
+  -moz-border-radius: 80px;
+  /* 40px radius, move origin to center */
+  height: 30px;
+  width: 30px;
+  margin: 0px;
+  pointer-events: none; /* dont kill the hover event of markers */
+  -webkit-transform: translateZ(0); /* little trick to force GPU acceleration */
+}
 
 </style>
 

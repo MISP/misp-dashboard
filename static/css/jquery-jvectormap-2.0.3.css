@@ -1,34 +1,3 @@
-.flashing {
-    animation: pulse-me 6s linear infinite;
-}
-
-@keyframes pulse-me{
-    0%{
-        opacity: 1.0;
-    }
-    20%{
-        opacity: 0.8;
-    }
-    40%{
-        opacity: 0.4;
-    }
-    50%{
-        opacity: 0.2;
-    }
-    60%{
-        opacity: 0.4;
-    }
-    80%{
-        opacity: 0.8;
-    }
-    100%{
-        opacity: 1.0;
-    }
-}
-
-
- /* ---------------- */
- /* ---------------- */
 svg {
     touch-action: none;
 }

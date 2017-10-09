@@ -287,25 +287,37 @@ function createHead(callback) {
 
 
 /* MAP */
-//var coord = [[30, -84], [-12, 20]];
-//var names = ['name1', 'name2'];
-//var val = [5,7];
-//
 var mapObj;
 var curNumMarker = 0;
-var allMarker = [curNumMarker];
+var allMarker = [];
+
+function marker_animation(x, y, curNumMarker) {
+    var markerColor = mapObj.markers[curNumMarker].element.config.style.current.fill;
+    $("#feedDiv2").append(
+        $('<div class="marker_animation"></div>')
+        .css({'left': x-15 + 'px'}) /* HACK to center the effect */
+        .css({'top': y-15 + 'px'})
+        .css({ 'background-color': markerColor })
+        .animate({ opacity: 0, scale: 1, height: '80px', width:'80px', margin: '-25px' }, 1000, 'linear', function(){$(this).remove(); })
+    );
+}
 
 function popupCoord(coord) {
     var value = coord[0]+coord[1];
-    mapObj.addMarker(curNumMarker, coord, [value]);
-    curNumMarker = curNumMarker>=maxNumCoord ? 0 : curNumMarker+1;
-    allMarker.push(curNumMarker)
-    if (allMarker.length >= maxNumCoord) {
-        to_remove = allMarker[0];
-        mapObj.removeMarkers([to_remove]);
-        allMarker.slice(1);
+    pnts = mapObj.latLngToPoint(coord[0], coord[1])
+    if (pnts != false) { //sometimes latLngToPoint return false
+        mapObj.addMarker(curNumMarker, coord, [value]);
+        allMarker.push(curNumMarker)
+        marker_animation(pnts.x, pnts.y, curNumMarker);
+        curNumMarker = curNumMarker>=maxNumCoord ? 0 : curNumMarker+1;
+        if (allMarker.length >= maxNumCoord) {
+            to_remove = allMarker[0];
+            mapObj.removeMarkers([to_remove]);
+            allMarker = allMarker.slice(1);
+        }
     }
 }
+
 
 $(function(){
     $('#feedDiv2').vectorMap({
