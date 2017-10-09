@@ -1,7 +1,7 @@
 //color: #5f6062
 var updateInterval = 1000*graph_log_refresh_rate; // 1s
 var maxNumPoint = 60;
-var maxNumCoord = 20;
+var maxNumCoord = 100;
 
 var emptyArray = [];
 var mapCoord = [];
@@ -169,8 +169,8 @@ $(document).ready(function () {
         { label: "Series3",  data: 60}
     ];
 var plotLineChart = $.plot("#feedDiv3", sources.getEmptyData(), optionsLineChart);
-var plotPieChartA = $.plot("#feedDiv1A", rData, optionsPieChart);
-var plotPieChartB = $.plot("#feedDiv1B", rData, optionsPieChart);
+//var plotPieChartA = $.plot("#feedDiv1A", rData, optionsPieChart);
+//var plotPieChartB = $.plot("#feedDiv1B", rData, optionsPieChart);
 updateChart()
 
 function updateChart() {

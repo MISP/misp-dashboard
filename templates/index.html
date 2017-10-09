@@ -38,6 +38,11 @@ table {
   -webkit-transform: translateZ(0); /* little trick to force GPU acceleration */
 }
 
+img {
+    border-style: solid;
+    border-width: 2px;
+}
+
 </style>
 
 <body>
@@ -60,20 +65,25 @@ table {
                     <div class="col-lg-12">
                        <div class="col-lg-5">
                         
-                        <div class="panel panel-default" style="margin-top: 15px; height: 37vh;">
-                            <div class="panel-heading">
+                        <div class="panel panel-default" style="margin-top: 15px; height: 59vh;">
+                            <!--<div class="panel-heading">
                                 <i class="fa fa-bar-chart-o fa-fw"></i> Statistics
-                            </div>
-                            <div id="panelbody" class="panel-body" style="height: 37vh; width:100%;">
+                            </div>-->
+                            <!--<div id="panelbody" class="panel-body" style="height: 37vh; width:100%;">
                                 <div id="feedDiv1A" style="width:50%; height: calc(100% - 30px); position: relative; float: left;"></div>
-                                <div id="feedDiv1B" style="width:50%; height: calc(100% - 30px); position: relative; float: left;"></div>
+                                <div id="feedDiv1B" style="width:50%; height: calc(100% - 30px); position: relative; float: left;"></div>-->
+                            <div id="panelbody" class="panel-body" style="height: 100%;">
+                                <div id="feedDiv1A" style="width:50%; height: 50%; position: relative; float: left;"><img id="img1" src="{{ url_for('static', filename='maps/map.png') }}" style="width:98%;height:97%;"></div>
+                                <div id="feedDiv1B" style="width:50%; height: 50%; position: relative; float: left;"><img id="img2" src="{{ url_for('static', filename='maps/map.png') }}" style="width:98%;height:97%;"></div>
+                                <div id="feedDiv2A" style="width:50%; height: 50%; position: relative; float: left;"><img id="img3" src="{{ url_for('static', filename='maps/map.png') }}" style="width:98%;height:97%;"></div>
+                                <div id="feedDiv2B" style="width:50%; height: 50%; position: relative; float: left;"><img id="img4" src="{{ url_for('static', filename='maps/map.png') }}" style="width:98%;height:97%;"></div>
                             </div>
                             <!-- /.panel-body -->
 
                         </div>
                         <!-- /.panel -->
 
-                        <div class="panel panel-default" style="height: 50vh;">
+                        <div class="panel panel-default" style="height: 29vh;">
                             <div class="panel-heading">
                                 <i class="fa fa-tasks fa-fw"></i> Logs
                                 <div class="pull-right">
@@ -113,7 +123,7 @@ table {
                         </div>
                         <!-- /.panel -->
 
-                        <div class="panel panel-default" style="margin-top: 15px; height: 28vh;">
+                        <div class="panel panel-default" style="margin-top: 15px; height: 29vh;">
                             <div class="panel-heading">
                                 <i class="fa fa-bar-chart-o fa-fw"></i> Log feed
                             </div>
@@ -158,6 +168,13 @@ table {
         var urlForHead = "{{ url_for('getLogHead') }}";
         /* DATA */
         var graph_log_refresh_rate = {{ graph_log_refresh_rate }};
+        setTimeout(function(){
+            var img2 = "{{ url_for('static', filename='maps/map2.png') }}";
+            $("#img1").fadeOut();
+            $('#img1').attr('src', img2);
+            $("#img1").delay(200).fadeIn();
+
+        }, 3000);
     </script>
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 
