@@ -168,6 +168,7 @@ $(document).ready(function () {
         var json = jQuery.parseJSON( event.data );
         var img2 = linkForDefaultMap.replace(/\/[^\/]+$/, "/"+json.path);
         $("#img"+img_to_change).fadeOut(400, function(){ $(this).attr('src', img2); }).fadeIn(400);
+        $("#textMap"+img_to_change).fadeOut(400, function(){ $(this).text(json.path); }).fadeIn(400);
         img_to_change = img_to_change == 4 ? 0 : img_to_change+1;
     };
     source_map.onopen = function(){

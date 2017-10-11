@@ -7,10 +7,11 @@ import math
 import sys, os
 import time
 from subprocess import PIPE, Popen
+import shlex
 
 URL_OPEN_MAP = "http://tile.openstreetmap.org/{zoom}/{x}/{y}.png"
 MAP_DIR = "static/maps/"
-ZOOM = 16
+ZOOM = 17
 dlat = 2
 dlon = 2
 serv = redis.StrictRedis('localhost', 6250, 2)
@@ -42,14 +43,22 @@ def create_box_around_coord(lon,lat):
     return pics
 
 def download_and_merge(url_list, coord):
-    with open('in.txt', 'w') as f:
-        for i, url in enumerate(url_list):
-            f.write(str(i+1)+' '+url+'\n')
+    to_process = b""
+    for i, url in enumerate(url_list):
+        to_process += (str(i+1)+' '+url+'\n').encode('utf8')
 
     map_name = "map_{lon}-{lat}.png".format(lon=coord['lon'], lat=coord['lat'])
     path = os.path.join(MAP_DIR, map_name)
-    FULL_COMMAND = "cat in.txt | parallel --colsep ' ' wget -O maps/{1} {2} && montage -geometry +0+0 maps/1 maps/4 maps/7 maps/2 maps/5 maps/8 maps/3 maps/6 maps/9  "+path
-    os.system(FULL_COMMAND)
+    cmd1 = "parallel --colsep ' ' wget -O maps/{1} {2}"
+    cmd2 = "montage -geometry +0+0 maps/1 maps/4 maps/7 maps/2 maps/5 maps/8 maps/3 maps/6 maps/9  "+path
+
+    # Donwload tiles
+    p = Popen(shlex.split(cmd1), stdout=PIPE, stdin=PIPE)
+    p.communicate(input=to_process)
+
+    # Combine tiles
+    p = Popen(shlex.split(cmd2), stdout=PIPE, stdin=PIPE)
+
     return map_name
 
 def download_maps(coord):

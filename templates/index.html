@@ -43,6 +43,11 @@ img {
     border-width: 2px;
 }
 
+small {
+    font-size: 100%;
+    font-weight: bold;
+}
+
 </style>
 
 <body>
@@ -72,21 +77,21 @@ img {
                             <!--<div id="panelbody" class="panel-body" style="height: 37vh; width:100%;">
                                 <div id="feedDiv1A" style="width:50%; height: calc(100% - 30px); position: relative; float: left;"></div>
                                 <div id="feedDiv1B" style="width:50%; height: calc(100% - 30px); position: relative; float: left;"></div>-->
-                            <div id="panelbody" class="panel-body" style="height: 100%;">
+                            <div id="panelbody" class="panel-body" style="height: 100%; padding: 5px">
                                 <div id="feedDivMap1" style="width:50%; height: 50%; position: relative; float: left;">
                                     <small id="textMap1">text1</small>
                                     <img id="img1" src="{{ url_for('static', filename='maps/default.png') }}" style="width:98%;height:97%;">
                                 </div>
                                 <div id="feedDivMap2" style="width:50%; height: 50%; position: relative; float: left;">
-                                    <small id="textMap1">text2</small>
+                                    <small id="textMap2">text2</small>
                                     <img id="img2" src="{{ url_for('static', filename='maps/default.png') }}" style="width:98%;height:97%;">
                                 </div>
-                                <div id="feedDivMap3" style="width:50%; height: 50%; position: relative; float: left;">
-                                    <small style="height:10%;" id="textMap1">text3</small>
+                                <div id="feedDivMap3" style="width:50%; height: 50%; position: relative; float: left; margin-top: 13px;">
+                                    <small style="height:10%;" id="textMap3">text3</small>
                                     <img id="img3" src="{{ url_for('static', filename='maps/default.png') }}" style="width:98%;height:87%;">
                                 </div>
-                                <div id="feedDivMap4" style="width:50%; height: 50%; position: relative; float: left;">
-                                    <small style="height:10%;" id="textMap1">text4</small>
+                                <div id="feedDivMap4" style="width:50%; height: 50%; position: relative; float: left; margin-top: 13px;">
+                                    <small style="height:10%;" id="textMap4">text4</small>
                                     <img id="img4" src="{{ url_for('static', filename='maps/default.png') }}" style="width:98%;height:87%;">
                                 </div>
                             </div>
