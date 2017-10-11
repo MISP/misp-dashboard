@@ -3,6 +3,7 @@ var updateInterval = 1000*graph_log_refresh_rate; // 1s
 var maxNumPoint = 60;
 var maxNumCoord = 100;
 
+var img_to_change = 1;
 var emptyArray = [];
 var mapCoord = [];
 var mapVal = [];
@@ -142,25 +143,40 @@ var optionsPieChart = {
 $(document).ready(function () {
     createHead(function() {
         if (!!window.EventSource) {
-            var source = new EventSource(urlForLogs);
+            var source_log = new EventSource(urlForLogs);
 
-            source.onopen = function(){
-                //console.log('connection is opened. '+source.readyState);  
+            source_log.onopen = function(){
+                //console.log('connection is opened. '+source_log.readyState);  
             };
 
-            source.onerror = function(){
-                //console.log('error: '+source.readyState);  
+            source_log.onerror = function(){
+                //console.log('error: '+source_log.readyState);  
             };
 
-            source.onmessage = function(event) {
+            source_log.onmessage = function(event) {
                 var json = jQuery.parseJSON( event.data );
                 updateLogTable(json.feedName, json.log);
             };
         
         } else {
-            console.log("No event source");
+            console.log("No event source_log");
         }
     });
+
+    var source_map = new EventSource(urlForMaps);
+    source_map.onmessage = function(event) {
+        var json = jQuery.parseJSON( event.data );
+        var img2 = linkForDefaultMap.replace(/\/[^\/]+$/, "/"+json.path);
+        $("#img"+img_to_change).fadeOut(400, function(){ $(this).attr('src', img2); }).fadeIn(400);
+        img_to_change = img_to_change == 4 ? 0 : img_to_change+1;
+    };
+    source_map.onopen = function(){
+        console.log('connection is opened. '+source_map.readyState);  
+    };
+    source_map.onerror = function(){
+        console.log('error: '+source_map.readyState);  
+    };
+
 });
 
     var rData = [
@@ -298,7 +314,7 @@ function marker_animation(x, y, curNumMarker) {
         .css({'left': x-15 + 'px'}) /* HACK to center the effect */
         .css({'top': y-15 + 'px'})
         .css({ 'background-color': markerColor })
-        .animate({ opacity: 0, scale: 1, height: '80px', width:'80px', margin: '-25px' }, 1000, 'linear', function(){$(this).remove(); })
+        .animate({ opacity: 0, scale: 1, height: '80px', width:'80px', margin: '-25px' }, 700, 'linear', function(){$(this).remove(); })
     );
 }
 

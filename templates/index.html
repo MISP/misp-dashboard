@@ -73,10 +73,22 @@ img {
                                 <div id="feedDiv1A" style="width:50%; height: calc(100% - 30px); position: relative; float: left;"></div>
                                 <div id="feedDiv1B" style="width:50%; height: calc(100% - 30px); position: relative; float: left;"></div>-->
                             <div id="panelbody" class="panel-body" style="height: 100%;">
-                                <div id="feedDiv1A" style="width:50%; height: 50%; position: relative; float: left;"><img id="img1" src="{{ url_for('static', filename='maps/map.png') }}" style="width:98%;height:97%;"></div>
-                                <div id="feedDiv1B" style="width:50%; height: 50%; position: relative; float: left;"><img id="img2" src="{{ url_for('static', filename='maps/map.png') }}" style="width:98%;height:97%;"></div>
-                                <div id="feedDiv2A" style="width:50%; height: 50%; position: relative; float: left;"><img id="img3" src="{{ url_for('static', filename='maps/map.png') }}" style="width:98%;height:97%;"></div>
-                                <div id="feedDiv2B" style="width:50%; height: 50%; position: relative; float: left;"><img id="img4" src="{{ url_for('static', filename='maps/map.png') }}" style="width:98%;height:97%;"></div>
+                                <div id="feedDivMap1" style="width:50%; height: 50%; position: relative; float: left;">
+                                    <small id="textMap1">text1</small>
+                                    <img id="img1" src="{{ url_for('static', filename='maps/default.png') }}" style="width:98%;height:97%;">
+                                </div>
+                                <div id="feedDivMap2" style="width:50%; height: 50%; position: relative; float: left;">
+                                    <small id="textMap1">text2</small>
+                                    <img id="img2" src="{{ url_for('static', filename='maps/default.png') }}" style="width:98%;height:97%;">
+                                </div>
+                                <div id="feedDivMap3" style="width:50%; height: 50%; position: relative; float: left;">
+                                    <small style="height:10%;" id="textMap1">text3</small>
+                                    <img id="img3" src="{{ url_for('static', filename='maps/default.png') }}" style="width:98%;height:87%;">
+                                </div>
+                                <div id="feedDivMap4" style="width:50%; height: 50%; position: relative; float: left;">
+                                    <small style="height:10%;" id="textMap1">text4</small>
+                                    <img id="img4" src="{{ url_for('static', filename='maps/default.png') }}" style="width:98%;height:87%;">
+                                </div>
                             </div>
                             <!-- /.panel-body -->
 
@@ -166,14 +178,11 @@ img {
         /* URL */
         var urlForLogs = "{{ url_for('logs') }}";
         var urlForHead = "{{ url_for('getLogHead') }}";
+        var urlForMaps = "{{ url_for('maps') }}";
+        var linkForDefaultMap = "{{ url_for('static', filename='maps/default.png') }}";
         /* DATA */
         var graph_log_refresh_rate = {{ graph_log_refresh_rate }};
         setTimeout(function(){
-            var img2 = "{{ url_for('static', filename='maps/map2.png') }}";
-            $("#img1").fadeOut();
-            $('#img1').attr('src', img2);
-            $("#img1").delay(200).fadeIn();
-
         }, 3000);
     </script>
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>

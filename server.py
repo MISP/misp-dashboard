@@ -2,6 +2,7 @@
 from flask import Flask, render_template, Response
 import json
 import redis
+import random
 import configparser
 from time import gmtime as now
 from time import sleep, strftime
@@ -13,13 +14,19 @@ cfg.read(configfile)
 
 app = Flask(__name__)
 
-redis_server = redis.StrictRedis(
-        host=cfg.get('Redis', 'host'),
-        port=cfg.getint('Redis', 'port'),
-        db=cfg.getint('Redis', 'db'))
+redis_server_log = redis.StrictRedis(
+        host=cfg.get('RedisLog', 'host'),
+        port=cfg.getint('RedisLog', 'port'),
+        db=cfg.getint('RedisLog', 'db'))
+redis_server_map = redis.StrictRedis(
+        host=cfg.get('RedisMap', 'host'),
+        port=cfg.getint('RedisMap', 'port'),
+        db=cfg.getint('RedisMap', 'db'))
 
-subscriber = redis_server.pubsub(ignore_subscribe_messages=True)
-subscriber.psubscribe(cfg.get('Redis', 'channel'))
+subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)
+subscriber_log.psubscribe(cfg.get('RedisLog', 'channel'))
+subscriber_map = redis_server_map.pubsub(ignore_subscribe_messages=True)
+subscriber_map.psubscribe(cfg.get('RedisMap', 'channelDisp'))
 eventNumber = 0
 
 class LogItem():
@@ -80,16 +87,26 @@ def index():
 
 @app.route("/_logs")
 def logs():
-    return Response(event_stream(), mimetype="text/event-stream")
+    return Response(event_stream_log(), mimetype="text/event-stream")
+
+@app.route("/_maps")
+def maps():
+    return Response(event_stream_maps(), mimetype="text/event-stream")
 
 @app.route("/_get_log_head")
 def getLogHead():
     return json.dumps(LogItem('').get_head_row())
 
-def event_stream():
-    for msg in subscriber.listen():
+def event_stream_log():
+    for msg in subscriber_log.listen():
         content = msg['data']
+        print('sending', content)
         yield EventMessage(content).to_json()
 
+def event_stream_maps():
+    for msg in subscriber_map.listen():
+        content = msg['data'].decode('utf8')
+        yield 'data: {}\n\n'.format(json.dumps({ 'path': content }))
+
 if __name__ == '__main__':
-    app.run(host='localhost', port=8000)
+    app.run(host='localhost', port=8000, threaded=True)

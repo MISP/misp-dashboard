@@ -13,34 +13,45 @@ configfile = os.path.join(os.environ['VIRTUAL_ENV'], '../config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
-zmq_url = cfg.get('Redis', 'zmq_url')
+zmq_url = cfg.get('RedisLog', 'zmq_url')
 zmq_url = "tcp://crf.circl.lu:5556"
-channel = cfg.get('Redis', 'channel')
+channel = cfg.get('RedisLog', 'channel')
 context = zmq.Context()
 socket = context.socket(zmq.SUB)
 socket.connect(zmq_url)
 socket.setsockopt_string(zmq.SUBSCRIBE, channel)
 
 redis_server = redis.StrictRedis(
-        host=cfg.get('Redis', 'host'),
-        port=cfg.getint('Redis', 'port'),
-        db=cfg.getint('Redis', 'db'))
+        host=cfg.get('RedisLog', 'host'),
+        port=cfg.getint('RedisLog', 'port'),
+        db=cfg.getint('RedisLog', 'db'))
+serv_coord = redis.StrictRedis(
+        host='localhost',
+        port=6250,
+        db=1) 
+
+channel_proc = "CoordToProcess"
+channel_disp = "PicToDisplay"
 
 # server side
 pubsub = redis_server.pubsub(ignore_subscribe_messages=True)
 
 while True:
-    rdm = random.randint(1,3)
-    time.sleep(float(rdm / 3))
-    lat = random.randint(-90,90)
-    lon = random.randint(-90,90)
+    rdm = random.randint(1,10)
+    time.sleep(float(rdm))
+    #lux
+    lon = random.uniform(5.7373, 6.4823)
+    lat = random.uniform(49.4061,49.7449)
+    #central eur
+    lon = random.uniform(3.936, 9.890)
+    lat = random.uniform(47.957, 50.999)
     content = ["rdm "+str(rdm)]
     content = [lat,lon]
     jsonContent = json.dumps(content)
     to_send = { 'name': 'feeder'+str(rdm), 'log': jsonContent }
     redis_server.publish(channel, json.dumps(to_send))
+    serv_coord.publish(channel_proc, json.dumps({'lat': float(lat), 'lon': float(lon)}))
 
-sys.exit(1)
 
 
 while True:
