@@ -2,8 +2,12 @@
 var updateInterval = 1000*graph_log_refresh_rate; // 1s
 var maxNumPoint = 60;
 var maxNumCoord = 100;
+var max_img_rotation = 10;
+var rotation_time = 1000*10; //10s
 
-var img_to_change = 1;
+var img_to_change = 0;
+var img_array = [];
+var first_map = true;
 var emptyArray = [];
 var mapCoord = [];
 var mapVal = [];
@@ -140,6 +144,40 @@ var optionsPieChart = {
     }
 };
 
+function ping() {
+    pnts = mapObj.latLngToPoint(map_lat, map_lon);
+    console.log(pnts);
+    if (pnts != false) { //sometimes latLngToPoint return false
+        $("#feedDiv2").append(
+                $('<div class="marker_animation"></div>')
+                .css({'left': pnts.x-15 + 'px'}) /* HACK to center the effect */
+                .css({'top': pnts.y-15 + 'px'})
+                .css({ 'background-color': 'orange' })
+                .animate({ opacity: 0, scale: 1, height: '80px', width:'80px', margin: '-25px' }, 400, 'linear', function(){$(this).remove(); })
+        );
+    }
+    setTimeout(function(){ ping(); }, rotation_time/4);
+}
+
+var map_lat, map_lon;
+function rotate_map() {
+    var to_switch = img_array[img_to_change];
+    var pic = to_switch[0];
+    var txt = to_switch[1];
+    var coord = to_switch[2];
+    map_lat = coord.lat;
+    map_lon = coord.lon;
+    console.log(to_switch);
+
+    $("#img1").fadeOut(400, function(){ $(this).attr('src', pic); }).fadeIn(400);
+    $("#textMap1").fadeOut(400, function(){ $(this).text(txt); }).fadeIn(400);
+    img_to_change = img_to_change == img_array.length-1 ? 0 : img_to_change+1;
+    console.log(img_array);
+    console.log(img_to_change);
+
+    setTimeout(function(){ rotate_map(); }, rotation_time);
+}
+
 $(document).ready(function () {
     createHead(function() {
         if (!!window.EventSource) {
@@ -168,9 +206,18 @@ $(document).ready(function () {
         var json = jQuery.parseJSON( event.data );
         popupCoord(json.coord);
         var img2 = linkForDefaultMap.replace(/\/[^\/]+$/, "/"+json.path);
-        $("#img"+img_to_change).fadeOut(400, function(){ $(this).attr('src', img2); }).fadeIn(400);
-        $("#textMap"+img_to_change).fadeOut(400, function(){ $(this).text(json.path); }).fadeIn(400);
-        img_to_change = img_to_change == 4 ? 0 : img_to_change+1;
+        
+        if (img_array.len >= max_img_rotation) {
+            img_array.slice(1)
+        }
+        img_array.push([img2, json.path, json.coord]);
+
+        if (first_map) { // remove no_map pic
+            rotate_map();
+            ping();
+            first_map = false;
+        }
+
     };
     source_map.onopen = function(){
         console.log('connection is opened. '+source_map.readyState);  
