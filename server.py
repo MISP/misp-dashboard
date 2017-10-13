@@ -100,13 +100,13 @@ def getLogHead():
 def event_stream_log():
     for msg in subscriber_log.listen():
         content = msg['data']
-        print('sending', content)
         yield EventMessage(content).to_json()
 
 def event_stream_maps():
     for msg in subscriber_map.listen():
         content = msg['data'].decode('utf8')
-        yield 'data: {}\n\n'.format(json.dumps({ 'path': content }))
+        print('sending map', content)
+        yield 'data: {}\n\n'.format(content)
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8000, threaded=True)

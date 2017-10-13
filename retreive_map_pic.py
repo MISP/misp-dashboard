@@ -70,7 +70,7 @@ def download_maps(coord):
     urls = create_box_around_coord(lon, lat)
     map_name = download_and_merge(urls, coord)
     print(map_name)
-    serv.publish(channel_disp, map_name)
+    serv.publish(channel_disp, json.dumps({ "path": map_name, "coord": coord }))
 
 if __name__ == '__main__':
     main()

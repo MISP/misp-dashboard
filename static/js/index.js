@@ -166,6 +166,7 @@ $(document).ready(function () {
     var source_map = new EventSource(urlForMaps);
     source_map.onmessage = function(event) {
         var json = jQuery.parseJSON( event.data );
+        popupCoord(json.coord);
         var img2 = linkForDefaultMap.replace(/\/[^\/]+$/, "/"+json.path);
         $("#img"+img_to_change).fadeOut(400, function(){ $(this).attr('src', img2); }).fadeIn(400);
         $("#textMap"+img_to_change).fadeOut(400, function(){ $(this).text(json.path); }).fadeIn(400);
@@ -219,20 +220,27 @@ function updateLogTable(feedName, log) {
     sources.addIfNotPresent(feedName);
     sources.incCountOnSource(feedName);
     sources.incCountOnSource('global');
-    createRow(tableBody, log);
 
-    // Remove old row
-    var logSel = document.getElementById("log_select");
-    //get height of pannel, find max num of item
-    var maxNumLogItem = document.getElementById('divLogTable').clientHeight/37;
-    maxNumLogItem -= 2; //take heading/padding/... into account
-    if (maxNumLogItem - parseInt(maxNumLogItem) < 0.5) { //beautifier
-        maxNumLogItem -= 1;
-    }
-    if (tableBody.rows.length > maxNumLogItem) {
-        while (tableBody.rows.length >= maxNumLogItem){
-            tableBody.deleteRow(0);
+    // only add row for attribute
+    if (feedName == "Attribute" ) {
+        createRow(tableBody, log);
+
+        // Remove old row
+        var logSel = document.getElementById("log_select");
+        //get height of pannel, find max num of item
+        var maxNumLogItem = document.getElementById('divLogTable').clientHeight/37;
+        maxNumLogItem -= 2; //take heading/padding/... into account
+        if (maxNumLogItem - parseInt(maxNumLogItem) < 0.5) { //beautifier
+            maxNumLogItem -= 1;
         }
+        if (tableBody.rows.length > maxNumLogItem) {
+            while (tableBody.rows.length >= maxNumLogItem){
+                tableBody.deleteRow(0);
+            }
+        }
+    } else {
+        // do nothing
+        return;
     }
 
 }
@@ -252,10 +260,7 @@ function slideAndMax(orig, newData) {
 
 function createRow(tableBody, log) {
     var tr = document.createElement('TR');
-    var action = document.createElement('TD');
-    var x = log[1];
-    var y = log[2];
-    popupCoord([x,y]);
+    //var action = document.createElement('TD');
 
     for (var key in log) {
         if (log.hasOwnProperty(key)) {
@@ -277,8 +282,8 @@ function createRow(tableBody, log) {
     }
 
     // action
-    action.appendChild(document.createTextNode("ACTION"));
-    tr.appendChild(action);
+    //action.appendChild(document.createTextNode("ACTION"));
+    //tr.appendChild(action);
 
     tableBody.appendChild(tr);
 
@@ -294,9 +299,9 @@ function createHead(callback) {
             th.appendChild(document.createTextNode(head));
             tr.appendChild(th);
         }
-        var action = document.createElement('TH');
-        action.appendChild(document.createTextNode("Actions"));
-        tr.appendChild(action);
+        //var action = document.createElement('TH');
+        //action.appendChild(document.createTextNode("Actions"));
+        //tr.appendChild(action);
         document.getElementById('table_log_head').appendChild(tr);
         callback();
     });
@@ -320,7 +325,8 @@ function marker_animation(x, y, curNumMarker) {
 }
 
 function popupCoord(coord) {
-    var value = coord[0]+coord[1];
+    var coord = [coord['lat'], coord['lon']];
+    var value = Math.random()*180;
     pnts = mapObj.latLngToPoint(coord[0], coord[1])
     if (pnts != false) { //sometimes latLngToPoint return false
         mapObj.addMarker(curNumMarker, coord, [value]);
@@ -345,7 +351,7 @@ $(function(){
             attribute: 'fill',
             scale: ['#1A0DAB', '#e50000', '#62ff41'],
             values: [],
-            min: -180,
+            min: 0,
             max: 180
           }],
         },
