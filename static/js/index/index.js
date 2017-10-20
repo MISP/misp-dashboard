@@ -1,3 +1,9 @@
+var maxNumPoint = 60;
+var emptyArray = [];
+for(i=0; i<maxNumPoint; i++) {
+    emptyArray.push([i, 0]);
+}
+
 class Sources {
     constructor() {
         this._sourcesArray = {};
@@ -8,7 +14,7 @@ class Sources {
     }
 
     addSource(sourceName) {
-        this._sourcesArray[sourceName] = [];
+        this._sourcesArray[sourceName] = emptyArray;
         this._sourcesCount[sourceName] = 0;
         this._sourcesCountMax[sourceName] = 0;
         this._sourceNames.push(sourceName);
@@ -64,7 +70,7 @@ class Sources {
     }
 
     getEmptyData() {
-        return [{label: 'no data', data: []}];
+        return [{label: 'no data', data: emptyArray}];
     }
 }
 
