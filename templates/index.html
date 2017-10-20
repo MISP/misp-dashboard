@@ -49,6 +49,20 @@ table {
   margin-right:auto;
 }
 
+.panel-body {
+        padding: 0px;
+}
+
+/*
+.panel-default {
+    border-color: #ddd;
+    border-top-color: rgb(221, 221, 221);
+    border-right-color: rgb(221, 221, 221);
+    border-bottom-color: #fff0;
+    border-left-color: rgb(221, 221, 221);
+}
+*/
+
 small {
     font-size: 100%;
     font-weight: bold;
@@ -186,7 +200,10 @@ small {
         setTimeout(function(){
         }, 3000);
     </script>
-    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/index/index.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/index/index_lineChart.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/index/index_map.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/index/index_pie.js') }}"></script>
 
 
     <link href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
