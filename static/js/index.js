@@ -5,6 +5,13 @@ var maxNumCoord = 100;
 var max_img_rotation = 10;
 var rotation_time = 1000*10; //10s
 
+var mymap = L.map('feedDivMap1').setView([51.505, -0.09], 13);;
+var osmUrl='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+var osmAttrib='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
+var osm = new L.TileLayer(osmUrl, {minZoom: 3, maxZoom: 17, attribution: osmAttrib}).addTo(mymap);
+
+var coord_to_change = 0;
+var coord_array = [];
 var img_to_change = 0;
 var img_array = [];
 var first_map = true;
@@ -146,7 +153,6 @@ var optionsPieChart = {
 
 function ping() {
     pnts = mapObj.latLngToPoint(map_lat, map_lon);
-    console.log(pnts);
     if (pnts != false) { //sometimes latLngToPoint return false
         $("#feedDiv2").append(
                 $('<div class="marker_animation"></div>')
@@ -161,19 +167,16 @@ function ping() {
 
 var map_lat, map_lon;
 function rotate_map() {
-    var to_switch = img_array[img_to_change];
-    var pic = to_switch[0];
-    var txt = to_switch[1];
-    var coord = to_switch[2];
+    var to_switch = coord_array[coord_to_change];
+    var coord = to_switch[0];
     map_lat = coord.lat;
     map_lon = coord.lon;
-    console.log(to_switch);
+    var marker = to_switch[1];
+    var headerTxt = to_switch[2];
+    mymap.setView([coord.lat, coord.lon], 17);
 
-    $("#img1").fadeOut(400, function(){ $(this).attr('src', pic); }).fadeIn(400);
-    $("#textMap1").fadeOut(400, function(){ $(this).text(txt); }).fadeIn(400);
-    img_to_change = img_to_change == img_array.length-1 ? 0 : img_to_change+1;
-    console.log(img_array);
-    console.log(img_to_change);
+    $("#textMap1").fadeOut(400, function(){ $(this).text(headerTxt); }).fadeIn(400);
+    coord_to_change = coord_to_change == coord_array.length-1 ? 0 : coord_to_change+1;
 
     setTimeout(function(){ rotate_map(); }, rotation_time);
 }
@@ -207,10 +210,12 @@ $(document).ready(function () {
         popupCoord(json.coord);
         var img2 = linkForDefaultMap.replace(/\/[^\/]+$/, "/"+json.path);
         
-        if (img_array.len >= max_img_rotation) {
-            img_array.slice(1)
+        if (coord_array.len >= max_img_rotation) {
+            coord_array[0][1].remove() // remove marker
+            coord_array.slice(1)
         }
-        img_array.push([img2, json.path, json.coord]);
+        var marker = L.marker([json.coord.lat, json.coord.lon]).addTo(mymap);
+        coord_array.push([json.coord, marker, ""+json.coord.lat+", "+json.coord.lon]);
 
         if (first_map) { // remove no_map pic
             rotate_map();
