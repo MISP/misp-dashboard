@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.5
 
-import time
+import time, datetime
 import zmq
 import redis
 import random
@@ -46,9 +46,13 @@ def get_ip(data):
 
 def ip_to_coord(ip):
     resp = reader.city(ip)
-    lat = resp.location.latitude
-    lon = resp.location.longitude
-    return {'lat': lat, 'lon': lon}
+    lat = float(resp.location.latitude)
+    lon = float(resp.location.longitude)
+    # 0.0001 correspond to ~10m
+    # Cast the float so that it has the correct float format
+    lat_corrected = float("{:.4f}".format(lat))
+    lon_corrected = float("{:.4f}".format(lon))
+    return {'lat': lat_corrected, 'lon': lon_corrected}
 
 def default_log(jsonevent):
     print('sending', 'log')
@@ -72,29 +76,37 @@ def default_event(jsonevent):
     to_send = { 'name': 'Event', 'log': json.dumps(to_push) }
     redis_server.publish(channel, json.dumps(to_send))
 
-def default_attribute(jsonevent):
+def default_attribute(jsonattr):
     print('sending', 'attribute')
-    jsonevent = jsonevent['Attribute']
+    jsonattr = jsonattr['Attribute']
     to_push = [
-            jsonevent['id'],
-            jsonevent['category'],
-            jsonevent['type'],
-            jsonevent['value'],
+            jsonattr['id'],
+            jsonattr['category'],
+            jsonattr['type'],
+            jsonattr['value'],
             ]
 
     #try to get coord
-    if jsonevent['category'] == "Network activity":
-        try:
-            coord = ip_to_coord(jsonevent['value'])
-            to_send = {'lat': float(coord['lat']), 'lon': float(coord['lon'])}
-            serv_coord.publish(channel_proc, json.dumps(to_send))
-            print('coord sent')
-        except ValueError:
-            print("can't resolve ip")
+    if jsonattr['category'] == "Network activity":
+        handleCoord(jsonattr['value'])
 
     to_send = { 'name': 'Attribute', 'log': json.dumps(to_push) }
     redis_server.publish(channel, json.dumps(to_send))
 
+def handleCoord(value):
+    try:
+        coord = ip_to_coord(value)
+        coord_dic = {'lat': coord['lat'], 'lon': coord['lon']}
+        coord_list = [coord['lat'], coord['lon']]
+        print(coord_list)
+        now = datetime.datetime.now()
+        today_str = str(now.year)+str(now.month)+str(now.day)
+        keyname = 'GEO_' + today_str
+        #serv_coord.zincrby(keyname, coord_list)
+        serv_coord.publish(channel_disp, json.dumps({ "coord": coord }))
+        print('coord sent')
+    except ValueError:
+        print("can't resolve ip")
 
 def process_log(event):
     event = event.decode('utf8')
@@ -143,26 +155,4 @@ dico_action = {
 if __name__ == "__main__":
     main()
     reader.close()
-
-
-
-# server side
-pubsub = redis_server.pubsub(ignore_subscribe_messages=True)
-
-#while True:
-#    rdm = random.randint(1,10)
-#    time.sleep(float(rdm))
-#    #lux
-#    lon = random.uniform(5.7373, 6.4823)
-#    lat = random.uniform(49.4061,49.7449)
-#    #central eur
-#    lon = random.uniform(3.936, 9.890)
-#    lat = random.uniform(47.957, 50.999)
-#    content = ["rdm "+str(rdm)]
-#    content = [lat,lon]
-#    jsonContent = json.dumps(content)
-#    to_send = { 'name': 'feeder'+str(rdm), 'log': jsonContent }
-#    redis_server.publish(channel, json.dumps(to_send))
-#    serv_coord.publish(channel_proc, json.dumps({'lat': float(lat), 'lon': float(lon)}))
-
 
