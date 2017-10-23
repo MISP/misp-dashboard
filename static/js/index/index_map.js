@@ -89,7 +89,6 @@ class MapEventManager {
 
         $("#textMap1").fadeOut(400, function(){ $(this).text(mapEvent.text); }).fadeIn(400);
         if(ROTATIONWAITTIME != 0) {
-            console.log(ROTATIONWAITTIME);
             this._timeoutRotate = setTimeout(function(){ mapEventManager.rotateMap(); }, ROTATIONWAITTIME);
         }
     }
@@ -159,18 +158,22 @@ $(function(){
 });
 
 // Subscribe to the flask eventStream
-var source_map = new EventSource(urlForMaps);
-source_map.onmessage = function(event) {
-    var json = jQuery.parseJSON( event.data );
-    var marker = L.marker([json.coord.lat, json.coord.lon]).addTo(myOpenStreetMap);
-    var mapEvent = new MapEvent(json, marker);
-    mapEventManager.addMapEvent(mapEvent);
-
-};
-source_map.onopen = function(){
-    console.log('connection is opened. '+source_map.readyState);  
-};
-source_map.onerror = function(){
-    console.log('error: '+source_map.readyState);
-    setTimeout(function() { location.reload(); }, 5000);
-};
+var source_map;
+function connect_source_map() {
+    source_map = new EventSource(urlForMaps);
+    source_map.onmessage = function(event) {
+        var json = jQuery.parseJSON( event.data );
+        var marker = L.marker([json.coord.lat, json.coord.lon]).addTo(myOpenStreetMap);
+        var mapEvent = new MapEvent(json, marker);
+        mapEventManager.addMapEvent(mapEvent);
+    
+    };
+    source_map.onopen = function(){
+        console.log('connection is opened. '+source_map.readyState);  
+    };
+    source_map.onerror = function(){
+        console.log('error: '+source_map.readyState);
+        setTimeout(function() { connect_source_map(); }, 5000);
+    };
+}
+connect_source_map()

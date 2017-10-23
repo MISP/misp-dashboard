@@ -103,29 +103,34 @@ sources.addSource('global');
 
 var curNumLog = 0;
 var curMaxDataNumLog = 0;
+var source_log;
+
+function connect_source_log() {
+    source_log = new EventSource(urlForLogs);
+
+    source_log.onopen = function(){
+        //console.log('connection is opened. '+source_log.readyState);  
+    };
+
+    source_log.onerror = function(){
+        console.log('error: '+source_log.readyState);  
+        setTimeout(function() { connect_source_log(); }, 5000);
+    };
+
+    source_log.onmessage = function(event) {
+        var json = jQuery.parseJSON( event.data );
+        updateLogTable(json.feedName, json.log);
+    };
+}
 
 $(document).ready(function () {
     createHead(function() {
         if (!!window.EventSource) {
-            var source_log = new EventSource(urlForLogs);
-
-            source_log.onopen = function(){
-                //console.log('connection is opened. '+source_log.readyState);  
-            };
-
-            source_log.onerror = function(){
-                console.log('error: '+source_log.readyState);  
-                setTimeout(function() { location.reload(); }, 5000);
-            };
-
-            source_log.onmessage = function(event) {
-                var json = jQuery.parseJSON( event.data );
-                updateLogTable(json.feedName, json.log);
-            };
-        
+            connect_source_log();
         } else {
             console.log("No event source_log");
         }
+
     });
 
     $( "#rotation_wait_time_selector" ).change(function() {
