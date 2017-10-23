@@ -45,7 +45,6 @@ function updateChart() {
 updateChart()
 
 function updateChartDirect() {
-    console.log(sources.toArrayDirect());
     plotLineChart.setData(sources.toArrayDirect());
     plotLineChart.getOptions().yaxes[0].max = sources.getGlobalMax();
     plotLineChart.setupGrid();

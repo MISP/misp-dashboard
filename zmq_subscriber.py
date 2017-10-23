@@ -67,24 +67,21 @@ def default_keepalive(jsonevent):
 
 def default_event(jsonevent):
     print('sending', 'event')
+    #fields: threat_level_id, id, info
     jsonevent = jsonevent['Event']
-    to_push = [
-            jsonevent['threat_level_id'],
-            jsonevent['id'],
-            jsonevent['info'],
-            ]
+    to_push = []
+    for field in json.loads(cfg.get('Log', 'fieldname_order'))[1:]:
+        to_push.append(jsonevent[field])
+
     to_send = { 'name': 'Event', 'log': json.dumps(to_push) }
     redis_server.publish(channel, json.dumps(to_send))
 
 def default_attribute(jsonattr):
     print('sending', 'attribute')
     jsonattr = jsonattr['Attribute']
-    to_push = [
-            jsonattr['id'],
-            jsonattr['category'],
-            jsonattr['type'],
-            jsonattr['value'],
-            ]
+    to_push = []
+    for field in json.loads(cfg.get('Log', 'fieldname_order'))[1:]:
+        to_push.append(jsonattr[field])
 
     #try to get coord
     if jsonattr['category'] == "Network activity":
@@ -129,25 +126,6 @@ def main():
         content.replace(b'\n', b'') # remove \n...
         process_log(content)
 
-def log_feed():
-    with open('misp-zmq.2', 'ba') as f:
-    
-        while True:
-            time.sleep(1.0)
-            content = socket.recv()
-            content.replace(b'\n', b'') # remove \n...
-            f.write(content)
-            f.write(b'\n')
-            print(content)
-            #redis_server.publish(channel, content)
-        
-            #if random.randint(1,10)<5:
-            #    time.sleep(0.5)
-            #    redis_server.publish(channel, content)
-        
-            #if random.randint(1,10)<5:
-            #    time.sleep(0.5)
-            #    redis_server.publish(channel, content)
 
 dico_action = {
         "misp_json":                default_event,
