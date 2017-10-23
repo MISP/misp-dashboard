@@ -49,6 +49,12 @@ table {
   margin-right:auto;
 }
 
+.leftSepa {
+    border-left-color: rgb(221, 221, 221);
+    border-left-style: solid;
+    border-left-width: 2px;
+    padding-left: 8px;
+}
 
 small {
     font-size: 100%;
@@ -81,13 +87,23 @@ small {
                             <div class="panel-heading bg-info" style="font-weight: bold;">
                                 <b id="textMap1"> No map </b>
                                 <div  style="float: right;">
-                                    <i id="txtMapNum">1</i><i>/{{ max_img_rotation }}</i>
+                                    <i class="leftSepa" id="txtMapNum">Rotation speed: </i>
                                      <select id="rotation_wait_time_selector" style="margin-top: -7px;">
                                       <option value="∞" selected>No rotation</option>
-                                      <option value="{{ rotation_wait_time }}" selected>{{ rotation_wait_time }}sec</option>
-                                      <option value="{{ rotation_wait_time * 2 }}">{{ rotation_wait_time * 2 }}sec</option>
-                                      <option value="{{ rotation_wait_time * 5}}">{{ rotation_wait_time * 5 }}sec</option>
-                                    </select> 
+                                      <option value="{{ rotation_wait_time }}" selected>{{ rotation_wait_time }} sec</option>
+                                      <option value="{{ rotation_wait_time * 2 }}">{{ rotation_wait_time * 2 }} sec</option>
+                                      <option value="{{ rotation_wait_time * 5}}">{{ rotation_wait_time * 5 }} sec</option>
+                                     </select>
+                                    <i class="leftSepa" id="txtMapNum">Zoom level: </i>
+                                     <select id="zoom_selector" style="margin-top: -7px;">
+                                      <option value="{{ zoomlevel + 3 }}">{{ zoomlevel + 3 }}</option>
+                                      <option value="{{ zoomlevel + 2 }}">{{ zoomlevel + 2 }}</option>
+                                      <option value="{{ zoomlevel }}" selected>{{ zoomlevel }}</option>
+                                      <option value="{{ zoomlevel - 2 }}">{{ zoomlevel - 2 }}</option>
+                                      <option value="{{ zoomlevel - 4 }}">{{ zoomlevel - 4 }}</option>
+                                      <option value="{{ zoomlevel - 6 }}">{{ zoomlevel - 6 }}</option>
+                                      <option value="{{ zoomlevel - 8 }}">{{ zoomlevel - 8 }}</option>
+                                    </select>
                                 </div>
                             </div>
                             <div id="panelbody" class="panel-body" style="height: 93%; padding: 5px">
@@ -191,6 +207,7 @@ small {
         var rotation_wait_time = {{ rotation_wait_time }};
         var max_img_rotation = {{ max_img_rotation }};
         var hours_spanned = {{ hours_spanned }};
+        var zoomlevel = {{ zoomlevel}};
 
 
     </script>

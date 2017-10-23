@@ -138,6 +138,13 @@ $(document).ready(function () {
             mapEventManager._timeoutRotate = setTimeout(function(){ mapEventManager.rotateMap(); }, ROTATIONWAITTIME);
         }
     });
+
+    $( "#zoom_selector" ).change(function() {
+        var sel = parseInt($( this ).val());
+        zoomlevel = sel;
+        ZOOMLEVEL = sel;
+    });
+
 });
 
 

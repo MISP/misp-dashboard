@@ -86,7 +86,8 @@ def index():
             graph_log_refresh_rate=cfg.getint('Dashboard' ,'graph_log_refresh_rate'),
             rotation_wait_time=cfg.getint('Dashboard' ,'rotation_wait_time'),
             max_img_rotation=cfg.getint('Dashboard' ,'max_img_rotation'),
-            hours_spanned=cfg.getint('Dashboard' ,'hours_spanned')
+            hours_spanned=cfg.getint('Dashboard' ,'hours_spanned'),
+            zoomlevel=cfg.getint('Dashboard' ,'zoomlevel')
             )
 
 @app.route("/_logs")

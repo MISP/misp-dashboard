@@ -5,9 +5,10 @@ const MAXIMGROTATION = max_img_rotation;
 const OSMURL='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
 var ROTATIONWAITTIME = 1000*rotation_wait_time; //seconds
+var ZOOMLEVEL = zoomlevel;
 
 var myOpenStreetMap = L.map('feedDivMap1').setView([0, 0], 1);
-var osm = new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 17}).addTo(myOpenStreetMap);
+var osm = new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 18}).addTo(myOpenStreetMap);
 
 class MapEvent {
     constructor(json, marker) {
@@ -83,7 +84,7 @@ class MapEventManager {
         this._latToPing = mapEvent.coord.lat;
         this._lonToPing = mapEvent.coord.lon;
         var marker = mapEvent.marker;
-        myOpenStreetMap.flyTo([mapEvent.coord.lat, mapEvent.coord.lon], 15);
+        myOpenStreetMap.flyTo([mapEvent.coord.lat, mapEvent.coord.lon], ZOOMLEVEL);
         mapEvent.marker.bindPopup(mapEvent.textMarker).openPopup();
 
         $("#textMap1").fadeOut(400, function(){ $(this).text(mapEvent.text); }).fadeIn(400);
