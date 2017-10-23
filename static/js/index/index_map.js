@@ -7,7 +7,7 @@ const OSMURL='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
 
 var myOpenStreetMap = L.map('feedDivMap1').setView([0, 0], 1);
-var osm = new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 17, attribution: OSMATTRIB}).addTo(myOpenStreetMap);
+var osm = new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 17}).addTo(myOpenStreetMap);
 
 class MapEvent {
     constructor(json, marker) {
@@ -60,7 +60,7 @@ class MapEventManager {
             this.ping();
             this._first_map = false;
         } else {
-            this.setMap(mapevent);
+            this.rotateMap(mapevent);
         }
     }
 
@@ -75,8 +75,11 @@ class MapEventManager {
     }
 
     // Perform the roration of the map in the openStreetMap pannel
-    rotateMap() {
-        var mapEvent = this.getNextEventToShow();
+    rotateMap(mapEvent) {
+        clearTimeout(this._timeoutRotate); //cancel current map rotation
+        if (mapEvent == undefined) {
+            var mapEvent = this.getNextEventToShow();
+        }
         this._latToPing = mapEvent.coord.lat;
         this._lonToPing = mapEvent.coord.lon;
         var marker = mapEvent.marker;
@@ -85,18 +88,6 @@ class MapEventManager {
 
         $("#textMap1").fadeOut(400, function(){ $(this).text(mapEvent.text); }).fadeIn(400);
         this._timeoutRotate = setTimeout(function(){ mapEventManager.rotateMap(); }, ROTATIONWAITTIME);
-    }
-
-    setMap(mapEvent) {
-        clearTimeout(this._timeoutRotate); //cancel current map rotation
-        this._latToPing = mapEvent.coord.lat;
-        this._lonToPing = mapEvent.coord.lon;
-        var marker = mapEvent.marker;
-        myOpenStreetMap.flyTo([mapEvent.coord.lat, mapEvent.coord.lon], 15);
-        mapEvent.marker.bindPopup(mapEvent.textMarker).openPopup();
-
-        $("#textMap1").fadeOut(400, function(){ $(this).text(mapEvent.text); }).fadeIn(400);
-        setTimeout(function(){ mapEventManager.rotateMap(); }, ROTATIONWAITTIME);
     }
 
     ping() {
