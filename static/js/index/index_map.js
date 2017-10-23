@@ -171,5 +171,6 @@ source_map.onopen = function(){
     console.log('connection is opened. '+source_map.readyState);  
 };
 source_map.onerror = function(){
-    console.log('error: '+source_map.readyState);  
+    console.log('error: '+source_map.readyState);
+    setTimeout(function() { location.reload(); }, 5000);
 };

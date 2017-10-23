@@ -114,7 +114,8 @@ $(document).ready(function () {
             };
 
             source_log.onerror = function(){
-                //console.log('error: '+source_log.readyState);  
+                console.log('error: '+source_log.readyState);  
+                setTimeout(function() { location.reload(); }, 5000);
             };
 
             source_log.onmessage = function(event) {
