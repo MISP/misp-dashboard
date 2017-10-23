@@ -52,7 +52,7 @@ def ip_to_coord(ip):
     # Cast the float so that it has the correct float format
     lat_corrected = float("{:.4f}".format(lat))
     lon_corrected = float("{:.4f}".format(lon))
-    return {'lat': lat_corrected, 'lon': lon_corrected}
+    return { 'coord': {'lat': lat_corrected, 'lon': lon_corrected}, 'full_rep': resp }
 
 def default_log(jsonevent):
     print('sending', 'log')
@@ -95,7 +95,8 @@ def default_attribute(jsonattr):
 
 def handleCoord(supposed_ip, categ):
     try:
-        coord = ip_to_coord(supposed_ip)
+        rep = ip_to_coord(supposed_ip)
+        coord = rep['coord']
         coord_dic = {'lat': coord['lat'], 'lon': coord['lon']}
         coord_list = [coord['lat'], coord['lon']]
         print(coord_list)
@@ -106,7 +107,10 @@ def handleCoord(supposed_ip, categ):
         to_send = {
                 "coord": coord,
                 "categ": categ,
-                "value": supposed_ip
+                "value": supposed_ip,
+                "country": rep['full_rep'].country.name,
+                "specifName": rep['full_rep'].subdivisions.most_specific.name,
+                "cityName": rep['full_rep'].city.name,
                 }
         serv_coord.publish(channel_disp, json.dumps(to_send))
     except ValueError:
