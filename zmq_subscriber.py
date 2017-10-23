@@ -88,23 +88,27 @@ def default_attribute(jsonattr):
 
     #try to get coord
     if jsonattr['category'] == "Network activity":
-        handleCoord(jsonattr['value'])
+        handleCoord(jsonattr['value'], jsonattr['category'])
 
     to_send = { 'name': 'Attribute', 'log': json.dumps(to_push) }
     redis_server.publish(channel, json.dumps(to_send))
 
-def handleCoord(value):
+def handleCoord(supposed_ip, categ):
     try:
-        coord = ip_to_coord(value)
+        coord = ip_to_coord(supposed_ip)
         coord_dic = {'lat': coord['lat'], 'lon': coord['lon']}
         coord_list = [coord['lat'], coord['lon']]
         print(coord_list)
         now = datetime.datetime.now()
         today_str = str(now.year)+str(now.month)+str(now.day)
         keyname = 'GEO_' + today_str
-        #serv_coord.zincrby(keyname, coord_list)
-        serv_coord.publish(channel_disp, json.dumps({ "coord": coord }))
-        print('coord sent')
+        serv_coord.zincrby(keyname, coord_list)
+        to_send = {
+                "coord": coord,
+                "categ": categ,
+                "value": supposed_ip
+                }
+        serv_coord.publish(channel_disp, json.dumps(to_send))
     except ValueError:
         print("can't resolve ip")
 

@@ -105,7 +105,7 @@ def event_stream_log():
 def event_stream_maps():
     for msg in subscriber_map.listen():
         content = msg['data'].decode('utf8')
-        print('sending map', content)
+        print(content)
         yield 'data: {}\n\n'.format(content)
 
 if __name__ == '__main__':
