@@ -1,10 +1,10 @@
 const MAXNUMCOORD = 100;
 const PINGWAITTIME = 1000*1; //1s
 const MAXIMGROTATION = max_img_rotation;
-const ROTATIONWAITTIME = 1000*rotation_wait_time; //seconds
 
 const OSMURL='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
+var ROTATIONWAITTIME = 1000*rotation_wait_time; //seconds
 
 var myOpenStreetMap = L.map('feedDivMap1').setView([0, 0], 1);
 var osm = new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 17}).addTo(myOpenStreetMap);
@@ -87,7 +87,10 @@ class MapEventManager {
         mapEvent.marker.bindPopup(mapEvent.textMarker).openPopup();
 
         $("#textMap1").fadeOut(400, function(){ $(this).text(mapEvent.text); }).fadeIn(400);
-        this._timeoutRotate = setTimeout(function(){ mapEventManager.rotateMap(); }, ROTATIONWAITTIME);
+        if(ROTATIONWAITTIME != 0) {
+            console.log(ROTATIONWAITTIME);
+            this._timeoutRotate = setTimeout(function(){ mapEventManager.rotateMap(); }, ROTATIONWAITTIME);
+        }
     }
 
     ping() {
