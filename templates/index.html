@@ -112,7 +112,7 @@ small {
                         <!-- /.panel -->
                         <div class="panel panel-default" style="margin-top: 15px; height: 20vh;">
                             <div class="panel-heading">
-                                <i class="fa fa-bar-chart-o fa-fw"></i> Log feed
+                                <i class="fa fa-bar-chart-o fa-fw"></i> Log feed (hours)
                             </div>
                             <div id="panelbody" class="panel-body" style="width:100%; height: calc(100% - 30px);">
                                 <div id="feedDiv3" style="width:100%; height: calc(100% - 30px); position: relative;"></div>
@@ -197,10 +197,14 @@ small {
         var urlForHead = "{{ url_for('getLogHead') }}";
         var urlForMaps = "{{ url_for('maps') }}";
         var linkForDefaultMap = "{{ url_for('static', filename='maps/default.png') }}";
-        /* DATA */
+
+        /* DATA FROM CONF */
         var graph_log_refresh_rate = {{ graph_log_refresh_rate }};
-        setTimeout(function(){
-        }, 3000);
+        var rotation_wait_time = {{ rotation_wait_time }};
+        var max_img_rotation = {{ max_img_rotation }};
+        var hours_spanned = {{ hours_spanned }};
+
+
     </script>
     <script src="{{ url_for('static', filename='js/index/index.js') }}"></script>
     <script src="{{ url_for('static', filename='js/index/index_lineChart.js') }}"></script>

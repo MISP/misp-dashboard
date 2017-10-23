@@ -1,4 +1,4 @@
-var maxNumPoint = 60;
+var maxNumPoint = hours_spanned;
 var emptyArray = [];
 for(i=0; i<maxNumPoint; i++) {
     emptyArray.push([i, 0]);
@@ -53,9 +53,29 @@ class Sources {
     toArray() {
         var to_return = [];
         for (var src of this._sourceNames) {
+            if(src == 'global') //ignore global
+                continue;
+            var realData = this._sourcesArray[src].slice(0); //clone array
+            realData.push([maxNumPoint, 0]);
             to_return.push({
                 label: src,
-                data: this._sourcesArray[src]
+                data: realData
+            });
+        }
+        return to_return;
+    }
+
+    toArrayDirect() {
+        var to_return = [];
+        for (var src of this._sourceNames) {
+            if(src == 'global') //ignore global
+                continue;
+            var realData = this._sourcesArray[src].slice(0); //clone array
+            realData.push([maxNumPoint, this._sourcesCount[src]]);
+            this._globalMax = this._globalMax > this._sourcesCount[src] ? this._globalMax : this._sourcesCount[src];
+            to_return.push({
+                label: src,
+                data: realData
             });
         }
         return to_return;

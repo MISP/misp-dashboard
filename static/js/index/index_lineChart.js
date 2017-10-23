@@ -1,5 +1,6 @@
-var updateInterval = 1000*graph_log_refresh_rate; // 1s
-var maxNumPoint = 60;
+var updateIntervalDirect = 1000*2; // 2s
+var updateInterval = 1000*60*60*graph_log_refresh_rate; // 1h
+var maxNumPoint = hours_spanned+1;
 
 var optionsLineChart = {
     series: {
@@ -13,8 +14,8 @@ var optionsLineChart = {
             },
     //colors: ["#2fa1db"],
     yaxis: { min: 0, max: 20 },
-    xaxis: { min: 0, max: maxNumPoint-1 },
-    ticks: maxNumPoint,
+    xaxis: { min: 0, max: maxNumPoint },
+    ticks: maxNumPoint+1,
     grid: {
         tickColor: "#dddddd",
         borderWidth: 0 
@@ -42,3 +43,14 @@ function updateChart() {
     setTimeout(updateChart, updateInterval);
 }
 updateChart()
+
+function updateChartDirect() {
+    console.log(sources.toArrayDirect());
+    plotLineChart.setData(sources.toArrayDirect());
+    plotLineChart.getOptions().yaxes[0].max = sources.getGlobalMax();
+    plotLineChart.setupGrid();
+    plotLineChart.draw();
+    setTimeout(updateChartDirect, updateIntervalDirect);
+}
+updateChartDirect()
+

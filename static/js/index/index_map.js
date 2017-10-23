@@ -1,7 +1,7 @@
 const MAXNUMCOORD = 100;
-const MAXIMGROTATION = 10;
-const ROTATIONWAITTIME = 1000*20; //30s
 const PINGWAITTIME = 1000*1; //1s
+const MAXIMGROTATION = max_img_rotation;
+const ROTATIONWAITTIME = 1000*rotation_wait_time; //seconds
 
 const OSMURL='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
