@@ -80,7 +80,7 @@ def default_attribute(jsonattr):
     print('sending', 'attribute')
     jsonattr = jsonattr['Attribute']
     to_push = []
-    for field in json.loads(cfg.get('Log', 'fieldname_order'))[1:]:
+    for field in json.loads(cfg.get('Log', 'fieldname_order')):
         to_push.append(jsonattr[field])
 
     #try to get coord

@@ -32,6 +32,7 @@ eventNumber = 0
 class LogItem():
 
     FIELDNAME_ORDER = []
+    FIELDNAME_ORDER.append("time")
     for item in json.loads(cfg.get('Log', 'fieldname_order')):
         FIELDNAME_ORDER.append(item)
 
