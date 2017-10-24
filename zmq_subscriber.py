@@ -67,6 +67,7 @@ def getCoordAndPublish(supposed_ip, categ):
                 "country": rep['full_rep'].country.name,
                 "specifName": rep['full_rep'].subdivisions.most_specific.name,
                 "cityName": rep['full_rep'].city.name,
+                "regionCode": rep['full_rep'].country.iso_code,
                 }
         serv_coord.publish(channelDisp, json.dumps(to_send))
     except ValueError:
@@ -96,7 +97,7 @@ def handler_event(jsonevent):
             for attr in attributes:
                 handler_attribute(attr)
         else:
-            handler_attribute(attributes)
+            handler_attribute(jsonevent)
 
 
 def handler_attribute(jsonattr):

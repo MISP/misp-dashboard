@@ -6,6 +6,8 @@ const OSMURL='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
 var ROTATIONWAITTIME = 1000*rotation_wait_time; //seconds
 var ZOOMLEVEL = zoomlevel;
+var regionhits = {};
+var regionhitsMax = 10;
 
 var myOpenStreetMap = L.map('feedDivMap1').setView([0, 0], 1);
 var osm = new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 18}).addTo(myOpenStreetMap);
@@ -13,6 +15,7 @@ var osm = new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 18}).addTo(myOpenStreetM
 class MapEvent {
     constructor(json, marker) {
         this.coord = json.coord;
+        this.regionCode = json.regionCode;
         this.marker = marker;
         this.categ = json.categ;
         this.value = json.value;
@@ -51,7 +54,7 @@ class MapEventManager {
         if(!this._coordSet.has(mapevent.text)) { // avoid duplicate map
             this._mapEventArray.push(mapevent);
             this._coordSet.add(mapevent.text);
-            this.popupCoord(mapevent.coord);
+            this.popupCoord(mapevent.coord, mapevent.regionCode);
         } else {
             //console.log('Duplicate coordinates');
         }
@@ -108,7 +111,7 @@ class MapEventManager {
     }
 
     // Add and Manage markers on the map + make Animation
-    popupCoord(coord) {
+    popupCoord(coord, regionCode) {
         var coord = [coord.lat, coord.lon];
         var color = Math.random()*180;
         var pnts = openStreetMapObj.latLngToPoint(coord[0], coord[1])
@@ -116,6 +119,9 @@ class MapEventManager {
             var addedMarker = openStreetMapObj.addMarker(this._curMarkerNum, coord, [color]);
             this._allMarkers.push(this._curMarkerNum)
             marker_animation(pnts.x, pnts.y, this._curMarkerNum);
+            update_region(regionCode);
+
+
             this._curMarkerNum = this._curMarkerNum >= MAXNUMCOORD ? 0 : this._curMarkerNum+1;
             if (this._allMarkers.length >= MAXNUMCOORD) {
                 to_remove = this._allMarkers[0];
@@ -137,6 +143,19 @@ function marker_animation(x, y, markerNum) {
     );
 }
 
+function update_region(regionCode) {
+    if (regionCode in regionhits) {
+        regionhits[regionCode] += 1;
+    } else {
+        regionhits[regionCode] = 1;
+    }
+    // Force recomputation of min and max for correct color scaling
+    regionhitsMax = regionhitsMax >= regionhits[regionCode] ? regionhitsMax : regionhits[regionCode];
+    openStreetMapObj.series.regions[0].params.max = regionhitsMax;
+    // Update data
+    openStreetMapObj.series.regions[0].setValues(regionhits);
+}
+
 var mapEventManager = new MapEventManager();
 var openStreetMapObj;
 
@@ -145,13 +164,20 @@ $(function(){
         map: 'world_mill',
         markers: [],
         series: {
-          markers: [{
-            attribute: 'fill',
-            scale: ['#1A0DAB', '#e50000', '#62ff41'],
-            values: [],
-            min: 0,
-            max: 180
-          }],
+            markers: [{
+              attribute: 'fill',
+              scale: ['#1A0DAB', '#e50000', '#62ff41'],
+              values: [],
+              min: 0,
+              max: 180
+            }],
+            regions: [{
+              values: [],
+              min: 0,
+              max: 10,
+              scale: ['#FFFAFA','#F4C2C2','#FF6961','#FF5C5C','#FF1C00','#FF0800','#FF0000','#CD5C5C','#E34234','#D73B3E','#CE1620','#CC0000','#B22222','#B31B1B','#A40000','#800000','#701C1C','#3C1414','#321414'],
+              normalizeFunction: 'polynomial'
+            }]
         },
     });
     openStreetMapObj = $("#feedDiv2").vectorMap('get','mapObject');
