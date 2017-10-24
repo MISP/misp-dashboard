@@ -16,6 +16,8 @@ var optionsLineChart = {
     yaxis: { min: 0, max: 20 },
     xaxis: { min: 0, max: maxNumPoint },
     ticks: maxNumPoint+1,
+    points: { show: true },
+    lines: { show: true, fill: true },
     grid: {
         tickColor: "#dddddd",
         borderWidth: 0 
