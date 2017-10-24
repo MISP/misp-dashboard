@@ -56,7 +56,6 @@ def getCoordAndPublish(supposed_ip, categ):
         coord = rep['coord']
         coord_dic = {'lat': coord['lat'], 'lon': coord['lon']}
         coord_list = [coord['lat'], coord['lon']]
-        print(coord_list)
         now = datetime.datetime.now()
         today_str = str(now.year)+str(now.month)+str(now.day)
         keyname = 'GEO_' + today_str
@@ -87,16 +86,21 @@ def handler_keepalive(jsonevent):
     publish_log('Keepalive', to_push)
 
 def handler_event(jsonevent):
-    print('sending', 'event')
+    print(jsonevent)
     #fields: threat_level_id, id, info
     jsonevent = jsonevent['Event']
     #redirect to handler_attribute
     if 'Attribute' in jsonevent:
-        handler_attribute(jsonevent['Attribute'])
+        attributes = jsonevent['Attribute']
+        if attributes is list:
+            for attr in attributes:
+                handler_attribute(attr)
+        else:
+            handler_attribute(attr)
 
 
 def handler_attribute(jsonattr):
-    print('sending', 'attribute')
+    print(jsonattr)
     jsonattr = jsonattr['Attribute']
     to_push = []
     for field in json.loads(cfg.get('Log', 'fieldname_order')):

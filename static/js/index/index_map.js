@@ -43,7 +43,7 @@ class MapEventManager {
     addMapEvent(mapevent) {
         if(this._mapEventArray.length >= MAXIMGROTATION) {
             var toDel = this._mapEventArray[0];
-            toDel._marker.remove(); // remove marker
+            toDel.marker.remove(); // remove marker
             this._coordSet.delete(toDel.text);
             this._mapEventArray.slice(1);
         }
