@@ -36,7 +36,6 @@ class LogItem():
     for item in json.loads(cfg.get('Log', 'fieldname_order')):
         FIELDNAME_ORDER.append(item)
 
-    #def __init__(self, feed='', time='', level='level', src='source', name='name', message='wonderful meesage'):
     def __init__(self, feed):
         self.time = strftime("%H:%M:%S", now())
         #FIXME Parse feed message?
@@ -89,7 +88,6 @@ def index():
             "{:.0f}".format(cfg.getint('Dashboard' ,'size_world_pannel_perc')/100*ratioCorrection),
             "{:.0f}".format((100-cfg.getint('Dashboard' ,'size_world_pannel_perc'))/100*ratioCorrection)
             ]
-    print(pannelSize)
     return render_template('index.html', 
             pannelSize=pannelSize,
             graph_log_refresh_rate=cfg.getint('Dashboard' ,'graph_log_refresh_rate'),
@@ -119,7 +117,6 @@ def event_stream_log():
 def event_stream_maps():
     for msg in subscriber_map.listen():
         content = msg['data'].decode('utf8')
-        print(content)
         yield 'data: {}\n\n'.format(content)
 
 if __name__ == '__main__':
