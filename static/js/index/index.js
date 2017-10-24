@@ -2,6 +2,7 @@ var feedStatusFreqCheck = 1000*15;
 var maxNumPoint = hours_spanned;
 var keepaliveTime = 0;
 var emptyArray = [];
+var _timeoutLed;
 for(i=0; i<maxNumPoint; i++) {
     emptyArray.push([i, 0]);
 }
@@ -156,6 +157,7 @@ $(document).ready(function () {
 });
 
 function ledColorManager() {
+    $("#status_led").removeClass("led_orange"); 
     if(new Date().getTime() - keepaliveTime > feedStatusFreqCheck) { // no feed
         $("#status_led").removeClass("led_green");
         $("#status_led").addClass("led_red");
@@ -163,8 +165,9 @@ function ledColorManager() {
         $("#status_led").removeClass("led_red");
         $("#status_led").addClass("led_green");
     }
-    setTimeout(function(){ ledColorManager(); }, feedStatusFreqCheck);
+    _timeoutLed = setTimeout(function(){ ledColorManager(); }, feedStatusFreqCheck);
 }
+_timeoutLed = setTimeout(function(){ ledColorManager(); }, feedStatusFreqCheck);
 
 
 //  LOG TABLE
@@ -198,6 +201,7 @@ function updateLogTable(feedName, log) {
         }
     } else if (feedName == "Keepalive") {
         keepaliveTime = new Date().getTime();
+        clearTimeout(_timeoutLed); //cancel current led timeout
         ledColorManager();
     } else {
         // do nothing

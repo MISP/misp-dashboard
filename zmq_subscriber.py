@@ -15,34 +15,26 @@ cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
 zmq_url = cfg.get('RedisLog', 'zmq_url')
-zmq_url = "tcp://192.168.56.50:50000"
-zmq_url = "tcp://localhost:9990"
 channel = cfg.get('RedisLog', 'channel')
 context = zmq.Context()
 socket = context.socket(zmq.SUB)
 socket.connect(zmq_url)
 socket.setsockopt_string(zmq.SUBSCRIBE, '')
+channelDisp = cfg.get('RedisMap', 'channelDisp')
 
 redis_server = redis.StrictRedis(
         host=cfg.get('RedisLog', 'host'),
         port=cfg.getint('RedisLog', 'port'),
         db=cfg.getint('RedisLog', 'db'))
 serv_coord = redis.StrictRedis(
-        host='localhost',
-        port=6250,
-        db=1) 
+        host=cfg.get('RedisMap', 'host'),
+        port=cfg.getint('RedisMap', 'port'),
+        db=cfg.getint('RedisMap', 'db'))
 path_to_db = "/home/sami/Downloads/GeoLite2-City_20171003/GeoLite2-City.mmdb"
 reader = geoip2.database.Reader(path_to_db)
 
 channel_proc = "CoordToProcess"
-channel_disp = "PicToDisplay"
 
-
-def publish_coord(coord):
-    pass
-
-def get_ip(data):
-    pass
 
 def ip_to_coord(ip):
     resp = reader.city(ip)
@@ -54,18 +46,23 @@ def ip_to_coord(ip):
     lon_corrected = float("{:.4f}".format(lon))
     return { 'coord': {'lat': lat_corrected, 'lon': lon_corrected}, 'full_rep': resp }
 
-def default_log(jsonevent):
+
+##############
+## HANDLERS ##
+##############
+
+def handler_log(jsonevent):
     print('sending', 'log')
     return
     #redis_server.publish(channel, json.dumps(jsonevent))
 
-def default_keepalive(jsonevent):
+def handler_keepalive(jsonevent):
     print('sending', 'keepalive')
     to_push = [ jsonevent['uptime'] ]
     to_send = { 'name': 'Keepalive', 'log': json.dumps(to_push) }
     redis_server.publish(channel, json.dumps(to_send))
 
-def default_event(jsonevent):
+def handler_event(jsonevent):
     print('sending', 'event')
     #fields: threat_level_id, id, info
     jsonevent = jsonevent['Event']
@@ -76,7 +73,7 @@ def default_event(jsonevent):
     to_send = { 'name': 'Event', 'log': json.dumps(to_push) }
     redis_server.publish(channel, json.dumps(to_send))
 
-def default_attribute(jsonattr):
+def handler_attribute(jsonattr):
     print('sending', 'attribute')
     jsonattr = jsonattr['Attribute']
     to_push = []
@@ -85,12 +82,12 @@ def default_attribute(jsonattr):
 
     #try to get coord
     if jsonattr['category'] == "Network activity":
-        handleCoord(jsonattr['value'], jsonattr['category'])
+        getCoordAndPublish(jsonattr['value'], jsonattr['category'])
 
     to_send = { 'name': 'Attribute', 'log': json.dumps(to_push) }
     redis_server.publish(channel, json.dumps(to_send))
 
-def handleCoord(supposed_ip, categ):
+def getCoordAndPublish(supposed_ip, categ):
     try:
         rep = ip_to_coord(supposed_ip)
         coord = rep['coord']
@@ -109,7 +106,7 @@ def handleCoord(supposed_ip, categ):
                 "specifName": rep['full_rep'].subdivisions.most_specific.name,
                 "cityName": rep['full_rep'].city.name,
                 }
-        serv_coord.publish(channel_disp, json.dumps(to_send))
+        serv_coord.publish(channelDisp, json.dumps(to_send))
     except ValueError:
         print("can't resolve ip")
 
@@ -128,13 +125,13 @@ def main():
 
 
 dico_action = {
-        "misp_json":                default_event,
-        "misp_json_self":           default_keepalive,
-        "misp_json_attribute":      default_attribute,
-        "misp_json_sighting":       default_log,
-        "misp_json_organisation":   default_log,
-        "misp_json_user":           default_log,
-        "misp_json_conversation":   default_log
+        "misp_json":                handler_event,
+        "misp_json_self":           handler_keepalive,
+        "misp_json_attribute":      handler_attribute,
+        "misp_json_sighting":       handler_log,
+        "misp_json_organisation":   handler_log,
+        "misp_json_user":           handler_log,
+        "misp_json_conversation":   handler_log
         }
 
 

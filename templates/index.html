@@ -51,6 +51,17 @@ table {
     box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #FF0303 0 2px 12px;
 }
 
+.led_orange {
+    float: right;
+    margin: auto auto;
+    margin-top: 12.5px;
+    width: 24px;
+    height: 24px;
+    background-color: #FFB400;
+    border-radius: 50%;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #FF9000 0 2px 12px;
+}
+
 .marker_animation {
   stroke: darkred;
   position: absolute;
@@ -93,7 +104,7 @@ small {
         <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0; padding-left: 15px;">
             <div class="navbar-header">
                 <a class="navbar-brand" href="{{ url_for('index') }}">Misp feed dashboard</a>
-                <div id="status_led" class="led_red"></div>
+                <div id="status_led" class="led_orange"></div>
             </div>
             <!-- /.navbar-header -->
 
@@ -106,7 +117,7 @@ small {
                     <div class="col-lg-12">
                        <div class="col-lg-5">
                         
-                        <div class="panel panel-default" style="margin-top: 15px; height: 68vh;">
+                           <div class="panel panel-default" style="margin-top: 15px; height: {{ pannelSize[0] }}vh;">
                             <div class="panel-heading bg-info" style="font-weight: bold;">
                                 <b id="textMap1"> No map </b>
                                 <div  style="float: right;">
@@ -130,19 +141,19 @@ small {
                                 </div>
                             </div>
                             <div id="panelbody" class="panel-body" style="height: 93%; padding: 5px">
-                                <div id="feedDivMap1" style="width:100%; height: 100%;">
+                                <div id="feedDivMap1" style="width:100%; height: 95%;">
                                 </div>
                             </div>
                             <!-- /.panel-body -->
 
                         </div>
                         <!-- /.panel -->
-                        <div class="panel panel-default" style="margin-top: 15px; height: 20vh;">
+                        <div class="panel panel-default" style="margin-top: 15px; height: {{ pannelSize[1] }}vh;">
                             <div class="panel-heading">
                                 <i class="fa fa-bar-chart-o fa-fw"></i> Log feed (hours)
                             </div>
                             <div id="panelbody" class="panel-body" style="width:100%; height: calc(100% - 30px);">
-                                <div id="feedDiv3" style="width:100%; height: calc(100% - 30px); position: relative;"></div>
+                                <div id="feedDiv3" style="width:100%; height: 100%; position: relative;"></div>
                             </div>
                         </div>
 
@@ -150,22 +161,18 @@ small {
                     </div>
                     <!-- /.col-lg-6 -->
                     <!-- /.col-lg-6 -->
-                    <!-- vh sum = 87 -->
                     <div class="col-lg-7">
                         
-                        <div class="panel panel-default" style="margin-top: 15px; height: 39vh;">
-                            <!--<div class="panel-heading">
-                                <i class="fa fa-bar-chart-o fa-fw"></i> Feed
-                            </div>-->
-                            <div id="panelbody" class="panel-body" style="height: 100%;">
-                                <div id="feedDiv2" style="width:100%; height: calc(100% - 30px); position: relative;"></div>
+                        <div class="panel panel-default" style="margin-top: 15px; height: {{ pannelSize[2] }}vh;">
+                            <div id="panelbody" class="panel-body" style="height: 100%; padding: 3px;">
+                                <div id="feedDiv2" style="width:100%; height: 100%; position: relative;"></div>
                             </div>
                             <!-- /.panel-body -->
 
                         </div>
                         <!-- /.panel -->
 
-                        <div class="panel panel-default" style="height: 49vh;">
+                        <div class="panel panel-default" style="height: {{ pannelSize[3] }}vh;">
                             <div class="panel-heading">
                                 <i class="fa fa-tasks fa-fw"></i> Logs
                                 <div class="pull-right">

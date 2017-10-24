@@ -82,7 +82,16 @@ class EventMessage():
 
 @app.route("/")
 def index():
+    ratioCorrection = 88
+    pannelSize = [
+            "{:.0f}".format(cfg.getint('Dashboard' ,'size_openStreet_pannel_perc')/100*ratioCorrection),
+            "{:.0f}".format((100-cfg.getint('Dashboard' ,'size_openStreet_pannel_perc'))/100*ratioCorrection),
+            "{:.0f}".format(cfg.getint('Dashboard' ,'size_world_pannel_perc')/100*ratioCorrection),
+            "{:.0f}".format((100-cfg.getint('Dashboard' ,'size_world_pannel_perc'))/100*ratioCorrection)
+            ]
+    print(pannelSize)
     return render_template('index.html', 
+            pannelSize=pannelSize,
             graph_log_refresh_rate=cfg.getint('Dashboard' ,'graph_log_refresh_rate'),
             rotation_wait_time=cfg.getint('Dashboard' ,'rotation_wait_time'),
             max_img_rotation=cfg.getint('Dashboard' ,'max_img_rotation'),
