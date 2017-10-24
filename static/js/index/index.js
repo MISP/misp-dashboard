@@ -224,12 +224,16 @@ function slideAndMax(orig, newData) {
 
 function createRow(tableBody, log) {
     var tr = document.createElement('TR');
-    //var action = document.createElement('TD');
 
     for (var key in log) {
         if (log.hasOwnProperty(key)) {
             var td = document.createElement('TD');
-            td.appendChild(document.createTextNode(log[key]));
+            var textToAddArray = log[key].split(char_separator);
+            for(var i in textToAddArray){
+                if (i > 0)
+                    td.appendChild(document.createElement("br"));
+                td.appendChild(document.createTextNode(textToAddArray[i]));
+            }
             tr.appendChild(td);
         }
     }
@@ -244,10 +248,6 @@ function createRow(tableBody, log) {
     else if ( log.level == "CRITICAL"){
         tr.className = "danger"
     }
-
-    // action
-    //action.appendChild(document.createTextNode("ACTION"));
-    //tr.appendChild(action);
 
     tableBody.appendChild(tr);
 

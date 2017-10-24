@@ -32,8 +32,14 @@ eventNumber = 0
 class LogItem():
 
     FIELDNAME_ORDER = []
+    FIELDNAME_ORDER_HEADER = []
     FIELDNAME_ORDER.append("time")
+    FIELDNAME_ORDER_HEADER.append("time")
     for item in json.loads(cfg.get('Log', 'fieldname_order')):
+        if type(item) is list:
+            FIELDNAME_ORDER_HEADER.append(" | ".join(item))
+        else:
+            FIELDNAME_ORDER_HEADER.append(item)
         FIELDNAME_ORDER.append(item)
 
     def __init__(self, feed):
@@ -46,18 +52,18 @@ class LogItem():
 
     def get_head_row(self):
         to_ret = []
-        for fn in LogItem.FIELDNAME_ORDER:
+        for fn in LogItem.FIELDNAME_ORDER_HEADER:
             to_ret.append(fn[0].upper()+fn[1:])
         return to_ret
 
     def get_row(self):
         to_ret = {}
         #Number to keep them sorted (jsonify sort keys)
-        for i in range(len(LogItem.FIELDNAME_ORDER)):
+        for item in range(len(LogItem.FIELDNAME_ORDER)):
             try:
-                to_ret[i] = self.fields[i]
+                to_ret[item] = self.fields[item]
             except IndexError: # not enough field in rcv item
-                to_ret[i] = ''
+                to_ret[item] = ''
         return to_ret
 
 
@@ -91,6 +97,7 @@ def index():
     return render_template('index.html', 
             pannelSize=pannelSize,
             graph_log_refresh_rate=cfg.getint('Dashboard' ,'graph_log_refresh_rate'),
+            char_separator=cfg.get('Log', 'char_separator'),
             rotation_wait_time=cfg.getint('Dashboard' ,'rotation_wait_time'),
             max_img_rotation=cfg.getint('Dashboard' ,'max_img_rotation'),
             hours_spanned=cfg.getint('Dashboard' ,'hours_spanned'),

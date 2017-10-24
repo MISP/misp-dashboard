@@ -104,8 +104,11 @@ def handler_attribute(jsonattr):
     jsonattr = jsonattr['Attribute']
     to_push = []
     for field in json.loads(cfg.get('Log', 'fieldname_order')):
-        to_push.append(jsonattr[field])
-    to_push.append("blabla")
+        if type(field) is list:
+            to_add = cfg.get('Log', 'char_separator').join([ jsonattr[subField] for subField in field ])
+        else:
+            to_add = jsonattr[field]
+        to_push.append(to_add)
 
     #try to get coord
     if jsonattr['category'] == "Network activity":
