@@ -35,6 +35,10 @@ reader = geoip2.database.Reader(path_to_db)
 
 channel_proc = "CoordToProcess"
 
+def publish_log(name, content):
+    to_send = { 'name': name, 'log': json.dumps(content) }
+    redis_server.publish(channel, json.dumps(to_send))
+
 
 def ip_to_coord(ip):
     resp = reader.city(ip)
@@ -45,48 +49,6 @@ def ip_to_coord(ip):
     lat_corrected = float("{:.4f}".format(lat))
     lon_corrected = float("{:.4f}".format(lon))
     return { 'coord': {'lat': lat_corrected, 'lon': lon_corrected}, 'full_rep': resp }
-
-
-##############
-## HANDLERS ##
-##############
-
-def handler_log(jsonevent):
-    print('sending', 'log')
-    return
-    #redis_server.publish(channel, json.dumps(jsonevent))
-
-def handler_keepalive(jsonevent):
-    print('sending', 'keepalive')
-    to_push = [ jsonevent['uptime'] ]
-    to_send = { 'name': 'Keepalive', 'log': json.dumps(to_push) }
-    redis_server.publish(channel, json.dumps(to_send))
-
-def handler_event(jsonevent):
-    print('sending', 'event')
-    #fields: threat_level_id, id, info
-    jsonevent = jsonevent['Event']
-    to_push = []
-    for field in json.loads(cfg.get('Log', 'fieldname_order'))[1:]:
-        to_push.append(jsonevent[field])
-
-    to_send = { 'name': 'Event', 'log': json.dumps(to_push) }
-    redis_server.publish(channel, json.dumps(to_send))
-
-def handler_attribute(jsonattr):
-    print('sending', 'attribute')
-    jsonattr = jsonattr['Attribute']
-    to_push = []
-    for field in json.loads(cfg.get('Log', 'fieldname_order')):
-        to_push.append(jsonattr[field])
-    to_push.append("blabla")
-
-    #try to get coord
-    if jsonattr['category'] == "Network activity":
-        getCoordAndPublish(jsonattr['value'], jsonattr['category'])
-
-    to_send = { 'name': 'Attribute', 'log': json.dumps(to_push) }
-    redis_server.publish(channel, json.dumps(to_send))
 
 def getCoordAndPublish(supposed_ip, categ):
     try:
@@ -110,6 +72,43 @@ def getCoordAndPublish(supposed_ip, categ):
         serv_coord.publish(channelDisp, json.dumps(to_send))
     except ValueError:
         print("can't resolve ip")
+
+##############
+## HANDLERS ##
+##############
+
+def handler_log(jsonevent):
+    print('sending', 'log')
+    return
+
+def handler_keepalive(jsonevent):
+    print('sending', 'keepalive')
+    to_push = [ jsonevent['uptime'] ]
+    publish_log('Keepalive', to_push)
+
+def handler_event(jsonevent):
+    print('sending', 'event')
+    #fields: threat_level_id, id, info
+    jsonevent = jsonevent['Event']
+    #redirect to handler_attribute
+    if 'Attribute' in jsonevent:
+        handler_attribute(jsonevent['Attribute'])
+
+
+def handler_attribute(jsonattr):
+    print('sending', 'attribute')
+    jsonattr = jsonattr['Attribute']
+    to_push = []
+    for field in json.loads(cfg.get('Log', 'fieldname_order')):
+        to_push.append(jsonattr[field])
+    to_push.append("blabla")
+
+    #try to get coord
+    if jsonattr['category'] == "Network activity":
+        getCoordAndPublish(jsonattr['value'], jsonattr['category'])
+
+    publish_log('Attribute', to_push)
+
 
 def process_log(event):
     event = event.decode('utf8')
