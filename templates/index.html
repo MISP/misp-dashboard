@@ -117,9 +117,9 @@ small {
                     <div class="col-lg-12">
                        <div class="col-lg-5">
                         
-                           <div class="panel panel-default" style="margin-top: 15px; height: {{ pannelSize[0] }}vh;">
+                           <div id="panelOpenMap" class="panel panel-default" style="margin-top: 15px; height: {{ pannelSize[0] }}vh;">
                             <div class="panel-heading bg-info" style="font-weight: bold;">
-                                <b id="textMap1"> No map </b>
+                                <b><a id="textMap1" href="#panelbody">No map </a></b>
                                 <div  style="float: right;">
                                     <i class="leftSepa" id="txtMapNum">Rotation speed: </i>
                                      <select id="rotation_wait_time_selector" style="margin-top: -7px;">
@@ -141,19 +141,18 @@ small {
                                 </div>
                             </div>
                             <div id="panelbody" class="panel-body" style="height: 93%; padding: 5px">
-                                <div id="feedDivMap1" style="width:100%; height: 95%;">
-                                </div>
+                                 <div id="feedDivMap1" style="width:100%; height: calc({{ pannelSize[0] }}vh - 51px);"></div>
                             </div>
                             <!-- /.panel-body -->
 
                         </div>
                         <!-- /.panel -->
-                        <div class="panel panel-default" style="margin-top: 15px; height: {{ pannelSize[1] }}vh;">
+                        <div id="panelLineChart"  class="panel panel-default" style="margin-top: 15px; height: {{ pannelSize[1] }}vh;">
                             <div class="panel-heading">
                                 <i class="fa fa-bar-chart-o fa-fw"></i> Log feed (hours)
                             </div>
-                            <div id="panelbody" class="panel-body" style="width:100%; height: calc(100% - 30px);">
-                                <div id="feedDiv3" style="width:100%; height: 100%; position: relative;"></div>
+                            <div id="panelbody" class="panel-body" style="width:100%; height: 100%;">
+                                <div id="feedDiv3" style="width:100%; height: calc(100% - 46px); position: relative;"></div>
                             </div>
                         </div>
 
@@ -222,6 +221,7 @@ small {
     <!-- jQuery flot -->
     <script src="{{ url_for('static', filename='js/jquery.flot.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.flot.pie.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.flot.resize.js') }}"></script>
     <!-- Bootstrap Core JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <!-- Index -->
@@ -239,6 +239,29 @@ small {
         var hours_spanned = {{ hours_spanned }};
         var zoomlevel = {{ zoomlevel}};
 
+        var flag_expanded = true;
+
+        $( "#textMap1" ).click(function() {
+            flag_expanded = !flag_expanded;
+            var panelOpenMap = $("#panelOpenMap");
+            var panelLineChart = $("#panelLineChart");
+            var feedDivMap1 = $("#feedDivMap1");
+            var default_openMapHeight = "{{ pannelSize[0] }}vh";
+            var default_lineChartHeight = "{{ pannelSize[1] }}vh";
+            var default_feedDivMap1Height = "{{ pannelSize[1] }}vh - 51px";
+            console.log(default_lineChartHeight);
+            console.log(panelOpenMap.height());
+            if(!flag_expanded) {
+                panelLineChart.height("82vh");
+                panelOpenMap.height("41px");
+                feedDivMap1.css('display', 'none');
+            } else {
+                panelLineChart.height(default_lineChartHeight);
+                panelOpenMap.height(default_openMapHeight);
+                feedDivMap1.css('display', '');
+            }
+
+        });
 
     </script>
     <script src="{{ url_for('static', filename='js/index/index.js') }}"></script>

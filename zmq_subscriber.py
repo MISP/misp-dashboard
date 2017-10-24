@@ -96,7 +96,7 @@ def handler_event(jsonevent):
             for attr in attributes:
                 handler_attribute(attr)
         else:
-            handler_attribute(attr)
+            handler_attribute(attributes)
 
 
 def handler_attribute(jsonattr):
