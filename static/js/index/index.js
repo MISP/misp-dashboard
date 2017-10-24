@@ -177,13 +177,13 @@ function updateLogTable(feedName, log) {
 
     // Create new row
     tableBody = document.getElementById('table_log_body');
-    //curNumLog++;
-    sources.addIfNotPresent(feedName);
-    sources.incCountOnSource(feedName);
-    sources.incCountOnSource('global');
 
     // only add row for attribute
     if (feedName == "Attribute" ) {
+        var categName = log[2];
+        sources.addIfNotPresent(categName);
+        sources.incCountOnSource(categName);
+        sources.incCountOnSource('global');
         createRow(tableBody, log);
 
         // Remove old row
