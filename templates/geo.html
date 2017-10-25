@@ -185,6 +185,8 @@ small {
 
     <!-- Index -->
     <script> 
+    var regionhitsMax = 10;
+    var regionhits = {};
 
     const OSMURL='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
     const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
@@ -215,6 +217,9 @@ small {
               normalizeFunction: 'polynomial'
             }]
         },
+        onRegionTipShow: function(e, el, code){
+          el.html(el.html()+' ('+regionhits[code]+')');
+        }
     }
 
 
@@ -229,21 +234,30 @@ small {
         });
     }
 
-    function updateWorldMap(dateStart, dateEnd) {
+    function updateWorldMap(dayNum) {
          $.getJSON("{{ url_for('getHitMap') }}?dayNum="+dayNum, function(list){
             for(var i=0; i<list.length; i++) {
-                coordJson = JSON.parse(list[i][0]);
-                allOpenStreetMap[i+1].flyTo([coordJson.lat, coordJson.lon], ZOOMLEVEL);
-                var marker = L.marker([coordJson.lat, coordJson.lon]).addTo(allOpenStreetMap[i+1]);
-                marker.bindPopup('lat: '+coordJson.lat+', lon: '+coordJson.lon+' - '+list[i][1]).openPopup();
+                rCode = list[i][0];
+                rNum = list[i][1];
+                update_region(rCode, rNum);
             }
         });   
+    }
+
+    function update_region(regionCode, num) {
+        regionhits[regionCode] = num;
+        // Force recomputation of min and max for correct color scaling
+        regionhitsMax = regionhitsMax >= regionhits[regionCode] ? regionhitsMax : regionhits[regionCode];
+        worldMapObj.series.regions[0].params.max = regionhitsMax;
+        // Update data
+        worldMapObj.series.regions[0].setValues(regionhits);
     }
 
     $(document).ready(function () {
         $('#worldMap').vectorMap(vectorMapConfig);
         worldMapObj = $("#worldMap").vectorMap('get','mapObject');
         updateTopMaps(1);
+        updateWorldMap(1);
     });
 
     </script>

@@ -97,6 +97,7 @@ def getZrange(keyCateg, wantedDate, topNum):
     date_str = str(aDateTime.year)+str(aDateTime.month)+str(aDateTime.day)
     keyname = "{}:{}".format(keyCateg, date_str)
     data = serv_redis_db.zrange(keyname, 0, 5, desc=True, withscores=True)
+    data = [ [record[0].decode('utf8'), record[1]] for record in data ] 
     return data
 
 
@@ -134,7 +135,6 @@ def getTopCoord():
     keyCateg = "GEO_COORD"
     topNum = 6 # default Num
     data = getZrange(keyCateg, dayNum, topNum)
-    data = [ [record[0].decode('utf8'), record[1]] for record in data ] 
     return jsonify(data)
 
 @app.route("/_getHitMap")
