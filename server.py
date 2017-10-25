@@ -106,6 +106,11 @@ def index():
             zoomlevel=cfg.getint('Dashboard' ,'zoomlevel')
             )
 
+
+@app.route("/geo")
+def geo():
+    return render_template('geo.html')
+
 @app.route("/_logs")
 def logs():
     return Response(event_stream_log(), mimetype="text/event-stream")

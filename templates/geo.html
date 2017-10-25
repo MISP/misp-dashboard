@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Misp live dashboard</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/sb-admin-2.css') }}" rel="stylesheet">
+    <!-- Custom Fonts -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
+        integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
+        crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
+        integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
+        crossorigin=""></script>
+
+</head>
+
+<style>
+.panel-body {
+    padding: 0px;
+}
+
+.col-lg-6 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.leftSepa {
+    border-left-color: rgb(221, 221, 221);
+    border-left-style: solid;
+    border-left-width: 2px;
+    padding-left: 8px;
+}
+
+.textTopHeader {
+    height: 50px; 
+    text-align: center;
+    margin-left: 8px;
+    float: left;
+}
+
+.center {
+  display:block;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+small {
+    font-size: 100%;
+    font-weight: bold;
+}
+
+</style>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0; padding-left: 15px;">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="{{ url_for('geo') }}">Misp Geolocalization</a>
+                <div id="ledsHolder" style="float: right; height: 50px;"><div class='leftSepa textTopHeader'><b>Date + zoom Level</b></div></div>
+            </div>
+            <!-- /.navbar-header -->
+
+        </nav>
+
+        <!-- Page Content -->
+        <div id="page-wrapper" style="margin: 0px; padding: 0px;">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div style="height: 10px;"></div>
+                        <div class="col-lg-6">
+
+                            <div class="col-lg-6">
+                                <div class="panel panel-default" style="">
+                                    <div class="panel-heading bg-info" style="font-weight: bold;">
+                                        <b id="topMap1Header">No map </b>
+                                    </div>
+                                    <div id="panelbody" class="panel-body" style="">
+                                        <div id="topMap1" style="width:100%; height: calc(75vh / 3);"></div>
+                                    </div>
+                                </div><!-- /.panel-body -->
+
+                                <div class="panel panel-default" style="">
+                                    <div class="panel-heading bg-info" style="font-weight: bold;">
+                                        <b id="topMap3Header">No map </b>
+                                    </div>
+                                    <div id="panelbody" class="panel-body" style="">
+                                        <div id="topMap3" style="width:100%; height: calc(75vh / 3);"></div>
+                                    </div>
+                                </div><!-- /.panel-body -->
+
+                                <div class="panel panel-default" style="">
+                                    <div class="panel-heading bg-info" style="font-weight: bold;">
+                                        <b id="topMap5Header">No map </b>
+                                    </div>
+                                    <div id="panelbody" class="panel-body" style="">
+                                        <div id="topMap5" style="width:100%; height: calc(75vh / 3);"></div>
+                                    </div>
+                                </div><!-- /.panel-body -->
+                            </div><!-- /.col-lg-6-6 -->
+
+                            <div class="col-lg-6">
+                                <div class="panel panel-default" style="">
+                                    <div class="panel-heading bg-info" style="font-weight: bold;">
+                                        <b id="topMap2Header">No map </b>
+                                    </div>
+                                    <div id="panelbody" class="panel-body" style="">
+                                        <div id="topMap2" style="width:100%; height: calc(75vh / 3);"></div>
+                                    </div>
+                                </div><!-- /.panel-body -->
+
+                                <div class="panel panel-default" style="">
+                                    <div class="panel-heading bg-info" style="font-weight: bold;">
+                                        <b id="topMap4Header">No map </b>
+                                    </div>
+                                    <div id="panelbody" class="panel-body" style="">
+                                        <div id="topMap4" style="width:100%; height: calc(75vh / 3);"></div>
+                                    </div>
+                                </div><!-- /.panel-body -->
+
+                                <div class="panel panel-default" style="">
+                                    <div class="panel-heading bg-info" style="font-weight: bold;">
+                                        <b id="topMap6Header">No map </b>
+                                    </div>
+                                    <div id="panelbody" class="panel-body" style="">
+                                        <div id="topMap6" style="width:100%; height: calc(75vh / 3);"></div>
+                                    </div>
+                                </div><!-- /.panel-body -->
+                            </div><!-- /.col-lg-6-6 -->
+
+                        </div><!-- /.col-lg-6 -->
+
+                        <div class="col-lg-6">
+                            
+                            <div class="panel panel-default" style="height: 100%;">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <b id="worldMapHeader">Hit map </b>
+                                </div>
+                                <div id="panelbody" class="panel-body" style="height: 100%;">
+                                    <div id="worldMap" style="width:100%; height: 88vh; position: relative;"></div>
+                                </div>
+                                <!-- /.panel-body -->
+
+                            </div><!-- /.panel -->
+
+                        </div><!-- /.col-lg-6 -->
+
+                    </div><!-- /.col-lg-12 -->
+                </div><!-- /.row -->
+
+            </div> <!-- /.container-fluid -->
+
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+<!-- /#wrapper -->
+
+    <!-- jQuery -->
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- jQuery flot -->
+    <script src="{{ url_for('static', filename='js/jquery.flot.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.flot.pie.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.flot.resize.js') }}"></script>
+    <!-- Bootstrap Core JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+    <link href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-jvectormap-2.0.3.css') }}" type="text/css" media="screen"/>
+    <script src="{{ url_for('static', filename='js/jquery-jvectormap-2.0.3.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery-jvectormap-world-mill.js') }}"></script>
+
+    <!-- Index -->
+    <script> 
+
+    const OSMURL='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
+    var allOpenStreetMap = {};
+
+    for(var i=1; i<7; i++) {
+        allOpenStreetMap[i] = L.map('topMap'+i).setView([0, 0], 0);
+        new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 18}).addTo(allOpenStreetMap[i]);
+    }
+
+    
+    var vectorMapConfig = {
+        map: 'world_mill',
+        markers: [],
+        series: {
+            markers: [{
+              attribute: 'fill',
+              scale: ['#1A0DAB', '#e50000', '#62ff41'],
+              values: [],
+              min: 0,
+              max: 180
+            }],
+            regions: [{
+              values: [],
+              min: 0,
+              max: 10,
+              scale: ['#CD5C5C','#E34234','#D73B3E','#CE1620','#CC0000','#B22222','#B31B1B','#A40000','#800000','#701C1C','#3C1414','#321414'],
+              normalizeFunction: 'polynomial'
+            }]
+        },
+    }
+
+    $('#worldMap').vectorMap(vectorMapConfig);
+    worldMapObj = $("#worldMap").vectorMap('get','mapObject');
+
+    </script>
+
+</body>
+
+</html>
