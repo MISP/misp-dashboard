@@ -78,11 +78,12 @@ class EventMessage():
             jsonMsg = { 'name': "undefined" ,'log': json.loads(msg) }
 
         self.feedName = jsonMsg['name']
+        self.zmqName = jsonMsg['zmqName']
         self.feed = json.loads(jsonMsg['log'])
         self.feed = LogItem(self.feed).get_row()
 
     def to_json(self):
-        to_ret = { 'log': self.feed, 'feedName': self.feedName }
+        to_ret = { 'log': self.feed, 'feedName': self.feedName, 'zmqName': self.zmqName }
         return 'data: {}\n\n'.format(json.dumps(to_ret))
 
 @app.route("/")

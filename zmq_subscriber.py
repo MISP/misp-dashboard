@@ -5,6 +5,7 @@ import zmq
 import redis
 import random
 import configparser
+import argparse
 import os
 import sys
 import json
@@ -35,8 +36,8 @@ reader = geoip2.database.Reader(path_to_db)
 
 channel_proc = "CoordToProcess"
 
-def publish_log(name, content):
-    to_send = { 'name': name, 'log': json.dumps(content) }
+def publish_log(zmq_name, name, content):
+    to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
     redis_server.publish(channel, json.dumps(to_send))
 
 
@@ -50,7 +51,7 @@ def ip_to_coord(ip):
     lon_corrected = float("{:.4f}".format(lon))
     return { 'coord': {'lat': lat_corrected, 'lon': lon_corrected}, 'full_rep': resp }
 
-def getCoordAndPublish(supposed_ip, categ):
+def getCoordAndPublish(zmq_name, supposed_ip, categ):
     try:
         rep = ip_to_coord(supposed_ip)
         coord = rep['coord']
@@ -77,17 +78,17 @@ def getCoordAndPublish(supposed_ip, categ):
 ## HANDLERS ##
 ##############
 
-def handler_log(jsonevent):
+def handler_log(zmq_name, jsonevent):
     print('sending', 'log')
     return
 
-def handler_keepalive(jsonevent):
+def handler_keepalive(zmq_name, jsonevent):
     print('sending', 'keepalive')
     to_push = [ jsonevent['uptime'] ]
-    publish_log('Keepalive', to_push)
+    publish_log(zmq_name, 'Keepalive', to_push)
 
-def handler_event(jsonevent):
-    print(jsonevent)
+def handler_event(zmq_name, jsonevent):
+    #print(jsonevent)
     #fields: threat_level_id, id, info
     jsonevent = jsonevent['Event']
     #redirect to handler_attribute
@@ -95,16 +96,17 @@ def handler_event(jsonevent):
         attributes = jsonevent['Attribute']
         if attributes is list:
             for attr in attributes:
-                handler_attribute(attr)
+                handler_attribute(zmq_name, attr)
         else:
-            handler_attribute(jsonevent)
+            handler_attribute(zmq_name, jsonevent)
 
 
-def handler_attribute(jsonattr):
-    print(jsonattr)
+def handler_attribute(zmq_name, jsonattr):
     jsonattr = jsonattr['Attribute']
+    print(jsonattr)
     to_push = []
     for field in json.loads(cfg.get('Log', 'fieldname_order')):
+        print(field)
         if type(field) is list:
             to_add = cfg.get('Log', 'char_separator').join([ jsonattr[subField] for subField in field ])
         else:
@@ -113,23 +115,24 @@ def handler_attribute(jsonattr):
 
     #try to get coord
     if jsonattr['category'] == "Network activity":
-        getCoordAndPublish(jsonattr['value'], jsonattr['category'])
+        getCoordAndPublish(zmq_name, jsonattr['value'], jsonattr['category'])
 
-    publish_log('Attribute', to_push)
+    publish_log(zmq_name, 'Attribute', to_push)
 
 
-def process_log(event):
+def process_log(zmq_name, event):
     event = event.decode('utf8')
     topic, eventdata = event.split(' ', maxsplit=1)
     jsonevent = json.loads(eventdata)
-    dico_action[topic](jsonevent)
+    dico_action[topic](zmq_name, jsonevent)
 
 
-def main():
+def main(zmqName):
     while True:
         content = socket.recv()
         content.replace(b'\n', b'') # remove \n...
-        process_log(content)
+        zmq_name = zmqName
+        process_log(zmq_name, content)
 
 
 dico_action = {
@@ -144,6 +147,11 @@ dico_action = {
 
 
 if __name__ == "__main__":
-    main()
+
+    parser = argparse.ArgumentParser(description='A zmq subscriber. It subscribe to a ZNQ then redispatch it to the misp-dashboard')
+    parser.add_argument('-n', '--name', required=False, dest='zmqname', help='The ZMQ feed name', default="Misp Standard ZMQ")
+    args = parser.parse_args()
+
+    main(args.zmqname)
     reader.close()
 

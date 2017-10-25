@@ -7,6 +7,68 @@ for(i=0; i<maxNumPoint; i++) {
     emptyArray.push([i, 0]);
 }
 
+class LedManager {
+    constructor() {
+        this._feedLedsTimeout = setTimeout(function(){ this.manageColors(); }, feedStatusFreqCheck);
+        this._feedLedKeepAlive = {};
+        this._allFeedName = [];
+        this._ledNum = 0;
+        this._nameToNumMapping = {}; //avoid bad ID if zmqname contains spaces
+    }
+
+    add_new_led(zmqname) {
+        this._allFeedName.push(zmqname);
+        this._nameToNumMapping[zmqname] = this._ledNum;
+        this._ledNum += 1;
+        this.add_new_html_led(zmqname);
+        this._feedLedKeepAlive[zmqname] = new Date().getTime();
+    }
+
+    add_new_html_led(zmqname) {
+        var ID = this._nameToNumMapping[zmqname]
+        var text = document.createElement('b');
+        text.innerHTML = zmqname;
+        var div = document.createElement('DIV');
+        div.id = "status_led_"+ID;
+        div.classList.add("led_green");
+        var sepa = document.createElement('DIV');
+        sepa.classList.add("leftSepa");
+        sepa.classList.add("textTopHeader");
+        sepa.appendChild(text);
+        sepa.appendChild(div);
+        $('#ledsHolder').append(sepa);
+    }
+
+    updateKeepAlive(zmqname) {
+        if (this._allFeedName.indexOf(zmqname) == -1) {
+            this.add_new_led(zmqname);
+        }
+        this._feedLedKeepAlive[zmqname] = new Date().getTime();
+        this.resetTimeoutAndRestart(zmqname);
+    }
+
+    resetTimeoutAndRestart(zmqName) {
+        clearTimeout(this._feedLedsTimeout); //cancel current leds timeout
+        this.manageColors();
+    }
+
+    manageColors() {
+        for (var feed in this._feedLedKeepAlive) {
+            var feedID = this._nameToNumMapping[feed];
+            var htmlLed = $("#status_led_"+feedID);
+            if(new Date().getTime() - this._feedLedKeepAlive[feed] > feedStatusFreqCheck) { // no feed
+                htmlLed.removeClass("led_green");
+                htmlLed.addClass("led_red");
+            } else {
+                htmlLed.removeClass("led_red");
+                htmlLed.addClass("led_green");
+            }
+        }
+        this._feedLedsTimeout = setTimeout(function(){ ledmanager.manageColors(); }, feedStatusFreqCheck);
+    }
+
+}
+
 class Sources {
     constructor() {
         this._sourcesArray = {};
@@ -101,6 +163,7 @@ class Sources {
 
 var sources = new Sources();
 sources.addSource('global');
+var ledmanager = new LedManager();
 
 var curNumLog = 0;
 var curMaxDataNumLog = 0;
@@ -120,7 +183,7 @@ function connect_source_log() {
 
     source_log.onmessage = function(event) {
         var json = jQuery.parseJSON( event.data );
-        updateLogTable(json.feedName, json.log);
+        updateLogTable(json.feedName, json.log, json.zmqName);
     };
 }
 
@@ -156,24 +219,14 @@ $(document).ready(function () {
 
 });
 
-function ledColorManager() {
-    $("#status_led").removeClass("led_orange"); 
-    if(new Date().getTime() - keepaliveTime > feedStatusFreqCheck) { // no feed
-        $("#status_led").removeClass("led_green");
-        $("#status_led").addClass("led_red");
-    } else {
-        $("#status_led").removeClass("led_red");
-        $("#status_led").addClass("led_green");
-    }
-    _timeoutLed = setTimeout(function(){ ledColorManager(); }, feedStatusFreqCheck);
-}
-_timeoutLed = setTimeout(function(){ ledColorManager(); }, feedStatusFreqCheck);
-
 
 //  LOG TABLE
-function updateLogTable(feedName, log) {
+function updateLogTable(feedName, log, zmqName) {
     if (log.length == 0)
         return;
+
+    // update keepAlives
+    ledmanager.updateKeepAlive(zmqName);
 
     // Create new row
     tableBody = document.getElementById('table_log_body');
@@ -200,13 +253,11 @@ function updateLogTable(feedName, log) {
             }
         }
     } else if (feedName == "Keepalive") {
-        keepaliveTime = new Date().getTime();
-        clearTimeout(_timeoutLed); //cancel current led timeout
-        ledColorManager();
+        // do nothing
     } else {
         // do nothing
-        return;
     }
+
 }
 
 function slideAndMax(orig, newData) {

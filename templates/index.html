@@ -30,36 +30,33 @@ table {
 }
 
 .led_green {
-    float: right;
     margin: auto auto;
-    margin-top: 12.5px;
-    width: 24px;
-    height: 24px;
+    margin-top: 7.5px;
+    width: 15px;
+    height: 15px;
     background-color: #ABFF00;
     border-radius: 50%;
-    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #89FF00 0 2px 12px;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #89FF00 0 2px 5px;
 }
 
 .led_red {
-    float: right;
     margin: auto auto;
-    margin-top: 12.5px;
-    width: 24px;
-    height: 24px;
+    margin-top: 7.5px;
+    width: 15px;
+    height: 15px;
     background-color: #F82222;
     border-radius: 50%;
-    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #FF0303 0 2px 12px;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #FF0303 0 2px 5px;
 }
 
 .led_orange {
-    float: right;
     margin: auto auto;
-    margin-top: 12.5px;
-    width: 24px;
-    height: 24px;
+    margin-top: 7.5px;
+    width: 15px;
+    height: 15px;
     background-color: #FFB400;
     border-radius: 50%;
-    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #FF9000 0 2px 12px;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #FF9000 0 2px 5px;
 }
 
 .marker_animation {
@@ -93,6 +90,13 @@ table {
     padding-left: 8px;
 }
 
+.textTopHeader {
+    height: 50px; 
+    text-align: center;
+    margin-left: 8px;
+    float: left;
+}
+
 small {
     font-size: 100%;
     font-weight: bold;
@@ -108,7 +112,7 @@ small {
         <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0; padding-left: 15px;">
             <div class="navbar-header">
                 <a class="navbar-brand" href="{{ url_for('index') }}">Misp feed dashboard</a>
-                <div id="status_led" class="led_orange"></div>
+                <div id="ledsHolder" style="float: right; height: 50px;"></div>
             </div>
             <!-- /.navbar-header -->
 
