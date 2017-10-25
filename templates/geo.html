@@ -86,7 +86,7 @@ small {
                             <div class="col-lg-6">
                                 <div class="panel panel-default" style="">
                                     <div class="panel-heading bg-info" style="font-weight: bold;">
-                                        <b id="topMap1Header">No map </b>
+                                        <b id="topMap1Header">1. Top location</b>
                                     </div>
                                     <div id="panelbody" class="panel-body" style="">
                                         <div id="topMap1" style="width:100%; height: calc(75vh / 3);"></div>
@@ -95,7 +95,7 @@ small {
 
                                 <div class="panel panel-default" style="">
                                     <div class="panel-heading bg-info" style="font-weight: bold;">
-                                        <b id="topMap3Header">No map </b>
+                                        <b id="topMap3Header">3. Top location</b>
                                     </div>
                                     <div id="panelbody" class="panel-body" style="">
                                         <div id="topMap3" style="width:100%; height: calc(75vh / 3);"></div>
@@ -104,7 +104,7 @@ small {
 
                                 <div class="panel panel-default" style="">
                                     <div class="panel-heading bg-info" style="font-weight: bold;">
-                                        <b id="topMap5Header">No map </b>
+                                        <b id="topMap5Header">5. Top location</b>
                                     </div>
                                     <div id="panelbody" class="panel-body" style="">
                                         <div id="topMap5" style="width:100%; height: calc(75vh / 3);"></div>
@@ -115,7 +115,7 @@ small {
                             <div class="col-lg-6">
                                 <div class="panel panel-default" style="">
                                     <div class="panel-heading bg-info" style="font-weight: bold;">
-                                        <b id="topMap2Header">No map </b>
+                                        <b id="topMap2Header">2. Top location</b>
                                     </div>
                                     <div id="panelbody" class="panel-body" style="">
                                         <div id="topMap2" style="width:100%; height: calc(75vh / 3);"></div>
@@ -124,7 +124,7 @@ small {
 
                                 <div class="panel panel-default" style="">
                                     <div class="panel-heading bg-info" style="font-weight: bold;">
-                                        <b id="topMap4Header">No map </b>
+                                        <b id="topMap4Header">4. Top location</b>
                                     </div>
                                     <div id="panelbody" class="panel-body" style="">
                                         <div id="topMap4" style="width:100%; height: calc(75vh / 3);"></div>
@@ -133,7 +133,7 @@ small {
 
                                 <div class="panel panel-default" style="">
                                     <div class="panel-heading bg-info" style="font-weight: bold;">
-                                        <b id="topMap6Header">No map </b>
+                                        <b id="topMap6Header">6. Top location</b>
                                     </div>
                                     <div id="panelbody" class="panel-body" style="">
                                         <div id="topMap6" style="width:100%; height: calc(75vh / 3);"></div>
@@ -188,6 +188,7 @@ small {
 
     const OSMURL='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
     const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
+    var ZOOMLEVEL = 17;
     var allOpenStreetMap = {};
 
     for(var i=1; i<7; i++) {
@@ -195,7 +196,6 @@ small {
         new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 18}).addTo(allOpenStreetMap[i]);
     }
 
-    
     var vectorMapConfig = {
         map: 'world_mill',
         markers: [],
@@ -217,8 +217,34 @@ small {
         },
     }
 
-    $('#worldMap').vectorMap(vectorMapConfig);
-    worldMapObj = $("#worldMap").vectorMap('get','mapObject');
+
+    function updateTopMaps(dayNum) {
+        $.getJSON("{{ url_for('getTopCoord') }}?dayNum="+dayNum, function(list){
+            for(var i=0; i<6 && i<list.length; i++) {
+                coordJson = JSON.parse(list[i][0]);
+                allOpenStreetMap[i+1].flyTo([coordJson.lat, coordJson.lon], ZOOMLEVEL);
+                var marker = L.marker([coordJson.lat, coordJson.lon]).addTo(allOpenStreetMap[i+1]);
+                marker.bindPopup('lat: '+coordJson.lat+', lon: '+coordJson.lon+' - '+list[i][1]).openPopup();
+            }
+        });
+    }
+
+    function updateWorldMap(dateStart, dateEnd) {
+         $.getJSON("{{ url_for('getHitMap') }}?dayNum="+dayNum, function(list){
+            for(var i=0; i<list.length; i++) {
+                coordJson = JSON.parse(list[i][0]);
+                allOpenStreetMap[i+1].flyTo([coordJson.lat, coordJson.lon], ZOOMLEVEL);
+                var marker = L.marker([coordJson.lat, coordJson.lon]).addTo(allOpenStreetMap[i+1]);
+                marker.bindPopup('lat: '+coordJson.lat+', lon: '+coordJson.lon+' - '+list[i][1]).openPopup();
+            }
+        });   
+    }
+
+    $(document).ready(function () {
+        $('#worldMap').vectorMap(vectorMapConfig);
+        worldMapObj = $("#worldMap").vectorMap('get','mapObject');
+        updateTopMaps(1);
+    });
 
     </script>
 

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3.5
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, request, Response, jsonify
 import json
 import redis
 import random
 import configparser
 from time import gmtime as now
 from time import sleep, strftime
+import datetime
 import os
 
 configfile = os.path.join(os.environ['VIRTUAL_ENV'], '../config.cfg')
@@ -22,6 +23,10 @@ redis_server_map = redis.StrictRedis(
         host=cfg.get('RedisMap', 'host'),
         port=cfg.getint('RedisMap', 'port'),
         db=cfg.getint('RedisMap', 'db'))
+serv_redis_db = redis.StrictRedis(
+        host=cfg.get('RedisDB', 'host'),
+        port=cfg.getint('RedisDB', 'port'),
+        db=cfg.getint('RedisDB', 'db'))
 
 subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)
 subscriber_log.psubscribe(cfg.get('RedisLog', 'channel'))
@@ -86,6 +91,15 @@ class EventMessage():
         to_ret = { 'log': self.feed, 'feedName': self.feedName, 'zmqName': self.zmqName }
         return 'data: {}\n\n'.format(json.dumps(to_ret))
 
+def getZrange(keyCateg, wantedDate, topNum):
+    aDateTime = datetime.datetime.now()
+
+    date_str = str(aDateTime.year)+str(aDateTime.month)+str(aDateTime.day)
+    keyname = "{}:{}".format(keyCateg, date_str)
+    data = serv_redis_db.zrange(keyname, 0, 5, desc=True, withscores=True)
+    return data
+
+
 @app.route("/")
 def index():
     ratioCorrection = 88
@@ -110,6 +124,29 @@ def index():
 @app.route("/geo")
 def geo():
     return render_template('geo.html')
+
+@app.route("/_getTopCoord")
+def getTopCoord():
+    try:
+        dayNum = int(request.args.get('dayNum'))
+    except:
+        dayNum = 1
+    keyCateg = "GEO_COORD"
+    topNum = 6 # default Num
+    data = getZrange(keyCateg, dayNum, topNum)
+    data = [ [record[0].decode('utf8'), record[1]] for record in data ] 
+    return jsonify(data)
+
+@app.route("/_getHitMap")
+def getHitMap():
+    try:
+        dayNum = int(request.args.get('dayNum'))
+    except:
+        dayNum = 1
+    keyCateg = "GEO_COUNTRY"
+    topNum = -1 # default Num
+    data = getZrange(keyCateg, dayNum, topNum)
+    return jsonify(data)
 
 @app.route("/_logs")
 def logs():
