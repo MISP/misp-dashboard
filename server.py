@@ -97,6 +97,7 @@ def index():
             ]
     return render_template('index.html', 
             pannelSize=pannelSize,
+            size_dashboard_width=[cfg.getint('Dashboard' ,'size_dashboard_left_width'), 12-cfg.getint('Dashboard', 'size_dashboard_left_width')],
             graph_log_refresh_rate=cfg.getint('Dashboard' ,'graph_log_refresh_rate'),
             char_separator=cfg.get('Log', 'char_separator'),
             rotation_wait_time=cfg.getint('Dashboard' ,'rotation_wait_time'),

@@ -123,7 +123,7 @@ small {
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-lg-12">
-                       <div class="col-lg-5">
+                        <div class="col-lg-{{ size_dashboard_width[0] }}">
                         
                            <div id="panelOpenMap" class="panel panel-default" style="margin-top: 15px; height: {{ pannelSize[0] }}vh;">
                             <div class="panel-heading bg-info" style="font-weight: bold;">
@@ -168,7 +168,7 @@ small {
                     </div>
                     <!-- /.col-lg-6 -->
                     <!-- /.col-lg-6 -->
-                    <div class="col-lg-7">
+                    <div class="col-lg-{{ size_dashboard_width[1] }}">
                         
                         <div class="panel panel-default" style="margin-top: 15px; height: {{ pannelSize[2] }}vh;">
                             <div id="panelbody" class="panel-body" style="height: 100%;">
@@ -179,7 +179,7 @@ small {
                         </div>
                         <!-- /.panel -->
 
-                        <div class="panel panel-default" style="height: {{ pannelSize[3] }}vh;">
+                        <div id="panelLogTable" class="panel panel-default" style="height: {{ pannelSize[3] }}vh;">
                             <div class="panel-heading">
                                 <i class="fa fa-tasks fa-fw"></i> Logs
                                 <div class="pull-right">
@@ -188,7 +188,7 @@ small {
                                     <input id="checkbox_log_critical" type="checkbox" value="critical" checked="true"> CRITICAL
                                 </div>
                             </div>
-                            <div id="divLogTable" class="panel-body" style="height: 98%;">
+                            <div id="divLogTable" class="panel-body" style="height: 98%; padding: 0px;">
                                 <div class="row" style="height: 100%;">
                                     <div class="col-lg-12" style="height: 100%;">
                                         <table class="table table-bordered table-hover table-striped" id="table_log">

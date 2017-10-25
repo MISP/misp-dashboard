@@ -15,13 +15,11 @@ configfile = os.path.join(os.environ['VIRTUAL_ENV'], '../config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
-zmq_url = cfg.get('RedisLog', 'zmq_url')
-channel = cfg.get('RedisLog', 'channel')
-context = zmq.Context()
-socket = context.socket(zmq.SUB)
-socket.connect(zmq_url)
-socket.setsockopt_string(zmq.SUBSCRIBE, '')
-channelDisp = cfg.get('RedisMap', 'channelDisp')
+ZMQ_URL = cfg.get('RedisLog', 'zmq_url')
+CHANNEL = cfg.get('RedisLog', 'channel')
+CHANNELDISP = cfg.get('RedisMap', 'channelDisp')
+CHANNEL_PROC = cfg.get('RedisMap', 'channelProc')
+PATH_TO_DB = cfg.get('RedisMap', 'pathMaxMindDB')
 
 redis_server = redis.StrictRedis(
         host=cfg.get('RedisLog', 'host'),
@@ -31,14 +29,13 @@ serv_coord = redis.StrictRedis(
         host=cfg.get('RedisMap', 'host'),
         port=cfg.getint('RedisMap', 'port'),
         db=cfg.getint('RedisMap', 'db'))
-path_to_db = "/home/sami/Downloads/GeoLite2-City_20171003/GeoLite2-City.mmdb"
-reader = geoip2.database.Reader(path_to_db)
 
-channel_proc = "CoordToProcess"
+reader = geoip2.database.Reader(PATH_TO_DB)
+
 
 def publish_log(zmq_name, name, content):
     to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
-    redis_server.publish(channel, json.dumps(to_send))
+    redis_server.publish(CHANNEL, json.dumps(to_send))
 
 
 def ip_to_coord(ip):
@@ -70,7 +67,7 @@ def getCoordAndPublish(zmq_name, supposed_ip, categ):
                 "cityName": rep['full_rep'].city.name,
                 "regionCode": rep['full_rep'].country.iso_code,
                 }
-        serv_coord.publish(channelDisp, json.dumps(to_send))
+        serv_coord.publish(CHANNELDISP, json.dumps(to_send))
     except ValueError:
         print("can't resolve ip")
 
@@ -94,6 +91,8 @@ def handler_event(zmq_name, jsonevent):
     #redirect to handler_attribute
     if 'Attribute' in jsonevent:
         attributes = jsonevent['Attribute']
+        print("+--------- EVENTS -----------+")
+        print(attributes)
         if attributes is list:
             for attr in attributes:
                 handler_attribute(zmq_name, attr)
@@ -102,6 +101,7 @@ def handler_event(zmq_name, jsonevent):
 
 
 def handler_attribute(zmq_name, jsonattr):
+    print("+--------- ATTRIBUTE -----------+")
     jsonattr = jsonattr['Attribute']
     print(jsonattr)
     to_push = []
@@ -128,6 +128,11 @@ def process_log(zmq_name, event):
 
 
 def main(zmqName):
+    context = zmq.Context()
+    socket = context.socket(zmq.SUB)
+    socket.connect(ZMQ_URL)
+    socket.setsockopt_string(zmq.SUBSCRIBE, '')
+
     while True:
         content = socket.recv()
         content.replace(b'\n', b'') # remove \n...
@@ -150,6 +155,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='A zmq subscriber. It subscribe to a ZNQ then redispatch it to the misp-dashboard')
     parser.add_argument('-n', '--name', required=False, dest='zmqname', help='The ZMQ feed name', default="Misp Standard ZMQ")
+    parser.add_argument('-u', '--url', required=False, dest='zmqurl', help='The URL to connect to', default=ZMQ_URL)
     args = parser.parse_args()
 
     main(args.zmqname)

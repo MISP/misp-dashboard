@@ -240,18 +240,10 @@ function updateLogTable(feedName, log, zmqName) {
         createRow(tableBody, log);
 
         // Remove old row
-        var logSel = document.getElementById("log_select");
-        //get height of pannel, find max num of item
-        var maxNumLogItem = document.getElementById('divLogTable').clientHeight/37;
-        maxNumLogItem -= 2; //take heading/padding/... into account
-        if (maxNumLogItem - parseInt(maxNumLogItem) < 0.5) { //beautifier
-            maxNumLogItem -= 1;
+        while ($("#table_log").height() >= $("#panelLogTable").height()-26){ //26 for margin
+            tableBody.deleteRow(0);
         }
-        if (tableBody.rows.length > maxNumLogItem) {
-            while (tableBody.rows.length >= maxNumLogItem){
-                tableBody.deleteRow(0);
-            }
-        }
+
     } else if (feedName == "Keepalive") {
         // do nothing
     } else {

@@ -90,7 +90,7 @@ class MapEventManager {
         myOpenStreetMap.flyTo([mapEvent.coord.lat, mapEvent.coord.lon], ZOOMLEVEL);
         mapEvent.marker.bindPopup(mapEvent.textMarker).openPopup();
 
-        $("#textMap1").fadeOut(400, function(){ $(this).text(mapEvent.text); }).fadeIn(400);
+        $("#textMap1").text(mapEvent.text);
         if(ROTATIONWAITTIME != 0) {
             this._timeoutRotate = setTimeout(function(){ mapEventManager.rotateMap(); }, ROTATIONWAITTIME);
         }
