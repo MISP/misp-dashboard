@@ -46,6 +46,7 @@
     text-align: center;
     margin-left: 8px;
     float: left;
+    padding-top: 9px;
 }
 
 .center {
@@ -69,7 +70,11 @@ small {
         <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0; padding-left: 15px;">
             <div class="navbar-header">
                 <a class="navbar-brand" href="{{ url_for('geo') }}">Misp Geolocalization</a>
-                <div id="ledsHolder" style="float: right; height: 50px;"><div class='leftSepa textTopHeader'><b>Date + zoom Level</b></div></div>
+                <div id="ledsHolder" style="float: right; height: 50px;">
+                    <div class='leftSepa textTopHeader'>
+                        <strong>Date: <input type="text" id="datepicker" size="30" style="margin-bottom: 5px;"></strong>
+                    </div>
+                </div>
             </div>
             <!-- /.navbar-header -->
 
@@ -182,6 +187,8 @@ small {
     <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-jvectormap-2.0.3.css') }}" type="text/css" media="screen"/>
     <script src="{{ url_for('static', filename='js/jquery-jvectormap-2.0.3.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery-jvectormap-world-mill.js') }}"></script>
+    <link href="{{ url_for('static', filename='css/jquery-ui.min.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
 
     <!-- Index -->
     <script> 
@@ -192,6 +199,7 @@ small {
     const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
     var ZOOMLEVEL = 17;
     var allOpenStreetMap = {};
+    var datePickerWidget;
 
     for(var i=1; i<7; i++) {
         allOpenStreetMap[i] = L.map('topMap'+i).setView([0, 0], 0);
@@ -237,8 +245,8 @@ small {
     function updateWorldMap(dayNum) {
          $.getJSON("{{ url_for('getHitMap') }}?dayNum="+dayNum, function(list){
             for(var i=0; i<list.length; i++) {
-                rCode = list[i][0];
-                rNum = list[i][1];
+                var rCode = list[i][0];
+                var rNum = list[i][1];
                 update_region(rCode, rNum);
             }
         });   
@@ -253,11 +261,40 @@ small {
         worldMapObj.series.regions[0].setValues(regionhits);
     }
 
+    function days_between(date1, date2) {
+        var ONEDAY = 60*60*24*1000;
+        var diff_ms = Math.abs(date1.getTime() - date2.getTime());
+        return Math.round(diff_ms/ONEDAY);
+    }
+
+    function updateAll() {
+        var currentDate = datePickerWidget.datepicker( "getDate" );
+        var now = new Date();
+        var numDay = days_between(now, currentDate);
+        updateTopMaps(numDay);
+        updateWorldMap(numDay);
+    }
+
     $(document).ready(function () {
         $('#worldMap').vectorMap(vectorMapConfig);
         worldMapObj = $("#worldMap").vectorMap('get','mapObject');
-        updateTopMaps(1);
-        updateWorldMap(1);
+
+        /* Create the datepicker and button*/
+        var datePickerOptions = {
+            showOn: "button",
+            minDate: -31,
+            maxDate: 0,
+            buttonImage: "{{ url_for('static', filename='pics/calendar.gif') }}",
+            buttonImageOnly: true,
+            buttonText: "Select date",
+            showAnim: "slideDown",
+            onSelect: updateAll
+        };
+        datePickerWidget = $( "#datepicker" )
+        datePickerWidget.datepicker(datePickerOptions);
+
+        updateAll();
+
     });
 
     </script>

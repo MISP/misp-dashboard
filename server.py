@@ -91,10 +91,11 @@ class EventMessage():
         to_ret = { 'log': self.feed, 'feedName': self.feedName, 'zmqName': self.zmqName }
         return 'data: {}\n\n'.format(json.dumps(to_ret))
 
-def getZrange(keyCateg, wantedDate, topNum):
+def getZrange(keyCateg, dayNum, topNum):
     aDateTime = datetime.datetime.now()
+    correctDatetime = aDateTime - datetime.timedelta(days = dayNum) 
 
-    date_str = str(aDateTime.year)+str(aDateTime.month)+str(aDateTime.day)
+    date_str = str(correctDatetime.year)+str(correctDatetime.month)+str(correctDatetime.day)
     keyname = "{}:{}".format(keyCateg, date_str)
     data = serv_redis_db.zrange(keyname, 0, 5, desc=True, withscores=True)
     data = [ [record[0].decode('utf8'), record[1]] for record in data ] 
@@ -131,7 +132,7 @@ def getTopCoord():
     try:
         dayNum = int(request.args.get('dayNum'))
     except:
-        dayNum = 1
+        dayNum = 0
     keyCateg = "GEO_COORD"
     topNum = 6 # default Num
     data = getZrange(keyCateg, dayNum, topNum)
@@ -142,7 +143,7 @@ def getHitMap():
     try:
         dayNum = int(request.args.get('dayNum'))
     except:
-        dayNum = 1
+        dayNum = 0
     keyCateg = "GEO_COUNTRY"
     topNum = -1 # default Num
     data = getZrange(keyCateg, dayNum, topNum)
