@@ -47,6 +47,12 @@ def push_to_redis_zset(keyCateg, toAdd):
     keyname = "{}:{}".format(keyCateg, today_str)
     serv_redis_db.zincrby(keyname, toAdd)
 
+def push_to_redis_geo(keyCateg, lon, lat, content):
+    now = datetime.datetime.now()
+    today_str = str(now.year)+str(now.month)+str(now.day)
+    keyname = "{}:{}".format(keyCateg, today_str)
+    serv_redis_db.geoadd(keyname, lon, lat, content)
+
 
 def ip_to_coord(ip):
     resp = reader.city(ip)
@@ -66,6 +72,7 @@ def getCoordAndPublish(zmq_name, supposed_ip, categ):
         coord_list = [coord['lat'], coord['lon']]
         push_to_redis_zset('GEO_COORD', json.dumps(coord_dic))
         push_to_redis_zset('GEO_COUNTRY', rep['full_rep'].country.iso_code)
+        push_to_redis_geo('GEO_RAD', coord['lon'], coord['lat'], json.dumps({ 'categ': categ, 'value': supposed_ip }))
         to_send = {
                 "coord": coord,
                 "categ": categ,

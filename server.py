@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request, Response, jsonify
 import json
 import redis
-import random
+import random, math
 import configparser
 from time import gmtime as now
 from time import sleep, strftime
@@ -148,6 +148,30 @@ def getHitMap():
     topNum = -1 # default Num
     data = getZrange(keyCateg, dayNum, topNum)
     return jsonify(data)
+
+@app.route("/_getCoordsByRadius")
+def getCoordsByRadius():
+    to_return = []
+    try:
+        dateStart = datetime.datetime.fromtimestamp(float(request.args.get('dateStart')))
+        dateEnd = datetime.datetime.fromtimestamp(float(request.args.get('dateEnd')))
+        centerLat = request.args.get('centerLat')
+        centerLon = request.args.get('centerLon')
+        radius = int(math.ceil(float(request.args.get('radius'))))
+    except:
+        return jsonify(to_return)
+
+    delta = dateEnd - dateStart
+    for i in range(delta.days+1):
+        correctDatetime = dateStart + datetime.timedelta(days=i)
+        date_str = str(correctDatetime.year)+str(correctDatetime.month)+str(correctDatetime.day)
+        keyCateg = 'GEO_RAD'
+        keyname = "{}:{}".format(keyCateg, date_str)
+        res = serv_redis_db.georadius(keyname, centerLon, centerLat, radius, unit='km', withcoord=True)
+        res = [ [json.loads(data), coord] for data, coord in res ] #correctly send the json
+        to_return.append(res)
+
+    return jsonify(to_return)
 
 @app.route("/_logs")
 def logs():

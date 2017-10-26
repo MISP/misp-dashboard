@@ -28,6 +28,9 @@
 .panel-body {
     padding: 0px;
 }
+ .panel {
+     margin-bottom: 10px;
+ }
 
 .col-lg-6 {
     padding-right: 5px;
@@ -69,7 +72,7 @@ small {
         <!-- Navigation -->
         <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0; padding-left: 15px;">
             <div class="navbar-header">
-                <a class="navbar-brand" href="{{ url_for('geo') }}">Misp Geolocalization</a>
+                <a class="navbar-brand" href="{{ url_for('geo') }}">Misp Geolocalisation</a>
                 <div id="ledsHolder" style="float: right; height: 50px;">
                     <div class='leftSepa textTopHeader'>
                         <strong>Zoom level:</strong>
@@ -81,6 +84,9 @@ small {
                           <option value="11">11</option>
                           <option value="9">9</option>
                           <option value="7">7</option>
+                          <option value="5">5</option>
+                          <option value="4">4</option>
+                          <option value="3">3</option>
                         </select>
                     </div>
                     <div class='leftSepa textTopHeader'>
@@ -168,11 +174,25 @@ small {
                                     <b id="worldMapHeader">Hit map </b>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="height: 100%;">
-                                    <div id="worldMap" style="width:100%; height: 88vh; position: relative;"></div>
+                                    <div id="worldMap" style="width:100%; height: 30vh; position: relative;"></div>
                                 </div>
                                 <!-- /.panel-body -->
-
                             </div><!-- /.panel -->
+
+                            <div class="panel panel-default" style="height: 100%;">
+                                <div class="panel-heading bg-info" style="font-weight: bold; padding: 5px 10px;">
+                                    <b id="radiusHeader" style="font-size: 18px;">Geospatial information</b>
+                                    <strong  class='leftSepa textTopHeader' style="float: none; padding: 11px;">Dates: 
+                                        <input type="text" id="datepickerRadiusFrom" size="20" style="">
+                                        <input type="text" id="datepickerRadiusTo" size="20" style="">
+                                    </strong>
+                                </div>
+                                <div id="panelbody" class="panel-body" style="height: 100%;">
+                                    <div id="radiusMap" style="width:100%; height: 51vh; position: relative;"></div>
+                                </div>
+                                <!-- /.panel-body -->
+                            </div><!-- /.panel -->
+
 
                         </div><!-- /.col-lg-6 -->
 
@@ -214,7 +234,12 @@ small {
     var updateFrequency = 1000*60*60*1 //1h
     var allOpenStreetMap = {};
     var savedMarker = {};
+    var savedMarkerRadius = [];
     var datePickerWidget;
+    var datePickersRadiusWidget;
+    var radiusOpenStreetMap;
+    var circleRadius;
+
 
     for(var i=1; i<7; i++) {
         allOpenStreetMap[i] = L.map('topMap'+i).setView([0, 0], 0);
@@ -284,6 +309,42 @@ small {
         worldMapObj.series.regions[0].setValues(regionhits);
     }
 
+    function updateRadius(e) {
+        var curObj = e.target;
+        var curCoord = curObj.getCenter();
+        var zoom = curObj.zoom;
+        var scale = getScale(radiusOpenStreetMap.getZoom());
+        circleRadius.setRadius(scale);
+        circleRadius.setLatLng(curCoord);
+    }
+
+    function getScale(zoom) {
+        return 64 * Math.pow(2, (18-zoom));
+    }
+
+    function queryAndAddMarkers() {
+        var radius_km = circleRadius.getRadius() / 1000;
+        var coord = circleRadius._latlng;
+        var dateStart = datePickersRadiusWidgetFrom.datepicker("getDate").getTime() / 1000;
+        var dateEnd = datePickersRadiusWidgetTo.datepicker("getDate").getTime() / 1000;
+        $.getJSON("{{ url_for('getCoordsByRadius') }}?dateStart="+dateStart+"&dateEnd="+dateEnd+"&centerLat="+coord.lat+"&centerLon="+coord.lng+"&radius="+radius_km, function(list){
+            // remove old markers
+            for (var i in savedMarkerRadius) {
+                savedMarkerRadius[i].remove(); // remove marker
+            }
+
+            var list = list[0];
+            for (var dayListIndex in list) {
+                var jsonData = list[dayListIndex][0];
+                var coordJson = list[dayListIndex][1];
+
+                var marker = L.marker([coordJson[1], coordJson[0]]).addTo(radiusOpenStreetMap);
+                savedMarkerRadius.push(marker);
+                marker.bindPopup('<strong>'+jsonData.categ+'</strong><br>'+jsonData.value, {autoClose:false}).openPopup();
+            }
+        });
+    }
+
     function days_between(date1, date2) {
         var ONEDAY = 60*60*24*1000;
         var diff_ms = Math.abs(date1.getTime() - date2.getTime());
@@ -313,9 +374,41 @@ small {
             showAnim: "slideDown",
             onSelect: updateAll
         };
+        var datePickerRadiusOptions = {
+            showOn: "button",
+            minDate: -31,
+            maxDate: 0,
+            buttonImage: "{{ url_for('static', filename='pics/calendar.gif') }}",
+            buttonImageOnly: true,
+            buttonText: "Select date",
+            showAnim: "slideDown",
+            onSelect: updateRadius
+        };
+
         datePickerWidget = $( "#datepicker" )
         datePickerWidget.datepicker(datePickerOptions);
         datePickerWidget.datepicker("setDate", new Date());
+
+        // radius
+        datePickersRadiusWidgetFrom = $( "#datepickerRadiusFrom" )
+        datePickersRadiusWidgetFrom.datepicker(datePickerRadiusOptions);
+        datePickersRadiusWidgetFrom.datepicker("setDate", new Date());
+        datePickersRadiusWidgetTo = $( "#datepickerRadiusTo" )
+        datePickersRadiusWidgetTo.datepicker(datePickerRadiusOptions);
+        datePickersRadiusWidgetTo.datepicker("setDate", new Date());
+        radiusOpenStreetMap = L.map('radiusMap', {closePopupOnClick: false} ).setView([30, 0], 2);
+        console.log(radiusOpenStreetMap);
+        new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 18}).addTo(radiusOpenStreetMap);
+
+        var radiusSize = 
+        circleRadius = L.circle(radiusOpenStreetMap.getCenter(), {
+            color: 'red',
+            fillColor: '#f03',
+            fillOpacity: 0.4,
+            radius: getScale(radiusOpenStreetMap.getZoom())
+        }).addTo(radiusOpenStreetMap);
+
+        radiusOpenStreetMap.on('move', updateRadius);
 
         $( "#zoom_selector" ).change(function() {
             var sel = parseInt($( this ).val());
@@ -323,6 +416,7 @@ small {
             updateAll();
         });
 
+        
         updateAll();
         setInterval(function(){ 
             updateAll(); 
