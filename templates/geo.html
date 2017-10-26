@@ -328,20 +328,22 @@ small {
         var coord = circleRadius._latlng;
         var dateStart = datePickersRadiusWidgetFrom.datepicker("getDate").getTime() / 1000;
         var dateEnd = datePickersRadiusWidgetTo.datepicker("getDate").getTime() / 1000;
-        $.getJSON("{{ url_for('getCoordsByRadius') }}?dateStart="+dateStart+"&dateEnd="+dateEnd+"&centerLat="+coord.lat+"&centerLon="+coord.lng+"&radius="+radius_km, function(list){
+        $.getJSON("{{ url_for('getCoordsByRadius') }}?dateStart="+dateStart+"&dateEnd="+dateEnd+"&centerLat="+coord.lat+"&centerLon="+coord.lng+"&radius="+radius_km, function(allList){
             // remove old markers
             for (var i in savedMarkerRadius) {
                 savedMarkerRadius[i].remove(); // remove marker
             }
 
-            var list = list[0];
-            for (var dayListIndex in list) {
-                var jsonData = list[dayListIndex][0];
-                var coordJson = list[dayListIndex][1];
+            for (var listIndex in allList) {
+                var list = allList[listIndex];
+                for (var dayListIndex in list) {
+                    var jsonData = list[dayListIndex][0];
+                    var coordJson = list[dayListIndex][1];
 
-                var marker = L.marker([coordJson[1], coordJson[0]]).addTo(radiusOpenStreetMap);
-                savedMarkerRadius.push(marker);
-                marker.bindPopup('<strong>'+jsonData.categ+'</strong><br>'+jsonData.value, {autoClose:false}).openPopup();
+                    var marker = L.marker([coordJson[1], coordJson[0]]).addTo(radiusOpenStreetMap);
+                    savedMarkerRadius.push(marker);
+                    marker.bindPopup('<strong>'+jsonData.categ+'</strong><br>'+jsonData.value, {autoClose:false}).openPopup();
+                }
             }
         });
     }
@@ -383,7 +385,6 @@ small {
             buttonImageOnly: true,
             buttonText: "Select date",
             showAnim: "slideDown",
-            onSelect: updateRadius
         };
 
         datePickerWidget = $( "#datepicker" )
