@@ -227,7 +227,7 @@ small {
               min: 0,
               max: 10,
               scale: ['#003FBF','#0063BF','#0087BF','#00ACBF','#00BFAD','#00BF89','#00BF64','#00BF40','#00BF1C','#08BF00','#2CBF00','#51BF00','#75BF00','#99BF00','#BEBF00','#BF9B00','#BF7700','#BF5200','#BF2E00','#BF0900'],
-              normalizeFunction: 'polynomial',
+              normalizeFunction: 'linear',
               legend: {
                   horizontal: true
               }
@@ -266,7 +266,6 @@ small {
         regionhitsMax = regionhitsMax >= regionhits[regionCode] ? regionhitsMax : regionhits[regionCode];
         worldMapObj.series.regions[0].params.max = regionhitsMax;
         worldMapObj.series.regions[0].legend.render();
-        console.log(worldMapObj);
         // Update data
         worldMapObj.series.regions[0].setValues(regionhits);
     }
