@@ -72,6 +72,18 @@ small {
                 <a class="navbar-brand" href="{{ url_for('geo') }}">Misp Geolocalization</a>
                 <div id="ledsHolder" style="float: right; height: 50px;">
                     <div class='leftSepa textTopHeader'>
+                        <strong>Zoom level:</strong>
+                        <select id="zoom_selector">
+                          <option value="18">18</option>
+                          <option value="17">17</option>
+                          <option value="15" selected>15</option>
+                          <option value="13">13</option>
+                          <option value="11">11</option>
+                          <option value="9">9</option>
+                          <option value="7">7</option>
+                        </select>
+                    </div>
+                    <div class='leftSepa textTopHeader'>
                         <strong>Date: <input type="text" id="datepicker" size="30" style="margin-bottom: 5px;"></strong>
                     </div>
                 </div>
@@ -197,7 +209,7 @@ small {
 
     const OSMURL='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
     const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
-    var ZOOMLEVEL = 17;
+    var ZOOMLEVEL = 15;
     var allOpenStreetMap = {};
     var datePickerWidget;
 
@@ -292,6 +304,13 @@ small {
         };
         datePickerWidget = $( "#datepicker" )
         datePickerWidget.datepicker(datePickerOptions);
+        datePickerWidget.datepicker("setDate", new Date());
+
+        $( "#zoom_selector" ).change(function() {
+            var sel = parseInt($( this ).val());
+            ZOOMLEVEL = sel;
+            updateAll();
+        });
 
         updateAll();
 
