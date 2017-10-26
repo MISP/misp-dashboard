@@ -149,8 +149,15 @@ def getHitMap():
     data = getZrange(keyCateg, dayNum, topNum)
     return jsonify(data)
 
+def isCloseTo(coord1, coord2):
+    if abs(float(coord1[0]) - float(coord2[0])) <= 0.0001:
+        if abs(float(coord1[1]) - float(coord2[1])) <= 0.0001:
+            return True
+    return False
+
 @app.route("/_getCoordsByRadius")
 def getCoordsByRadius():
+    dico_coord = {}
     to_return = []
     try:
         dateStart = datetime.datetime.fromtimestamp(float(request.args.get('dateStart')))
@@ -168,8 +175,33 @@ def getCoordsByRadius():
         keyCateg = 'GEO_RAD'
         keyname = "{}:{}".format(keyCateg, date_str)
         res = serv_redis_db.georadius(keyname, centerLon, centerLat, radius, unit='km', withcoord=True)
-        res = [ [json.loads(data), coord] for data, coord in res ] #correctly send the json
-        to_return.append(res)
+
+        #sum up really close coord
+        for data, coord in res:
+            flag_added = False
+            coord = [coord[0], coord[1]]
+            #list all coord
+            for dicoCoordStr in dico_coord.keys():
+                dicoCoord = json.loads(dicoCoordStr)
+                #if curCoord close to coord
+                if isCloseTo(dicoCoord, coord):
+                    #add data to dico coord
+                    dico_coord[dicoCoordStr].append(data)
+                    flag_added = True
+                    break
+            # coord not in dic
+            if not flag_added:
+                dico_coord[str(coord)] = [data]
+
+        for dicoCoord, array in dico_coord.items():
+            print(array)
+            dicoCoord = json.loads(dicoCoord)
+            to_return.append([array, dicoCoord])
+
+        #res = [ [json.loads(data), coord] for data, coord in res ] #correctly send the json
+        #to_return.append(res)
+        import pprint
+        pprint.pprint(to_return)
 
     return jsonify(to_return)
 

@@ -329,21 +329,34 @@ small {
         var dateStart = datePickersRadiusWidgetFrom.datepicker("getDate").getTime() / 1000;
         var dateEnd = datePickersRadiusWidgetTo.datepicker("getDate").getTime() / 1000;
         $.getJSON("{{ url_for('getCoordsByRadius') }}?dateStart="+dateStart+"&dateEnd="+dateEnd+"&centerLat="+coord.lat+"&centerLon="+coord.lng+"&radius="+radius_km, function(allList){
+            console.log(allList);
             // remove old markers
             for (var i in savedMarkerRadius) {
                 savedMarkerRadius[i].remove(); // remove marker
             }
 
-            for (var listIndex in allList) {
-                var list = allList[listIndex];
-                for (var dayListIndex in list) {
-                    var jsonData = list[dayListIndex][0];
-                    var coordJson = list[dayListIndex][1];
+            //for (var listIndex in allList) {
+            //    var list = allList[listIndex];
+            //    for (var dayListIndex in list) {
+            //        var jsonData = list[dayListIndex][0];
+            //        var coordJson = list[dayListIndex][1];
 
-                    var marker = L.marker([coordJson[1], coordJson[0]]).addTo(radiusOpenStreetMap);
-                    savedMarkerRadius.push(marker);
-                    marker.bindPopup('<strong>'+jsonData.categ+'</strong><br>'+jsonData.value, {autoClose:false}).openPopup();
+            //        var marker = L.marker([coordJson[1], coordJson[0]]).addTo(radiusOpenStreetMap);
+            //        savedMarkerRadius.push(marker);
+            //        marker.bindPopup('<strong>'+jsonData.categ+': </strong> '+jsonData.value, {autoClose:false}).openPopup();
+            //    }
+            //}
+            for (var listIndex in allList) {
+                var curMarker = allList[listIndex];
+                var dataText = "";
+                var coordJson = curMarker[1];
+                for (var dataI in curMarker[0]) {
+                    var jsonData = JSON.parse(curMarker[0][dataI])
+                    dataText += '<strong>'+jsonData.categ+': </strong> '+jsonData.value + "<br>"
                 }
+                var marker = L.marker([coordJson[1], coordJson[0]]).addTo(radiusOpenStreetMap);
+                savedMarkerRadius.push(marker);
+                marker.bindPopup(dataText, {autoClose:false}).openPopup();
             }
         });
     }
