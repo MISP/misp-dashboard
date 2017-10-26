@@ -186,9 +186,10 @@ small {
                                         <input type="text" id="datepickerRadiusFrom" size="20" style="">
                                         <input type="text" id="datepickerRadiusTo" size="20" style="">
                                     </strong>
+                                    <button type="button" class="btn btn-default leftSepa" onclick="queryAndAddMarkers()">Query</button>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="height: 100%;">
-                                    <div id="radiusMap" style="width:100%; height: 51vh; position: relative;"></div>
+                                    <div id="radiusMap" style="width:100%; height: 51vh; position: relative; z-index: 1;"></div>
                                 </div>
                                 <!-- /.panel-body -->
                             </div><!-- /.panel -->
@@ -390,17 +391,15 @@ small {
         datePickerWidget.datepicker("setDate", new Date());
 
         // radius
+        radiusOpenStreetMap = L.map('radiusMap', {closePopupOnClick: false} ).setView([30, 0], 2);
+        new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 18}).addTo(radiusOpenStreetMap);
         datePickersRadiusWidgetFrom = $( "#datepickerRadiusFrom" )
         datePickersRadiusWidgetFrom.datepicker(datePickerRadiusOptions);
         datePickersRadiusWidgetFrom.datepicker("setDate", new Date());
         datePickersRadiusWidgetTo = $( "#datepickerRadiusTo" )
         datePickersRadiusWidgetTo.datepicker(datePickerRadiusOptions);
         datePickersRadiusWidgetTo.datepicker("setDate", new Date());
-        radiusOpenStreetMap = L.map('radiusMap', {closePopupOnClick: false} ).setView([30, 0], 2);
-        console.log(radiusOpenStreetMap);
-        new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 18}).addTo(radiusOpenStreetMap);
 
-        var radiusSize = 
         circleRadius = L.circle(radiusOpenStreetMap.getCenter(), {
             color: 'red',
             fillColor: '#f03',
