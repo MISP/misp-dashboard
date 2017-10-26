@@ -266,6 +266,7 @@ small {
         regionhitsMax = regionhitsMax >= regionhits[regionCode] ? regionhitsMax : regionhits[regionCode];
         worldMapObj.series.regions[0].params.max = regionhitsMax;
         worldMapObj.series.regions[0].legend.render();
+        console.log(worldMapObj);
         // Update data
         worldMapObj.series.regions[0].setValues(regionhits);
     }
