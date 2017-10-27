@@ -38,8 +38,8 @@ class LogItem():
 
     FIELDNAME_ORDER = []
     FIELDNAME_ORDER_HEADER = []
-    FIELDNAME_ORDER.append("time")
-    FIELDNAME_ORDER_HEADER.append("time")
+    FIELDNAME_ORDER.append("Time")
+    FIELDNAME_ORDER_HEADER.append("Time")
     for item in json.loads(cfg.get('Log', 'fieldname_order')):
         if type(item) is list:
             FIELDNAME_ORDER_HEADER.append(" | ".join(item))
@@ -58,7 +58,7 @@ class LogItem():
     def get_head_row(self):
         to_ret = []
         for fn in LogItem.FIELDNAME_ORDER_HEADER:
-            to_ret.append(fn[0].upper()+fn[1:])
+            to_ret.append(fn)
         return to_ret
 
     def get_row(self):
@@ -227,4 +227,4 @@ def event_stream_maps():
         yield 'data: {}\n\n'.format(content)
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=8000, threaded=True)
+    app.run(host='localhost', port=8001, threaded=True)

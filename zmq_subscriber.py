@@ -99,6 +99,10 @@ def handler_keepalive(zmq_name, jsonevent):
     to_push = [ jsonevent['uptime'] ]
     publish_log(zmq_name, 'Keepalive', to_push)
 
+def handler_sighting(zmq_name, jsonsight):
+    print('sending' ,'sighting')
+    return
+
 def handler_event(zmq_name, jsonevent):
     #fields: threat_level_id, id, info
     jsonevent = jsonevent['Event']
@@ -112,17 +116,27 @@ def handler_event(zmq_name, jsonevent):
             handler_attribute(zmq_name, attributes)
 
 
-def handler_attribute(zmq_name, jsonattr):
+def getFields(obj, fields):
+    jsonWalker = fields.split('.')
+    itemToExplore = obj
+    for i in jsonWalker:
+        itemToExplore = itemToExplore[i]
+    return itemToExplore
+
+def handler_attribute(zmq_name, jsonobj):
     # check if jsonattr is an attribute object
-    if 'Attribute' in jsonattr:
-        jsonattr = jsonattr['Attribute']
+    if 'Attribute' in jsonobj:
+        jsonattr = jsonobj['Attribute']
 
     to_push = []
     for field in json.loads(cfg.get('Log', 'fieldname_order')):
         if type(field) is list:
-            to_add = cfg.get('Log', 'char_separator').join([ jsonattr[subField] for subField in field ])
+            to_join = []
+            for subField in field:
+                to_join.append(getFields(jsonobj, subField))
+            to_add = cfg.get('Log', 'char_separator').join(to_join)
         else:
-            to_add = jsonattr[field]
+            to_add = getFields(jsonobj, field)
         to_push.append(to_add)
 
     #try to get coord from ip
@@ -154,10 +168,11 @@ def main(zmqName):
 
 
 dico_action = {
-        "misp_json":                handler_event,
+        "misp_json":                handler_log,
+        "misp_json_event":          handler_event,
         "misp_json_self":           handler_keepalive,
         "misp_json_attribute":      handler_attribute,
-        "misp_json_sighting":       handler_log,
+        "misp_json_sighting":       handler_sighting,
         "misp_json_organisation":   handler_log,
         "misp_json_user":           handler_log,
         "misp_json_conversation":   handler_log
