@@ -77,16 +77,13 @@ small {
                     <div class='leftSepa textTopHeader'>
                         <strong>Zoom level:</strong>
                         <select id="zoom_selector">
-                          <option value="18">18</option>
-                          <option value="17">17</option>
-                          <option value="15" selected>15</option>
-                          <option value="13">13</option>
-                          <option value="11">11</option>
-                          <option value="9">9</option>
-                          <option value="7">7</option>
-                          <option value="5">5</option>
-                          <option value="4">4</option>
-                          <option value="3">3</option>
+                            <option value="{{ zoomlevel + 3 }}">{{ zoomlevel + 3 }}</option>
+                            <option value="{{ zoomlevel + 2 }}">{{ zoomlevel + 2 }}</option>
+                            <option value="{{ zoomlevel }}" selected>{{ zoomlevel }}</option>
+                            <option value="{{ zoomlevel - 2 }}">{{ zoomlevel - 2 }}</option>
+                            <option value="{{ zoomlevel - 4 }}">{{ zoomlevel - 4 }}</option>
+                            <option value="{{ zoomlevel - 6 }}">{{ zoomlevel - 6 }}</option>
+                            <option value="{{ zoomlevel - 8 }}">{{ zoomlevel - 8 }}</option>
                         </select>
                     </div>
                     <div class='leftSepa textTopHeader'>
@@ -226,208 +223,18 @@ small {
 
     <!-- Index -->
     <script> 
-    var regionhitsMax = 10;
-    var regionhits = {};
+        /* URL */
+        var urlTopCoord = "{{ url_for('getTopCoord') }}";
+        var urlHitMap = "{{ url_for('getHitMap') }}";
+        var urlCoordsByRadius = "{{ url_for('getCoordsByRadius') }}";
+        var urlIconCalendar = "{{ url_for('static', filename='pics/calendar.gif') }}";
 
-    const OSMURL='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
-    var ZOOMLEVEL = 15;
-    var updateFrequency = 1000*60*60*1 //1h
-    var allOpenStreetMap = {};
-    var savedMarker = {};
-    var savedMarkerRadius = [];
-    var datePickerWidget;
-    var datePickersRadiusWidget;
-    var radiusOpenStreetMap;
-    var circleRadius;
-
-
-    for(var i=1; i<7; i++) {
-        allOpenStreetMap[i] = L.map('topMap'+i).setView([0, 0], 0);
-        new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 18}).addTo(allOpenStreetMap[i]);
-    }
-
-    var vectorMapConfig = {
-        map: 'world_mill',
-        markers: [],
-        series: {
-            regions: [{
-              values: [],
-              min: 0,
-              max: 10,
-              scale: ['#003FBF','#0063BF','#0087BF','#00ACBF','#00BFAD','#00BF89','#00BF64','#00BF40','#00BF1C','#08BF00','#2CBF00','#51BF00','#75BF00','#99BF00','#BEBF00','#BF9B00','#BF7700','#BF5200','#BF2E00','#BF0900'],
-              normalizeFunction: 'linear',
-              legend: {
-                  horizontal: true
-              }
-            }]
-        },
-        onRegionTipShow: function(e, el, code){
-          el.html(el.html()+' ('+regionhits[code]+')');
-        }
-    }
-
-
-    function updateTopMaps(dayNum) {
-        $.getJSON("{{ url_for('getTopCoord') }}?dayNum="+dayNum, function(list){
-            for(var i=0; i<6 && i<list.length; i++) {
-                // create marker + flyToIt
-                coordJson = JSON.parse(list[i][0]);
-                allOpenStreetMap[i+1].flyTo([coordJson.lat, coordJson.lon], ZOOMLEVEL);
-
-                // update marker
-                var markerToUpdate = savedMarker[i+1];
-                if (markerToUpdate != undefined) {
-                    markerToUpdate.setLatLng({lat: coordJson.lat, lng: coordJson.lon});
-                    markerToUpdate._popup._content = 'lat: '+coordJson.lat+', lon: '+coordJson.lon+' - '+list[i][1];
-                    markerToUpdate.update();
-                } else { // create new marker
-                    var marker = L.marker([coordJson.lat, coordJson.lon]).addTo(allOpenStreetMap[i+1]);
-                    savedMarker[i+1] = marker;
-                    marker.bindPopup('lat: '+coordJson.lat+', lon: '+coordJson.lon+' (<strong>'+list[i][1]+'</strong>)').openPopup();
-                }
-            }
-        });
-    }
-
-    function updateWorldMap(dayNum) {
-         $.getJSON("{{ url_for('getHitMap') }}?dayNum="+dayNum, function(list){
-            for(var i=0; i<list.length; i++) {
-                var rCode = list[i][0];
-                var rNum = list[i][1];
-                update_region(rCode, rNum);
-            }
-        });   
-    }
-
-    function update_region(regionCode, num) {
-        regionhits[regionCode] = num;
-        // Force recomputation of min and max for correct color scaling
-        regionhitsMax = regionhitsMax >= regionhits[regionCode] ? regionhitsMax : regionhits[regionCode];
-        worldMapObj.series.regions[0].params.max = regionhitsMax;
-        worldMapObj.series.regions[0].legend.render();
-        // Update data
-        worldMapObj.series.regions[0].setValues(regionhits);
-    }
-
-    function updateRadius(e) {
-        var curObj = e.target;
-        var curCoord = curObj.getCenter();
-        var zoom = curObj.zoom;
-        var scale = getScale(radiusOpenStreetMap.getZoom());
-        circleRadius.setRadius(scale);
-        circleRadius.setLatLng(curCoord);
-    }
-
-    function getScale(zoom) {
-        return 64 * Math.pow(2, (18-zoom));
-    }
-
-    function queryAndAddMarkers() {
-        var radius_km = circleRadius.getRadius() / 1000;
-        var coord = circleRadius._latlng;
-        var dateStart = datePickersRadiusWidgetFrom.datepicker("getDate").getTime() / 1000;
-        var dateEnd = datePickersRadiusWidgetTo.datepicker("getDate").getTime() / 1000;
-        $.getJSON("{{ url_for('getCoordsByRadius') }}?dateStart="+dateStart+"&dateEnd="+dateEnd+"&centerLat="+coord.lat+"&centerLon="+coord.lng+"&radius="+radius_km, function(allList){
-            console.log(allList);
-            // remove old markers
-            for (var i in savedMarkerRadius) {
-                savedMarkerRadius[i].remove(); // remove marker
-            }
-
-            for (var listIndex in allList) {
-                var curMarker = allList[listIndex];
-                var dataText = "";
-                var coordJson = curMarker[1];
-                for (var dataI in curMarker[0]) {
-                    var jsonData = JSON.parse(curMarker[0][dataI])
-                    dataText += '<strong>'+jsonData.categ+': </strong> '+jsonData.value + "<br>"
-                }
-                var marker = L.marker([coordJson[1], coordJson[0]]).addTo(radiusOpenStreetMap);
-                savedMarkerRadius.push(marker);
-                marker.bindPopup(dataText, {autoClose:false}).openPopup();
-            }
-        });
-    }
-
-    function days_between(date1, date2) {
-        var ONEDAY = 60*60*24*1000;
-        var diff_ms = Math.abs(date1.getTime() - date2.getTime());
-        return Math.round(diff_ms/ONEDAY);
-    }
-
-    function updateAll() {
-        var currentDate = datePickerWidget.datepicker( "getDate" );
-        var now = new Date();
-        var numDay = days_between(now, currentDate);
-        updateTopMaps(numDay);
-        updateWorldMap(numDay);
-    }
-
-    $(document).ready(function () {
-        $('#worldMap').vectorMap(vectorMapConfig);
-        worldMapObj = $("#worldMap").vectorMap('get','mapObject');
-
-        /* Create the datepicker and button*/
-        var datePickerOptions = {
-            showOn: "button",
-            minDate: -31,
-            maxDate: 0,
-            buttonImage: "{{ url_for('static', filename='pics/calendar.gif') }}",
-            buttonImageOnly: true,
-            buttonText: "Select date",
-            showAnim: "slideDown",
-            onSelect: updateAll
-        };
-        var datePickerRadiusOptions = {
-            showOn: "button",
-            minDate: -31,
-            maxDate: 0,
-            buttonImage: "{{ url_for('static', filename='pics/calendar.gif') }}",
-            buttonImageOnly: true,
-            buttonText: "Select date",
-            showAnim: "slideDown",
-        };
-
-        datePickerWidget = $( "#datepicker" )
-        datePickerWidget.datepicker(datePickerOptions);
-        datePickerWidget.datepicker("setDate", new Date());
-
-        // radius
-        radiusOpenStreetMap = L.map('radiusMap').setView([30, 0], 2);
-        new L.TileLayer(OSMURL, {minZoom: 0, maxZoom: 18}).addTo(radiusOpenStreetMap);
-        datePickersRadiusWidgetFrom = $( "#datepickerRadiusFrom" )
-        datePickersRadiusWidgetFrom.datepicker(datePickerRadiusOptions);
-        datePickersRadiusWidgetFrom.datepicker("setDate", new Date());
-        datePickersRadiusWidgetTo = $( "#datepickerRadiusTo" )
-        datePickersRadiusWidgetTo.datepicker(datePickerRadiusOptions);
-        datePickersRadiusWidgetTo.datepicker("setDate", new Date());
-
-        circleRadius = L.circle(radiusOpenStreetMap.getCenter(), {
-            color: 'red',
-            fillColor: '#f03',
-            fillOpacity: 0.4,
-            radius: getScale(radiusOpenStreetMap.getZoom())
-        }).addTo(radiusOpenStreetMap);
-
-        radiusOpenStreetMap.on('move', updateRadius);
-
-        $( "#zoom_selector" ).change(function() {
-            var sel = parseInt($( this ).val());
-            ZOOMLEVEL = sel;
-            updateAll();
-        });
-
-        
-        updateAll();
-        setInterval(function(){ 
-            updateAll(); 
-            $("#alertUpdate").fadeIn(2200).fadeOut(2200);
-        }, updateFrequency);
-
-    });
+        /* DATA FROM CONF */
+        var default_zoom_level = {{ zoomlevel }};
+        var default_updateFrequency = {{ default_updateFrequency }};
 
     </script>
+    <script src="{{ url_for('static', filename='js/geo.js') }}"></script>
 
 </body>
 

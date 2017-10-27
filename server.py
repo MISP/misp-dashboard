@@ -125,7 +125,10 @@ def index():
 
 @app.route("/geo")
 def geo():
-    return render_template('geo.html')
+    return render_template('geo.html',
+            zoomlevel=cfg.getint('GEO' ,'zoomlevel'),
+            default_updateFrequency=cfg.getint('GEO' ,'updateFrequency')
+            )
 
 @app.route("/_getTopCoord")
 def getTopCoord():
