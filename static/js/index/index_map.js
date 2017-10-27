@@ -175,8 +175,11 @@ $(function(){
               values: [],
               min: 0,
               max: 10,
-              scale: ['#CD5C5C','#E34234','#D73B3E','#CE1620','#CC0000','#B22222','#B31B1B','#A40000','#800000','#701C1C','#3C1414','#321414'],
-              normalizeFunction: 'polynomial'
+              scale: ['#003FBF','#0063BF','#0087BF','#00ACBF','#00BFAD','#00BF89','#00BF64','#00BF40','#00BF1C','#08BF00','#2CBF00','#51BF00','#75BF00','#99BF00','#BEBF00','#BF9B00','#BF7700','#BF5200','#BF2E00','#BF0900'],
+              normalizeFunction: 'linear',
+              legend: {
+                  horizontal: true
+              }
             }]
         },
     });

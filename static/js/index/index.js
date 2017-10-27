@@ -10,7 +10,7 @@ for(i=0; i<maxNumPoint; i++) {
 
 class LedManager {
     constructor() {
-        this._feedLedsTimeout = setTimeout(function(){ this.manageColors(); }, feedStatusFreqCheck);
+        this._feedLedsTimeout = setTimeout(function(){ ledmanager.manageColors(); }, feedStatusFreqCheck);
         this._feedLedKeepAlive = {};
         this._allFeedName = [];
         this._ledNum = 0;

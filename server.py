@@ -16,16 +16,16 @@ cfg.read(configfile)
 app = Flask(__name__)
 
 redis_server_log = redis.StrictRedis(
-        host=cfg.get('RedisLog', 'host'),
-        port=cfg.getint('RedisLog', 'port'),
+        host=cfg.get('RedisGlobal', 'host'),
+        port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisLog', 'db'))
 redis_server_map = redis.StrictRedis(
-        host=cfg.get('RedisMap', 'host'),
-        port=cfg.getint('RedisMap', 'port'),
+        host=cfg.get('RedisGlobal', 'host'),
+        port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisMap', 'db'))
 serv_redis_db = redis.StrictRedis(
-        host=cfg.get('RedisDB', 'host'),
-        port=cfg.getint('RedisDB', 'port'),
+        host=cfg.get('RedisGlobal', 'host'),
+        port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisDB', 'db'))
 
 subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)

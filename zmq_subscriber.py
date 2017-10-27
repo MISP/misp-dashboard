@@ -25,16 +25,16 @@ CHANNEL_PROC = cfg.get('RedisMap', 'channelProc')
 PATH_TO_DB = cfg.get('RedisMap', 'pathMaxMindDB')
 
 serv_log = redis.StrictRedis(
-        host=cfg.get('RedisLog', 'host'),
-        port=cfg.getint('RedisLog', 'port'),
+        host=cfg.get('RedisGlobal', 'host'),
+        port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisLog', 'db'))
 serv_coord = redis.StrictRedis(
-        host=cfg.get('RedisMap', 'host'),
-        port=cfg.getint('RedisMap', 'port'),
+        host=cfg.get('RedisGlobal', 'host'),
+        port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisMap', 'db'))
 serv_redis_db = redis.StrictRedis(
-        host=cfg.get('RedisDB', 'host'),
-        port=cfg.getint('RedisDB', 'port'),
+        host=cfg.get('RedisGlobal', 'host'),
+        port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisDB', 'db'))
 
 reader = geoip2.database.Reader(PATH_TO_DB)
