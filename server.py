@@ -194,14 +194,8 @@ def getCoordsByRadius():
                 dico_coord[str(coord)] = [data]
 
         for dicoCoord, array in dico_coord.items():
-            print(array)
             dicoCoord = json.loads(dicoCoord)
             to_return.append([array, dicoCoord])
-
-        #res = [ [json.loads(data), coord] for data, coord in res ] #correctly send the json
-        #to_return.append(res)
-        import pprint
-        pprint.pprint(to_return)
 
     return jsonify(to_return)
 
