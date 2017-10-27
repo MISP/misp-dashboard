@@ -153,8 +153,10 @@ def getHitMap():
     return jsonify(data)
 
 def isCloseTo(coord1, coord2):
-    if abs(float(coord1[0]) - float(coord2[0])) <= 0.0001:
-        if abs(float(coord1[1]) - float(coord2[1])) <= 0.0001:
+    clusterMeter = cfg.getfloat('GEO' ,'clusteringDistance')
+    clusterThres = math.pow(10, len(str(abs(clusterMeter)))-7) #map meter to coord threshold (~ big approx)
+    if abs(float(coord1[0]) - float(coord2[0])) <= clusterThres:
+        if abs(float(coord1[1]) - float(coord2[1])) <= clusterThres:
             return True
     return False
 
