@@ -265,17 +265,36 @@ function slideAndMax(orig, newData) {
     return [curMaxDataNumLog, slided];
 }
 
+function addObjectToLog(name, obj, td) {
+    if(name == "Tag") {
+        td.appendChild(document.createTextNode('tag'));
+    } else if (name == "mispObject") {
+        td.appendChild(document.createTextNode('mispObj'));
+    } else {
+        td.appendChild(document.createTextNode('nop'));
+
+    }
+}
+
 function createRow(tableBody, log) {
     var tr = document.createElement('TR');
 
     for (var key in log) {
         if (log.hasOwnProperty(key)) {
             var td = document.createElement('TD');
-            var textToAddArray = log[key].split(char_separator);
-            for(var i in textToAddArray){
-                if (i > 0)
-                    td.appendChild(document.createElement("br"));
-                td.appendChild(document.createTextNode(textToAddArray[i]));
+            if(typeof log[key] === 'object') { //handle list of objects
+                theObj = log[key];
+                for(var objI in theObj.data) {
+                    addObjectToLog(theObj.name, theObj.data[objI], td);
+                }
+
+            } else {
+                var textToAddArray = log[key].split(char_separator);
+                for(var i in textToAddArray){
+                    if (i > 0)
+                        td.appendChild(document.createElement("br"));
+                    td.appendChild(document.createTextNode(textToAddArray[i]));
+                }
             }
             tr.appendChild(td);
         }

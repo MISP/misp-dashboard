@@ -86,6 +86,22 @@ def getCoordAndPublish(zmq_name, supposed_ip, categ):
     except ValueError:
         print("can't resolve ip")
 
+def getFields(obj, fields):
+    jsonWalker = fields.split('.')
+    itemToExplore = obj
+    lastName = ""
+    try:
+        for i in jsonWalker:
+            itemToExplore = itemToExplore[i]
+            lastName = i
+        if type(itemToExplore) is list:
+            return { 'name': lastName , 'data': itemToExplore }
+        else:
+            return itemToExplore
+    except KeyError as e:
+        return ""
+
+
 ##############
 ## HANDLERS ##
 ##############
@@ -114,14 +130,6 @@ def handler_event(zmq_name, jsonevent):
                 handler_attribute(zmq_name, attr)
         else:
             handler_attribute(zmq_name, attributes)
-
-
-def getFields(obj, fields):
-    jsonWalker = fields.split('.')
-    itemToExplore = obj
-    for i in jsonWalker:
-        itemToExplore = itemToExplore[i]
-    return itemToExplore
 
 def handler_attribute(zmq_name, jsonobj):
     # check if jsonattr is an attribute object
