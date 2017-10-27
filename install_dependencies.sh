@@ -41,10 +41,16 @@ mkdir -p static/css/images
 mv -f temp/jquery-ui-${JQUERYUIVERSION}/images/* ./static/css/images/
 
 # boostrap
+BOOTSTRAP_VERSION='4.0.0-beta.2'
+wget https://github.com/twbs/bootstrap/releases/download/v${BOOTSTRAP_VERSION}/bootstrap-${BOOTSTRAP_VERSION}-dist.zip -O temp/bootstrap-${BOOTSTRAP_VERSION}.zip
+unzip -o temp/bootstrap-${BOOTSTRAP_VERSION}.zip -d temp/bootstrap-${BOOTSTRAP_VERSION}-dist/
+mv temp/bootstrap-${BOOTSTRAP_VERSION}-dist/js/* ./static/js/
+mv temp/bootstrap-${BOOTSTRAP_VERSION}-dist/css/* ./static/css/
+
+# sb-admin2
 SBADMIN_VERSION='3.3.7'
 wget https://github.com/BlackrockDigital/startbootstrap-sb-admin-2/archive/v${SBADMIN_VERSION}.zip -O temp/${SBADMIN_VERSION}-2.zip
 unzip -o temp/${SBADMIN_VERSION}-2.zip -d temp/
-#mv temp/sb-admin-2/startbootstrap-sb-admin-2-${SBADMIN_VERSION} temp/sb-admin-2
 
 mv temp/startbootstrap-sb-admin-2-${SBADMIN_VERSION}/dist/js/* ./static/js/
 mv temp/startbootstrap-sb-admin-2-${SBADMIN_VERSION}/dist/css/* ./static/css/
