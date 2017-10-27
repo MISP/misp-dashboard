@@ -37,8 +37,8 @@ wget https://jqueryui.com/resources/download/jquery-ui-${JQUERYUIVERSION}.zip -O
 unzip -o temp/jquery-ui.zip -d temp/
 mv temp/jquery-ui-${JQUERYUIVERSION}/jquery-ui.min.js ./static/js/jquery-ui.min.js
 mv temp/jquery-ui-${JQUERYUIVERSION}/jquery-ui.min.css ./static/css/jquery-ui.min.css
-rm -r static/css/images
-mv -f temp/jquery-ui-${JQUERYUIVERSION}/images ./static/css
+mkdir -p static/css/images
+mv -f temp/jquery-ui-${JQUERYUIVERSION}/images/* ./static/css/images/
 
 # boostrap
 SBADMIN_VERSION='3.3.7'
