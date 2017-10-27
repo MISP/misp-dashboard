@@ -157,7 +157,7 @@ small {
                         <!-- /.panel -->
                         <div id="panelLineChart"  class="panel panel-default" style="margin-top: 15px; height: {{ pannelSize[1] }}vh;">
                             <div class="panel-heading">
-                                <i class="fa fa-bar-chart-o fa-fw"></i> Categories overtime (hours)
+                                <i class="fa fa-bar-chart-o fa-fw"></i> <strong>{{ itemToPlot }}</strong> overtime (hours)
                             </div>
                             <div id="panelbody" class="panel-body" style="width:100%; height: 100%;">
                                 <div id="feedDiv3" style="width:100%; height: calc(100% - 46px); position: relative;"></div>
@@ -241,6 +241,7 @@ small {
         var linkForDefaultMap = "{{ url_for('static', filename='maps/default.png') }}";
 
         /* DATA FROM CONF */
+        var itemToPlot = "{{ itemToPlot }}";
         var graph_log_refresh_rate = {{ graph_log_refresh_rate }};
         var char_separator = "{{ char_separator }}";
         var rotation_wait_time = {{ rotation_wait_time }};

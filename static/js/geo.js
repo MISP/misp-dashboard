@@ -110,8 +110,15 @@ $(document).ready(function () {
 
 /* TOP LOCATION */
 
-function updateTopMaps(dayNum) {
-    $.getJSON(urlTopCoord+"?dayNum="+dayNum, function(list){
+function updateTopMaps(date) {
+    $.getJSON(urlTopCoord+"?date="+date.getTime()/1000, function(list){
+        if (list.length==0) {
+            for(var i=0; i<6; i++) { // clear maps
+                allOpenStreetMap[i+1].setView([0, 0], 1);
+                savedMarker[i+1].remove(); // remove marker
+            }
+            savedMarker = {};
+        }
         for(var i=0; i<6 && i<list.length; i++) {
             // create marker + flyToIt
             coordJson = JSON.parse(list[i][0]);
@@ -121,7 +128,7 @@ function updateTopMaps(dayNum) {
             var markerToUpdate = savedMarker[i+1];
             if (markerToUpdate != undefined) {
                 markerToUpdate.setLatLng({lat: coordJson.lat, lng: coordJson.lon});
-                markerToUpdate._popup._content = 'lat: '+coordJson.lat+', lon: '+coordJson.lon+' - '+list[i][1];
+                markerToUpdate._popup.setContent('lat: '+coordJson.lat+', lon: '+coordJson.lon+' (<strong>'+list[i][1]+'</strong>)');
                 markerToUpdate.update();
             } else { // create new marker
                 var marker = L.marker([coordJson.lat, coordJson.lon]).addTo(allOpenStreetMap[i+1]);
@@ -135,8 +142,10 @@ function updateTopMaps(dayNum) {
 
 /* WORLD MAP */
 
-function updateWorldMap(dayNum) {
-     $.getJSON(urlHitMap+"?dayNum="+dayNum, function(list){
+function updateWorldMap(date) {
+     $.getJSON(urlHitMap+"?date="+date.getTime()/1000, function(list){
+        regionhits = {};
+        worldMapObj.series.regions[0].clear();
         for(var i=0; i<list.length; i++) {
             var rCode = list[i][0];
             var rNum = list[i][1];
@@ -148,8 +157,7 @@ function updateWorldMap(dayNum) {
 function update_region(regionCode, num) {
     regionhits[regionCode] = num;
     // Force recomputation of min and max for correct color scaling
-    regionhitsMax = regionhitsMax >= regionhits[regionCode] ? regionhitsMax : regionhits[regionCode];
-    worldMapObj.series.regions[0].params.max = regionhitsMax;
+    worldMapObj.series.regions[0].params.max = undefined;
     worldMapObj.series.regions[0].legend.render();
     // Update data
     worldMapObj.series.regions[0].setValues(regionhits);
@@ -210,6 +218,6 @@ function updateAll() {
     var currentDate = datePickerWidget.datepicker( "getDate" );
     var now = new Date();
     var numDay = days_between(now, currentDate);
-    updateTopMaps(numDay);
-    updateWorldMap(numDay);
+    updateTopMaps(currentDate);
+    updateWorldMap(currentDate);
 }

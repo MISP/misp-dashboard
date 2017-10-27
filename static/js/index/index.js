@@ -3,6 +3,7 @@ var maxNumPoint = hours_spanned;
 var keepaliveTime = 0;
 var emptyArray = [];
 var _timeoutLed;
+var toPlotLocationLog;
 for(i=0; i<maxNumPoint; i++) {
     emptyArray.push([i, 0]);
 }
@@ -233,10 +234,11 @@ function updateLogTable(feedName, log, zmqName) {
 
     // only add row for attribute
     if (feedName == "Attribute" ) {
-        var categName = log[2];
+        var categName = log[toPlotLocationLog];
         sources.addIfNotPresent(categName);
         sources.incCountOnSource(categName);
         sources.incCountOnSource('global');
+        updateChartDirect();
         createRow(tableBody, log);
 
         // Remove old row
@@ -320,14 +322,15 @@ function createHead(callback) {
         return
     $.getJSON( urlForHead, function( data ) {
         var tr = document.createElement('TR');
-        for (head of data) {
+        for (i in data) {
+            var head = data[i];
             var th = document.createElement('TH');
+            if (head == itemToPlot) {
+                toPlotLocationLog = i;
+            }
             th.appendChild(document.createTextNode(head));
             tr.appendChild(th);
         }
-        //var action = document.createElement('TH');
-        //action.appendChild(document.createTextNode("Actions"));
-        //tr.appendChild(action);
         document.getElementById('table_log_head').appendChild(tr);
         callback();
     });

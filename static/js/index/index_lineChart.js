@@ -51,7 +51,7 @@ function updateChartDirect() {
     plotLineChart.getOptions().yaxes[0].max = sources.getGlobalMax();
     plotLineChart.setupGrid();
     plotLineChart.draw();
-    setTimeout(updateChartDirect, updateIntervalDirect);
+    //setTimeout(updateChartDirect, updateIntervalDirect);
 }
 updateChartDirect()
 

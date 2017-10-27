@@ -91,11 +91,8 @@ class EventMessage():
         to_ret = { 'log': self.feed, 'feedName': self.feedName, 'zmqName': self.zmqName }
         return 'data: {}\n\n'.format(json.dumps(to_ret))
 
-def getZrange(keyCateg, dayNum, topNum):
-    aDateTime = datetime.datetime.now()
-    correctDatetime = aDateTime - datetime.timedelta(days = dayNum) 
-
-    date_str = str(correctDatetime.year)+str(correctDatetime.month)+str(correctDatetime.day)
+def getZrange(keyCateg, date, topNum):
+    date_str = str(date.year)+str(date.month)+str(date.day)
     keyname = "{}:{}".format(keyCateg, date_str)
     data = serv_redis_db.zrange(keyname, 0, 5, desc=True, withscores=True)
     data = [ [record[0].decode('utf8'), record[1]] for record in data ] 
@@ -114,6 +111,7 @@ def index():
     return render_template('index.html', 
             pannelSize=pannelSize,
             size_dashboard_width=[cfg.getint('Dashboard' ,'size_dashboard_left_width'), 12-cfg.getint('Dashboard', 'size_dashboard_left_width')],
+            itemToPlot=cfg.get('Dashboard', 'item_to_plot'),
             graph_log_refresh_rate=cfg.getint('Dashboard' ,'graph_log_refresh_rate'),
             char_separator=cfg.get('Log', 'char_separator'),
             rotation_wait_time=cfg.getint('Dashboard' ,'rotation_wait_time'),
@@ -133,23 +131,23 @@ def geo():
 @app.route("/_getTopCoord")
 def getTopCoord():
     try:
-        dayNum = int(request.args.get('dayNum'))
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
     except:
-        dayNum = 0
+        date = datetime.datetime.now()
     keyCateg = "GEO_COORD"
     topNum = 6 # default Num
-    data = getZrange(keyCateg, dayNum, topNum)
+    data = getZrange(keyCateg, date, topNum)
     return jsonify(data)
 
 @app.route("/_getHitMap")
 def getHitMap():
     try:
-        dayNum = int(request.args.get('dayNum'))
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
     except:
-        dayNum = 0
+        date = datetime.datetime.now()
     keyCateg = "GEO_COUNTRY"
     topNum = -1 # default Num
-    data = getZrange(keyCateg, dayNum, topNum)
+    data = getZrange(keyCateg, date, topNum)
     return jsonify(data)
 
 def isCloseTo(coord1, coord2):

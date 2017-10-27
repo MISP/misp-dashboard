@@ -1,6 +1,9 @@
 #!/usr/bin/env python3.5
 
 import time, datetime
+import copy
+from collections import OrderedDict
+from pprint import pprint
 import zmq
 import redis
 import random
@@ -69,8 +72,11 @@ def getCoordAndPublish(zmq_name, supposed_ip, categ):
         rep = ip_to_coord(supposed_ip)
         coord = rep['coord']
         coord_dic = {'lat': coord['lat'], 'lon': coord['lon']}
+        ordDic = OrderedDict()
+        ordDic['lat'] = coord_dic['lat']
+        ordDic['lon'] = coord_dic['lon']
         coord_list = [coord['lat'], coord['lon']]
-        push_to_redis_zset('GEO_COORD', json.dumps(coord_dic))
+        push_to_redis_zset('GEO_COORD', json.dumps(ordDic))
         push_to_redis_zset('GEO_COUNTRY', rep['full_rep'].country.iso_code)
         push_to_redis_geo('GEO_RAD', coord['lon'], coord['lat'], json.dumps({ 'categ': categ, 'value': supposed_ip }))
         to_send = {
@@ -85,6 +91,8 @@ def getCoordAndPublish(zmq_name, supposed_ip, categ):
         serv_coord.publish(CHANNELDISP, json.dumps(to_send))
     except ValueError:
         print("can't resolve ip")
+    except ip2.errors.AddressNotFoundError:
+        print("Address not in Database")
 
 def getFields(obj, fields):
     jsonWalker = fields.split('.')
@@ -110,6 +118,10 @@ def handler_log(zmq_name, jsonevent):
     print('sending', 'log')
     return
 
+def handler_dispatcher(zmq_name, jsonObj):
+    if "Event" in jsonObj:
+        handler_event(zmq_name, jsonObj)
+
 def handler_keepalive(zmq_name, jsonevent):
     print('sending', 'keepalive')
     to_push = [ jsonevent['uptime'] ]
@@ -119,15 +131,17 @@ def handler_sighting(zmq_name, jsonsight):
     print('sending' ,'sighting')
     return
 
-def handler_event(zmq_name, jsonevent):
+def handler_event(zmq_name, jsonobj):
     #fields: threat_level_id, id, info
-    jsonevent = jsonevent['Event']
+    jsonevent = jsonobj['Event']
     #redirect to handler_attribute
     if 'Attribute' in jsonevent:
         attributes = jsonevent['Attribute']
         if type(attributes) is list:
             for attr in attributes:
-                handler_attribute(zmq_name, attr)
+                jsoncopy = copy.deepcopy(jsonobj)
+                jsoncopy['Attribute'] = attr
+                handler_attribute(zmq_name, jsoncopy)
         else:
             handler_attribute(zmq_name, attributes)
 
@@ -176,7 +190,7 @@ def main(zmqName):
 
 
 dico_action = {
-        "misp_json":                handler_log,
+        "misp_json":                handler_dispatcher,
         "misp_json_event":          handler_event,
         "misp_json_self":           handler_keepalive,
         "misp_json_attribute":      handler_attribute,
