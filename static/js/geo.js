@@ -126,7 +126,7 @@ function updateTopMaps(dayNum) {
             } else { // create new marker
                 var marker = L.marker([coordJson.lat, coordJson.lon]).addTo(allOpenStreetMap[i+1]);
                 savedMarker[i+1] = marker;
-                marker.bindPopup('lat: '+coordJson.lat+', lon: '+coordJson.lon+' (<strong>'+list[i][1]+')').openPopup();
+                marker.bindPopup('lat: '+coordJson.lat+', lon: '+coordJson.lon+' (<strong>'+list[i][1]+'</strong>)').openPopup();
             }
         }
     });
