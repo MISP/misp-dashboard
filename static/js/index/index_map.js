@@ -1,6 +1,6 @@
 const MAXNUMCOORD = 100;
 const PINGWAITTIME = 1000*1; //1s
-const MAXIMGROTATION = max_img_rotation;
+const MAXIMGROTATION = parseInt(max_img_rotation);
 
 const OSMURL='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const OSMATTRIB='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
@@ -44,11 +44,11 @@ class MapEventManager {
     }
 
     addMapEvent(mapevent) {
-        if(this._mapEventArray.length >= MAXIMGROTATION) {
+        if(this.getNumberOfEvent() > MAXIMGROTATION) {
             var toDel = this._mapEventArray[0];
             toDel.marker.remove(); // remove marker
             this._coordSet.delete(toDel.text);
-            this._mapEventArray.slice(1);
+            this._mapEventArray = this._mapEventArray.slice(1);
         }
 
         if(!this._coordSet.has(mapevent.text)) { // avoid duplicate map
@@ -124,7 +124,7 @@ class MapEventManager {
 
             this._curMarkerNum = this._curMarkerNum >= MAXNUMCOORD ? 0 : this._curMarkerNum+1;
             if (this._allMarkers.length >= MAXNUMCOORD) {
-                to_remove = this._allMarkers[0];
+                var to_remove = this._allMarkers[0];
                 openStreetMapObj.removeMarkers([to_remove]);
                 this._allMarkers = this._allMarkers.slice(1);
             }

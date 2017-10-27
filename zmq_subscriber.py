@@ -91,7 +91,7 @@ def getCoordAndPublish(zmq_name, supposed_ip, categ):
         serv_coord.publish(CHANNELDISP, json.dumps(to_send))
     except ValueError:
         print("can't resolve ip")
-    except ip2.errors.AddressNotFoundError:
+    except geoip2.errors.AddressNotFoundError:
         print("Address not in Database")
 
 def getFields(obj, fields):
