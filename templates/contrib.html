@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>MISP live dashboard</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/sb-admin-2.css') }}" rel="stylesheet">
+    <!-- LeafLet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.css') }}">
+    <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+
+    <!-- jQuery -->
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- jQuery flot -->
+    <script src="{{ url_for('static', filename='js/jquery.flot.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.flot.pie.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.flot.resize.js') }}"></script>
+    <!-- Bootstrap Core JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-jvectormap-2.0.3.css') }}" type="text/css" media="screen"/>
+    <script src="{{ url_for('static', filename='js/jquery-jvectormap-2.0.3.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery-jvectormap-world-mill.js') }}"></script>
+    <link href="{{ url_for('static', filename='css/jquery-ui.min.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='css/dataTables.bootstrap.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dataTables.bootstrap.js') }}"></script>
+
+
+    <script src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ranking.css') }}">
+
+</head>
+
+<style>
+.panel-body {
+    padding: 0px;
+}
+ .panel {
+     margin-bottom: 10px;
+ }
+
+.col-lg-6 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.col-lg-8 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.col-lg-4 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.leftSepa {
+    border-left-color: rgb(221, 221, 221);
+    border-left-style: solid;
+    border-left-width: 2px;
+    padding-left: 8px;
+}
+
+.textTopHeader {
+    height: 50px;
+    text-align: center;
+    margin-left: 8px;
+    float: left;
+    padding-top: 9px;
+}
+
+.center {
+  display:block;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+small {
+    font-size: 100%;
+    font-weight: bold;
+}
+
+</style>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0; padding-left: 15px;">
+            <div class="navbar-header">
+                <img src="{{ url_for('static', filename='pics/MISP.png') }}" alt="MISP" style="float: left; height: 40px; margin-top: 5px;"><a class="navbar-brand dropdown-toggle" data-toggle="dropdown" href="#">MISP Contributors
+                    <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                      <li><a href="{{ url_for('index') }}">MISP Live Dashboard</a></li>
+                      <li><a href="{{ url_for('geo') }}">MISP Geolocalisation</a></li>
+                      <li><a href="{{ url_for('contrib') }}">MISP Contributors</a></li>
+                    </ul>
+            </div>
+            <!-- /.navbar-header -->
+        </nav>
+
+        <!-- Page Content -->
+        <div id="page-wrapper" style="margin: 0px; padding: 0px;">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div style="height: 10px;"></div>
+                        <div class="col-lg-8">
+
+                            <div class="panel panel-default" style="height: 100%;">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <i class="fa fa-fire" style="margin-right: 5px;"></i><b>Contributor Ranking</b>
+                                </div>
+                                <div id="panelRanking" class="panel-body" style="height: 100%;">
+
+                                    <div class="table-responsive">
+                                        <table id="topContribTable" class="table table-hover table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th></th>
+                                                    <th></th>
+                                                    <th>Logo</th>
+                                                    <th>Organization name</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                </div>
+                                <!-- /.panel-body -->
+                            </div><!-- /.panel -->
+
+
+                        </div><!-- /.col-lg-8 -->
+
+
+                        <div class="col-lg-4">
+
+                            <div class="panel panel-default" style="height: 100%;">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <i class="fa fa-star" style="margin-right: 5px;"></i><b>Hall Of Fame</b>
+                                </div>
+                                <div id="panelRanking" class="panel-body" style="height: 100%;">
+
+                                    <div class="table-responsive">
+                                        <table id="fameTable" class="table table-hover table-striped" style="margin-bottom: 0px;">
+                                            <thead>
+                                                <tr>
+                                                    <th></th>
+                                                    <th>Logo</th>
+                                                    <th>Organization name</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id=fameTableBody>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                </div>
+                                <!-- /.panel-body -->
+                            </div><!-- /.panel -->
+
+                            <div class="panel panel-default" style="height: 100%;">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <i class="fa fa-line-chart" style="margin-right: 5px;"></i><b>Top 5 Contributor overtime</b>
+                                </div>
+                                <div id="panelRanking" class="panel-body" style="height: 100%;">
+                                    <div id="divTop5Overtime" style="height: 20vh"></div>
+                                </div>
+                                <!-- /.panel-body -->
+
+                            </div><!-- /.panel -->
+
+                        </div><!-- /.col-lg-4 -->
+
+                    </div><!-- /.col-lg-12 -->
+                </div><!-- /.row -->
+
+            </div> <!-- /.container-fluid -->
+
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+<!-- /#wrapper -->
+    <!-- Index -->
+    <script>
+        /* URL */
+
+        /* DATA FROM CONF */
+
+        function create_stars_dom(n) {
+            var n = 4-n; //1 is best -> 3 stars
+            var div = document.createElement('DIV');
+            div.classList.add('ranking');
+            for(var i=1; i<=n; i++) {
+                var span = document.createElement('span');
+                span.classList.add("glyphicon");
+                span.classList.add("glyphicon-star");
+                span.classList.add("star"+n+"-"+i);
+                div.appendChild(span);
+            }
+            return div.outerHTML;
+        }
+
+        var datatableIndex = 1;
+        function getIndexRank() {
+            var to_return;
+            switch (datatableIndex) {
+                case 1:
+                    to_return = create_stars_dom(1);
+                    break;
+                case 2:
+                    to_return = create_stars_dom(2);
+                    break;
+                case 3:
+                    to_return = create_stars_dom(3);
+                    break;
+
+                default:
+                    to_return = datatableIndex;
+            }
+            datatableIndex++;
+            return to_return;
+        }
+
+        var datatableTop;
+        var datatableFame;
+        var optionDatatable = {
+            responsive: true,
+            searching: false,
+            ordering: false,
+            order: [[0, "asc"]],
+            scrollY:        '50vh',
+            scrollCollapse: true,
+            paging:         false,
+            "language": {
+                "lengthMenu": "",
+                "info": "",
+                "infoFiltered": "",
+                "infoEmpty": "",
+            },
+            "info": false,
+            "columnDefs": [
+              { className: "centerCell", "targets": [ 0 ] }
+            ]
+        };
+
+        $(document).ready(function() {
+            datatableTop = $('#topContribTable').DataTable(optionDatatable);
+            datatableFame = $('#fameTable').DataTable(optionDatatable);
+            // top contributors
+            $.getJSON( "{{ url_for('getTopContributor') }}", function( data ) {
+                for (i in data) {
+                    var row = data[i];
+                    var to_add = [
+                        getIndexRank(),
+                        row.progression,
+                        row.logo_path,
+                        row.org
+                    ];
+                    datatableTop.row.add(to_add);
+                }
+                datatableTop.draw();
+            });
+
+            // hall of fame
+            $.getJSON( "{{ url_for('getTopContributor') }}", function( data ) {
+                datatableIndex = 1;
+                var table = document.getElementById('fameTableBody');
+                for (i in data) {
+                    var row = data[i];
+                    var to_add = [
+                        getIndexRank(),
+                        row.logo_path,
+                        row.org
+                    ];
+                    datatableFame.row.add(to_add);
+                }
+                datatableFame.draw();
+            });
+
+            // top 5 contrib overtime
+            $.getJSON( "{{ url_for('getTop5Overtime') }}", function( data ) {
+                var plotLineChart = $.plot("#divTop5Overtime", data, optionsLineChart);
+            });
+        });
+
+        var optionsLineChart = {
+            series: {
+                    shadowSize: 0 ,
+                    lines: {
+                        fill: true,
+                        fillColor: {
+                            colors: [ { opacity: 1 }, { opacity: 0.1 } ]
+                        }
+                    }
+            },
+            points: { show: true },
+            lines: { show: true, fill: true },
+            grid: {
+                tickColor: "#dddddd",
+                borderWidth: 0
+            },
+            legend: {
+                show: true,
+                position: "nw"
+            }
+        };
+    </script>
+
+</body>
+
+</html>

@@ -95,7 +95,7 @@ def getZrange(keyCateg, date, topNum):
     date_str = str(date.year)+str(date.month)+str(date.day)
     keyname = "{}:{}".format(keyCateg, date_str)
     data = serv_redis_db.zrange(keyname, 0, 5, desc=True, withscores=True)
-    data = [ [record[0].decode('utf8'), record[1]] for record in data ] 
+    data = [ [record[0].decode('utf8'), record[1]] for record in data ]
     return data
 
 
@@ -108,7 +108,7 @@ def index():
             "{:.0f}".format(cfg.getint('Dashboard' ,'size_world_pannel_perc')/100*ratioCorrection),
             "{:.0f}".format((100-cfg.getint('Dashboard' ,'size_world_pannel_perc'))/100*ratioCorrection)
             ]
-    return render_template('index.html', 
+    return render_template('index.html',
             pannelSize=pannelSize,
             size_dashboard_width=[cfg.getint('Dashboard' ,'size_dashboard_left_width'), 12-cfg.getint('Dashboard', 'size_dashboard_left_width')],
             itemToPlot=cfg.get('Dashboard', 'item_to_plot'),
@@ -127,6 +127,47 @@ def geo():
             zoomlevel=cfg.getint('GEO' ,'zoomlevel'),
             default_updateFrequency=cfg.getint('GEO' ,'updateFrequency')
             )
+
+@app.route("/contrib")
+def contrib():
+    return render_template('contrib.html',
+            )
+
+@app.route("/_getTopContributor")
+def getTopContributor():
+    data = [
+        {
+            'progression': '',
+            'logo_path': 'logo1',
+            'org': 'CIRCL',
+        },
+        {
+            'progression': '',
+            'logo_path': 'logo2',
+            'org': 'CASES',
+        },
+        {
+            'progression': '',
+            'logo_path': 'logo3',
+            'org': 'SMILE',
+        },
+        {
+            'progression': '',
+            'logo_path': 'logo4',
+            'org': 'ORG4',
+        },
+        {
+            'progression': '',
+            'logo_path': 'logo5',
+            'org': 'ORG5',
+        },
+    ]
+    return jsonify(data)
+
+@app.route("/_getTop5Overtime")
+def getTop5Overtime():
+    data = [{'label': 'CIRCL', 'data': [[0, 4], [1, 7], [2,14]]}, {'label': 'CASES', 'data': [[0, 1], [1, 5], [2,2]]}]
+    return jsonify(data)
 
 @app.route("/_getTopCoord")
 def getTopCoord():
