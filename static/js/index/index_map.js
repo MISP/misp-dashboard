@@ -30,6 +30,7 @@ class MapEvent {
 class MapEventManager {
     constructor() {
         this._mapEventArray = [];
+        this._currentMapEvent;
         this._nextEventToShow = 0;
         this._first_map = true;
         this._coordSet = new Set();
@@ -75,7 +76,12 @@ class MapEventManager {
     getNextEventToShow() {
         var toShow = this._mapEventArray[this._nextEventToShow];
         this._nextEventToShow = this._nextEventToShow == this._mapEventArray.length-1 ? 0 : this._nextEventToShow+1;
+        this._currentMapEvent = toShow;
         return toShow;
+    }
+
+    getCurrentMapEvent() {
+        return this._currentMapEvent;
     }
 
     // Perform the roration of the map in the openStreetMap pannel
@@ -94,6 +100,12 @@ class MapEventManager {
         if(ROTATIONWAITTIME != 0) {
             this._timeoutRotate = setTimeout(function(){ mapEventManager.rotateMap(); }, ROTATIONWAITTIME);
         }
+    }
+
+    directZoom() {
+        var mapEvent = this.getCurrentMapEvent();
+        if (mapEvent != undefined)
+            myOpenStreetMap.flyTo([mapEvent.coord.lat, mapEvent.coord.lon], ZOOMLEVEL);
     }
 
     ping() {
@@ -206,3 +218,26 @@ function connect_source_map() {
     };
 }
 connect_source_map()
+
+$(document).ready(function () {
+    $( "#rotation_wait_time_selector" ).change(function() {
+        var sel = parseInt($( this ).val());
+        if(isNaN(sel)) {
+            rotation_wait_time = 0;
+        } else {
+            rotation_wait_time = sel;
+        }
+        var old = ROTATIONWAITTIME;
+        ROTATIONWAITTIME = 1000*rotation_wait_time; //seconds
+        if(old == 0) {
+            mapEventManager._timeoutRotate = setTimeout(function(){ mapEventManager.rotateMap(); }, ROTATIONWAITTIME);
+        }
+    });
+
+    $( "#zoom_selector" ).change(function() {
+        var sel = parseInt($( this ).val());
+        ZOOMLEVEL = sel;
+        mapEventManager.directZoom();
+    });
+});
+

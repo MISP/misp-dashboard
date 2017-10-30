@@ -198,26 +198,6 @@ $(document).ready(function () {
 
     });
 
-    $( "#rotation_wait_time_selector" ).change(function() {
-        var sel = parseInt($( this ).val());
-        if(isNaN(sel)) {
-            rotation_wait_time = 0;
-        } else {
-            rotation_wait_time = sel;
-        }
-        var old = ROTATIONWAITTIME;
-        ROTATIONWAITTIME = 1000*rotation_wait_time; //seconds
-        if(old == 0) {
-            mapEventManager._timeoutRotate = setTimeout(function(){ mapEventManager.rotateMap(); }, ROTATIONWAITTIME);
-        }
-    });
-
-    $( "#zoom_selector" ).change(function() {
-        var sel = parseInt($( this ).val());
-        zoomlevel = sel;
-        ZOOMLEVEL = sel;
-    });
-
 });
 
 
