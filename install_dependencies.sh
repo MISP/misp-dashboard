@@ -72,6 +72,7 @@ unzip -o temp/leaflet.zip -d temp/
 
 mv temp/leaflet.js ./static/js/
 mv temp/leaflet.css ./static/css/
+mv temp/images/* ./static/css/images/
 
 # jvectormap
 JVECTORMAP_VERSION="2.0.3"
