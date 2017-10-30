@@ -3,14 +3,23 @@
 set -e
 set -x
 
-#sudo apt-get install python3-virtualenv
+sudo apt-get install python3-virtualenv -y
 
 if [ -z "$VIRTUAL_ENV" ]; then
     virtualenv -p python3 DASHENV
+
+    echo export DASH_HOME=$(pwd) >> ./DASHENV/bin/activate
+    echo export DASH_CONFIG=$(pwd)/config/ >> ./DASHENV/bin/activate
+
     . ./DASHENV/bin/activate
 fi
 
 pip3 install -U pip argparse redis zmq geoip2 flask
+
+## config
+if [ ! -f config/config.cfg ]; then
+    cp config/config.cfg.sample config/config.cfg
+fi
 
 ## Web stuff
 pushd static/

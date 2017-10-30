@@ -9,7 +9,7 @@ from time import sleep, strftime
 import datetime
 import os
 
-configfile = os.path.join(os.environ['VIRTUAL_ENV'], '../config.cfg')
+configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 

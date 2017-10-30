@@ -14,7 +14,7 @@ import sys
 import json
 import geoip2.database
 
-configfile = os.path.join(os.environ['VIRTUAL_ENV'], '../config.cfg')
+configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
