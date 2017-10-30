@@ -267,9 +267,27 @@ function slideAndMax(orig, newData) {
     return [curMaxDataNumLog, slided];
 }
 
+function getTextColour(rgb) {
+    var r = parseInt('0x'+rgb.substring(0,2));
+    var g = parseInt('0x'+rgb.substring(2,4));
+    var b = parseInt('0x'+rgb.substring(4,6));
+    var avg = ((2 * r) + b + (3 * g))/6;
+    if (avg < 128) {
+        return 'white';
+    } else {
+        return 'black';
+    }
+}
+
 function addObjectToLog(name, obj, td) {
     if(name == "Tag") {
-        td.appendChild(document.createTextNode('tag'));
+        var a = document.createElement('A');
+        a.classList.add('tagElem');
+        a.style.backgroundColor = obj.colour;
+        a.style.color = getTextColour(obj.colour.substring(1,6));
+        a.innerHTML = obj.name;
+        td.appendChild(a);
+        td.appendChild(document.createElement('br'));
     } else if (name == "mispObject") {
         td.appendChild(document.createTextNode('mispObj'));
     } else {
