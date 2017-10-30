@@ -112,7 +112,8 @@ $(document).ready(function () {
 
 function updateTopMaps(date) {
     $.getJSON(urlTopCoord+"?date="+date.getTime()/1000, function(list){
-        if (list.length==0) {
+        if (list.length==0 && savedMarker[1]!=undefined) { //No data and new markers
+            console.log(savedMarker.length);
             for(var i=0; i<6; i++) { // clear maps
                 allOpenStreetMap[i+1].setView([0, 0], 1);
                 savedMarker[i+1].remove(); // remove marker

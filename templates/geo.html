@@ -14,13 +14,26 @@
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='css/sb-admin-2.css') }}" rel="stylesheet">
-    <!-- Custom Fonts -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
-        integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
-        crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
-        integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
-        crossorigin=""></script>
+    <!-- LeafLet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.css') }}">
+    <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+
+    <!-- jQuery -->
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- jQuery flot -->
+    <script src="{{ url_for('static', filename='js/jquery.flot.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.flot.pie.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.flot.resize.js') }}"></script>
+    <!-- Bootstrap Core JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <link href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-jvectormap-2.0.3.css') }}" type="text/css" media="screen"/>
+    <script src="{{ url_for('static', filename='js/jquery-jvectormap-2.0.3.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery-jvectormap-world-mill.js') }}"></script>
+    <link href="{{ url_for('static', filename='css/jquery-ui.min.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
+
 
 </head>
 
@@ -210,22 +223,6 @@ small {
 
     </div>
 <!-- /#wrapper -->
-
-    <!-- jQuery -->
-    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <!-- jQuery flot -->
-    <script src="{{ url_for('static', filename='js/jquery.flot.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.flot.pie.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.flot.resize.js') }}"></script>
-    <!-- Bootstrap Core JavaScript -->
-    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-
-    <link href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-jvectormap-2.0.3.css') }}" type="text/css" media="screen"/>
-    <script src="{{ url_for('static', filename='js/jquery-jvectormap-2.0.3.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery-jvectormap-world-mill.js') }}"></script>
-    <link href="{{ url_for('static', filename='css/jquery-ui.min.css') }}" rel="stylesheet" type="text/css" />
-    <script src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
 
     <!-- Index -->
     <script> 
