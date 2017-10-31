@@ -26,6 +26,7 @@
     <script src="{{ url_for('static', filename='js/jquery.flot.resize.js') }}"></script>
     <!-- Bootstrap Core JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap3-typeahead.min.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-jvectormap-2.0.3.css') }}" type="text/css" media="screen"/>
@@ -112,6 +113,11 @@ small {
                       <li><a href="{{ url_for('geo') }}">MISP Geolocalisation</a></li>
                       <li><a href="{{ url_for('contrib') }}">MISP Contributors</a></li>
                     </ul>
+                <div id="ledsHolder" style="float: right; height: 50px;">
+                    <div class='leftSepa textTopHeader'>
+                        <strong>Your organisation name: <input type="text" id="orgName" data-provide="typeahead" size="30" style="margin-bottom: 5px;"></strong>
+                    </div>
+                </div>
             </div>
             <!-- /.navbar-header -->
         </nav>
@@ -278,39 +284,18 @@ small {
             return img.outerHTML;
         }
 
-        function create_stars_dom(n) {
-            var n = 4-n; //1 is best -> 3 stars
-            var div = document.createElement('DIV');
-            div.classList.add('ranking');
-            for(var i=1; i<=n; i++) {
-                var span = document.createElement('span');
-                span.classList.add("glyphicon");
-                span.classList.add("glyphicon-star");
-                span.classList.add("star"+n+"-"+i);
-                div.appendChild(span);
+        var allOrg = [];
+        var typeaheadOption = {
+            source: function (query, process) {
+                if (allOrg.length == 0) { // caching
+                    return $.getJSON("{{ url_for('getAllOrg') }}", function (data) {
+                            allOrg = data;
+                            return process(data);
+                    });
+                } else {
+                    return process(allOrg);
+                }
             }
-            return div.outerHTML;
-        }
-
-        var datatableIndex = 1;
-        function getIndexRank() {
-            var to_return;
-            switch (datatableIndex) {
-                case 1:
-                    to_return = create_stars_dom(1);
-                    break;
-                case 2:
-                    to_return = create_stars_dom(2);
-                    break;
-                case 3:
-                    to_return = create_stars_dom(3);
-                    break;
-
-                default:
-                    to_return = datatableIndex;
-            }
-            datatableIndex++;
-            return to_return;
         }
 
         var datatableTop;
@@ -367,6 +352,7 @@ small {
         };
 
         $(document).ready(function() {
+            $('#orgName').typeahead(typeaheadOption);
             datatableTop = $('#topContribTable').DataTable(optionDatatable_top);
             datatableFame = $('#fameTable').DataTable(optionDatatable_fame);
             datatableCateg = $('#categTable').DataTable(optionDatatable_Categ);
@@ -389,7 +375,6 @@ small {
 
             // hall of fame
             $.getJSON( "{{ url_for('getTopContributor') }}", function( data ) {
-                datatableIndex = 1;
                 for (i in data) {
                     var row = data[i];
                     i = parseInt(i);

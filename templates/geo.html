@@ -58,7 +58,7 @@
 }
 
 .textTopHeader {
-    height: 50px; 
+    height: 50px;
     text-align: center;
     margin-left: 8px;
     float: left;
@@ -90,6 +90,7 @@ small {
                     <ul class="dropdown-menu">
                       <li><a href="{{ url_for('index') }}">MISP Live Dashboard</a></li>
                       <li><a href="{{ url_for('geo') }}">MISP Geolocalisation</a></li>
+                      <li><a href="{{ url_for('contrib') }}">MISP Contributors</a></li>
                     </ul>
 
                 <div id="ledsHolder" style="float: right; height: 50px;">
@@ -184,7 +185,7 @@ small {
                         </div><!-- /.col-lg-6 -->
 
                         <div class="col-lg-6">
-                            
+
                             <div class="panel panel-default" style="height: 100%;">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
                                     <b id="worldMapHeader">Hit map </b>
@@ -198,7 +199,7 @@ small {
                             <div class="panel panel-default" style="height: 100%;">
                                 <div class="panel-heading bg-info" style="font-weight: bold; padding: 5px 10px;">
                                     <b id="radiusHeader" style="font-size: 18px;">Geospatial information</b>
-                                    <strong  class='leftSepa textTopHeader' style="float: none; padding: 11px;">Dates: 
+                                    <strong  class='leftSepa textTopHeader' style="float: none; padding: 11px;">Dates:
                                         <input type="text" id="datepickerRadiusFrom" size="20" style="">
                                         <input type="text" id="datepickerRadiusTo" size="20" style="">
                                     </strong>
@@ -225,7 +226,7 @@ small {
 <!-- /#wrapper -->
 
     <!-- Index -->
-    <script> 
+    <script>
         /* URL */
         var urlTopCoord = "{{ url_for('getTopCoord') }}";
         var urlHitMap = "{{ url_for('getHitMap') }}";
