@@ -1,0 +1,74 @@
+
+.ranking {
+    position: relative;
+    height: auto;
+}
+
+.table > tbody > tr > td.centerCell {
+    text-align: center;
+    min-width: 45px;
+}
+
+
+.table > tbody > tr > td.centerCellPic {
+    padding: 5px;
+}
+
+.star1-1{
+
+}
+
+.star2-1 {
+
+}
+.star2-2 {
+     left: 0px;
+}
+
+.star3-1 {
+    top: 6px;
+    left: 5px;
+}
+.star3-2 {
+    top: -8px;
+    left: 0px;
+}
+.star3-3 {
+    top: 6px;
+    left: -5px;
+}
+
+.star4-1 {
+
+}
+.star4-2 {
+    left: -6px;
+}
+.star4-3 {
+    left: -36px;
+    top: -10px;
+}
+.star4-4 {
+    left: -42px;
+    top: -10px;
+}
+
+.star5-1 {
+    top: 7px;
+}
+.star5-2 {
+    left: -3px;
+    top: 7px;
+}
+.star5-3 {
+    left: -37px;
+    top: -7px;
+}
+.star5-4 {
+    left: -47px;
+    top: -0px;
+}
+.star5-5 {
+    left: -57px;
+    top: -7px;
+}

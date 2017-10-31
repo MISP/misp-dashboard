@@ -65,6 +65,11 @@
     padding-left: 5px;
 }
 
+.col-lg-12 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
 .leftSepa {
     border-left-color: rgb(221, 221, 221);
     border-left-style: solid;
@@ -119,30 +124,117 @@ small {
                         <div style="height: 10px;"></div>
                         <div class="col-lg-8">
 
-                            <div class="panel panel-default" style="height: 100%;">
-                                <div class="panel-heading bg-info" style="font-weight: bold;">
-                                    <i class="fa fa-fire" style="margin-right: 5px;"></i><b>Contributor Ranking</b>
-                                </div>
-                                <div id="panelRanking" class="panel-body" style="height: 100%;">
-
-                                    <div class="table-responsive">
-                                        <table id="topContribTable" class="table table-hover table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th></th>
-                                                    <th></th>
-                                                    <th>Logo</th>
-                                                    <th>Organization name</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                            </tbody>
-                                        </table>
+                            <div class="col-lg-8">
+                                <div class="panel panel-default" style="height: 100%;">
+                                    <div class="panel-heading bg-info" style="font-weight: bold;">
+                                        <i class="fa fa-asterisk " style="margin-right: 5px;"></i><b>Contributor Ranking</b>
                                     </div>
+                                    <div id="panelRanking" class="panel-body" style="height: 100%;">
 
-                                </div>
-                                <!-- /.panel-body -->
-                            </div><!-- /.panel -->
+                                        <div class="table-responsive">
+                                            <table id="topContribTable" class="table table-hover table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th></th>
+                                                        <th></th>
+                                                        <th>Logo</th>
+                                                        <th>Organization name</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                    </div>
+                                    <!-- /.panel-body -->
+                                </div><!-- /.panel -->
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="panel panel-default" style="height: 100%;">
+                                    <div class="panel-heading bg-info" style="font-weight: bold;">
+                                        <i class="glyphicon glyphicon-fire " style="margin-right: 5px;"></i><b>Top progression</b>
+                                    </div>
+                                    <div id="panelProgress" class="panel-body" style="height: 100%;">
+
+                                        <div class="table-responsive">
+                                            <table id="topProgressTable" class="table table-hover table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th></th>
+                                                        <th></th>
+                                                        <th>Logo</th>
+                                                        <th>Organization name</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td><img src="{{ url_for('static', filename='pics/rankingMISP/5-1.png') }}" height=26px width=26px></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><img src="{{ url_for('static', filename='pics/rankingMISP/5-2.png') }}" height=26px width=26px></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><img src="{{ url_for('static', filename='pics/rankingMISP/5-3.png') }}" height=26px width=26px></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><img src="{{ url_for('static', filename='pics/rankingMISP/5-4.png') }}" height=26px width=26px></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><img src="{{ url_for('static', filename='pics/rankingMISP/5-5.png') }}" height=26px width=26px></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <!-- /.panel-body -->
+                                </div><!-- /.panel -->
+                            </div>
+
+                            <div class="col-lg-12">
+                                <div class="panel panel-default" style="height: 100%;">
+                                    <div class="panel-heading bg-info" style="font-weight: bold;">
+                                        <i class="fa fa-th-list " style="margin-right: 5px;"></i><b>Contributors and Categories</b>
+                                    </div>
+                                    <div id="panelRanking" class="panel-body" style="height: 100%;">
+
+                                        <div class="table-responsive">
+                                            <table id="categTable" class="table table-hover table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th></th>
+                                                        <th>Logo</th>
+                                                        <th>Organization name</th>
+                                                        <th>Network Activity</th>
+                                                        <th>Payload delivery</th>
+                                                        <th>Others</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                    </div>
+                                    <!-- /.panel-body -->
+                                </div><!-- /.panel -->
+                            </div>
 
 
                         </div><!-- /.col-lg-8 -->
@@ -152,7 +244,7 @@ small {
 
                             <div class="panel panel-default" style="height: 100%;">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
-                                    <i class="fa fa-star" style="margin-right: 5px;"></i><b>Hall Of Fame</b>
+                                    <i class="fa fa-star-o" style="margin-right: 5px;"></i><b>Hall Of Fame</b>
                                 </div>
                                 <div id="panelRanking" class="panel-body" style="height: 100%;">
 
@@ -179,7 +271,7 @@ small {
                                     <i class="fa fa-line-chart" style="margin-right: 5px;"></i><b>Top 5 Contributor overtime</b>
                                 </div>
                                 <div id="panelRanking" class="panel-body" style="height: 100%;">
-                                    <div id="divTop5Overtime" style="height: 20vh"></div>
+                                    <div id="divTop5Overtime" style="height: 38vh"></div>
                                 </div>
                                 <!-- /.panel-body -->
 
@@ -240,11 +332,32 @@ small {
 
         var datatableTop;
         var datatableFame;
-        var optionDatatable = {
+
+        var optionsLineChart = {
+            series: {
+                    shadowSize: 0 ,
+                    lines: {
+                        fill: true,
+                        fillColor: {
+                            colors: [ { opacity: 1 }, { opacity: 0.1 } ]
+                        }
+                    }
+            },
+            points: { show: true },
+            lines: { show: true, fill: true },
+            grid: {
+                tickColor: "#dddddd",
+                borderWidth: 0
+            },
+            legend: {
+                show: true,
+                position: "nw"
+            }
+        };
+        var optionDatatable_light = {
             responsive: true,
             searching: false,
             ordering: false,
-            order: [[0, "asc"]],
             scrollY:        '50vh',
             scrollCollapse: true,
             paging:         false,
@@ -259,10 +372,50 @@ small {
               { className: "centerCell", "targets": [ 0 ] }
             ]
         };
+        var optionDatatable_light2 = {
+            responsive: true,
+            searching: false,
+            ordering: false,
+            scrollY:        '50vh',
+            scrollCollapse: true,
+            paging:         false,
+            "language": {
+                "lengthMenu": "",
+                "info": "",
+                "infoFiltered": "",
+                "infoEmpty": "",
+            },
+            "info": false,
+            "columnDefs": [
+              { className: "centerCellPic", "targets": [ 0 ] }
+            ]
+        };
+
+        var optionDatatable_Categ = {
+            ajax: {
+                url: "{{ url_for('getCategPerContrib') }}",
+                dataSrc: ''
+            },
+            responsive: true,
+            searching: false,
+            scrollY:        '50vh',
+            scrollCollapse: true,
+            paging:         false,
+            "info": false,
+            "columnDefs": [
+              { className: "centerCell", "targets": [ 0 ] }
+            ]
+        };
+
+        $.getJSON( "{{ url_for('getCategPerContrib') }}", function( data ) {
+            console.log(data);
+        });
 
         $(document).ready(function() {
-            datatableTop = $('#topContribTable').DataTable(optionDatatable);
-            datatableFame = $('#fameTable').DataTable(optionDatatable);
+            datatableTop = $('#topContribTable').DataTable(optionDatatable_light);
+            datatableFame = $('#fameTable').DataTable(optionDatatable_light);
+            datatableCateg = $('#categTable').DataTable(optionDatatable_Categ);
+            datatableProgress = $('#topProgressTable').DataTable(optionDatatable_light2);
             // top contributors
             $.getJSON( "{{ url_for('getTopContributor') }}", function( data ) {
                 for (i in data) {
@@ -300,27 +453,6 @@ small {
             });
         });
 
-        var optionsLineChart = {
-            series: {
-                    shadowSize: 0 ,
-                    lines: {
-                        fill: true,
-                        fillColor: {
-                            colors: [ { opacity: 1 }, { opacity: 0.1 } ]
-                        }
-                    }
-            },
-            points: { show: true },
-            lines: { show: true, fill: true },
-            grid: {
-                tickColor: "#dddddd",
-                borderWidth: 0
-            },
-            legend: {
-                show: true,
-                position: "nw"
-            }
-        };
     </script>
 
 </body>

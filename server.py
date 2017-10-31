@@ -169,6 +169,15 @@ def getTop5Overtime():
     data = [{'label': 'CIRCL', 'data': [[0, 4], [1, 7], [2,14]]}, {'label': 'CASES', 'data': [[0, 1], [1, 5], [2,2]]}]
     return jsonify(data)
 
+@app.route("/_getCategPerContrib")
+def getCategPerContrib():
+    data = [["", "", "CIRCL", 723, 21, 32],
+["", "", "CASES", 32, 435, 2],
+["", "", "SMILE", 65, 231, 3],
+["", "", "ORG4", 34, 21, 7],
+["", "", "ORG5", 45, 211, 9]]
+    return jsonify(data)
+
 @app.route("/_getTopCoord")
 def getTopCoord():
     try:
