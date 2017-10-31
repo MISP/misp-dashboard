@@ -133,36 +133,67 @@ def contrib():
     return render_template('contrib.html',
             )
 
-@app.route("/_getTopContributor")
-def getTopContributor():
+@app.route("/_getLastContributor")
+def getLastContributor():
     data = [
         {
-            'progression': '',
+            'rank': random.randint(1,16),
             'logo_path': 'logo1',
             'org': 'CIRCL',
         },
         {
-            'progression': '',
+            'rank': random.randint(1,16),
             'logo_path': 'logo2',
             'org': 'CASES',
         },
         {
-            'progression': '',
+            'rank': random.randint(1,16),
             'logo_path': 'logo3',
             'org': 'SMILE',
         },
         {
-            'progression': '',
+            'rank': random.randint(1,16),
             'logo_path': 'logo4',
             'org': 'ORG4',
         },
         {
-            'progression': '',
+            'rank': random.randint(1,16),
             'logo_path': 'logo5',
             'org': 'ORG5',
         },
     ]
-    return jsonify(data)
+    return jsonify(data*2)
+
+@app.route("/_getTopContributor")
+def getTopContributor():
+    data = [
+        {
+            'rank': random.randint(1,16),
+            'logo_path': 'logo1',
+            'org': 'CIRCL',
+        },
+        {
+            'rank': random.randint(1,16),
+            'logo_path': 'logo2',
+            'org': 'CASES',
+        },
+        {
+            'rank': random.randint(1,16),
+            'logo_path': 'logo3',
+            'org': 'SMILE',
+        },
+        {
+            'rank': random.randint(1,16),
+            'logo_path': 'logo4',
+            'org': 'ORG4',
+        },
+        {
+            'rank': random.randint(1,16),
+            'logo_path': 'logo5',
+            'org': 'ORG5',
+        },
+    ]
+    return jsonify(data*2)
 
 @app.route("/_getTop5Overtime")
 def getTop5Overtime():
@@ -171,12 +202,49 @@ def getTop5Overtime():
 
 @app.route("/_getCategPerContrib")
 def getCategPerContrib():
-    data = [["", "", "CIRCL", 723, 21, 32],
-["", "", "CASES", 32, 435, 2],
-["", "", "SMILE", 65, 231, 3],
-["", "", "ORG4", 34, 21, 7],
-["", "", "ORG5", 45, 211, 9]]
-    return jsonify(data)
+    data = [
+        {
+            'rank': random.randint(1,16),
+            'logo_path': 'logo1',
+            'org': 'CIRCL',
+            'network_activity': random.randint(100,1600),
+            'payload_delivery': random.randint(100,1600),
+            'others': random.randint(1,16)
+        },
+        {
+            'rank': random.randint(1,16),
+            'logo_path': 'logo2',
+            'org': 'CASES',
+            'network_activity': random.randint(10,1600),
+            'payload_delivery': random.randint(10,1600),
+            'others': random.randint(1,16)
+        },
+        {
+            'rank': random.randint(1,16),
+            'logo_path': 'logo3',
+            'org': 'SMILE',
+            'network_activity': random.randint(1,160),
+            'payload_delivery': random.randint(1,160),
+            'others': random.randint(1,160)
+        },
+        {
+            'rank': random.randint(1,16),
+            'logo_path': 'logo4',
+            'org': 'ORG4',
+            'network_activity': random.randint(1,160),
+            'payload_delivery': random.randint(1,160),
+            'others': random.randint(1,16)
+        },
+        {
+            'rank': random.randint(1,16),
+            'logo_path': 'logo5',
+            'org': 'ORG5',
+            'network_activity': random.randint(1,16),
+            'payload_delivery': random.randint(1,16),
+            'others': random.randint(1,16)
+        },
+    ]
+    return jsonify(data*2)
 
 @app.route("/_getTopCoord")
 def getTopCoord():

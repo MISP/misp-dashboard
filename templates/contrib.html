@@ -135,8 +135,8 @@ small {
                                             <table id="topContribTable" class="table table-hover table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th></th>
-                                                        <th></th>
+                                                        <th>#</th>
+                                                        <th>Org rank</th>
                                                         <th>Logo</th>
                                                         <th>Organization name</th>
                                                     </tr>
@@ -154,51 +154,21 @@ small {
                             <div class="col-lg-4">
                                 <div class="panel panel-default" style="height: 100%;">
                                     <div class="panel-heading bg-info" style="font-weight: bold;">
-                                        <i class="glyphicon glyphicon-fire " style="margin-right: 5px;"></i><b>Top progression</b>
+                                        <i class="glyphicon glyphicon-fire " style="margin-right: 5px;"></i><b>Last contributors</b>
                                     </div>
-                                    <div id="panelProgress" class="panel-body" style="height: 100%;">
+                                    <div id="panellast" class="panel-body" style="height: 100%;">
 
                                         <div class="table-responsive">
-                                            <table id="topProgressTable" class="table table-hover table-striped">
+                                            <table id="lastTable" class="table table-hover table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th></th>
-                                                        <th></th>
+                                                        <th>#</th>
+                                                        <th>Org rank</th>
                                                         <th>Logo</th>
-                                                        <th>Organization name</th>
+                                                        <th>Org name</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr>
-                                                        <td><img src="{{ url_for('static', filename='pics/rankingMISP/4-1.png') }}" height=26px width=26px></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><img src="{{ url_for('static', filename='pics/rankingMISP/4-2.png') }}" height=26px width=26px></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><img src="{{ url_for('static', filename='pics/rankingMISP/4-3.png') }}" height=26px width=26px></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><img src="{{ url_for('static', filename='pics/rankingMISP/4-4.png') }}" height=26px width=26px></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><img src="{{ url_for('static', filename='pics/rankingMISP/4-5.png') }}" height=26px width=26px></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                    </tr>
                                                 </tbody>
                                             </table>
                                         </div>
@@ -218,7 +188,8 @@ small {
                                             <table id="categTable" class="table table-hover table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th></th>
+                                                        <th>#</th>
+                                                        <th>Org rank</th>
                                                         <th>Logo</th>
                                                         <th>Organization name</th>
                                                         <th>Network Activity</th>
@@ -252,7 +223,8 @@ small {
                                         <table id="fameTable" class="table table-hover table-striped" style="margin-bottom: 0px;">
                                             <thead>
                                                 <tr>
-                                                    <th></th>
+                                                    <th>#</th>
+                                                    <th>prev. rank</th>
                                                     <th>Logo</th>
                                                     <th>Organization name</th>
                                                 </tr>
@@ -271,7 +243,7 @@ small {
                                     <i class="fa fa-line-chart" style="margin-right: 5px;"></i><b>Top 5 Contributor overtime</b>
                                 </div>
                                 <div id="panelRanking" class="panel-body" style="height: 100%;">
-                                    <div id="divTop5Overtime" style="height: 38vh"></div>
+                                    <div id="divTop5Overtime" style="height: 32vh"></div>
                                 </div>
                                 <!-- /.panel-body -->
 
@@ -294,6 +266,17 @@ small {
         /* URL */
 
         /* DATA FROM CONF */
+
+        function getRankIcon(rank) {
+            var imgsPath = "{{ url_for('static', filename='pics/rankingMISP/1.png') }}";
+            imgsPath = imgsPath.substring(0, imgsPath.length-5);
+            rankLogoPath = imgsPath+rank+'.png';
+            var img = document.createElement('img');
+            img.src = rankLogoPath;
+            img.height = 26;
+            img.width = 26;
+            return img.outerHTML;
+        }
 
         function create_stars_dom(n) {
             var n = 4-n; //1 is best -> 3 stars
@@ -358,7 +341,7 @@ small {
             responsive: true,
             searching: false,
             ordering: false,
-            scrollY:        '50vh',
+            scrollY:        '30vh',
             scrollCollapse: true,
             paging:         false,
             "language": {
@@ -368,61 +351,34 @@ small {
                 "infoEmpty": "",
             },
             "info": false,
-            "columnDefs": [
-              { className: "centerCell", "targets": [ 0 ] }
-            ]
         };
-        var optionDatatable_light2 = {
-            responsive: true,
-            searching: false,
-            ordering: false,
-            scrollY:        '50vh',
-            scrollCollapse: true,
-            paging:         false,
-            "language": {
-                "lengthMenu": "",
-                "info": "",
-                "infoFiltered": "",
-                "infoEmpty": "",
-            },
-            "info": false,
-            "columnDefs": [
-              { className: "centerCellPic", "targets": [ 0 ] }
-            ]
-        };
+        var optionDatatable_top = jQuery.extend({}, optionDatatable_light)
+        var optionDatatable_last = jQuery.extend({}, optionDatatable_light)
+        var optionDatatable_fame = jQuery.extend({}, optionDatatable_light)
+        optionDatatable_fame.scrollY = '50vh';
 
         var optionDatatable_Categ = {
-            ajax: {
-                url: "{{ url_for('getCategPerContrib') }}",
-                dataSrc: ''
-            },
             responsive: true,
-            searching: false,
-            scrollY:        '50vh',
+            searching: true,
+            scrollY:        '39vh',
             scrollCollapse: true,
             paging:         false,
             "info": false,
-            "columnDefs": [
-              { className: "centerCell", "targets": [ 0 ] }
-            ]
         };
 
-        $.getJSON( "{{ url_for('getCategPerContrib') }}", function( data ) {
-            console.log(data);
-        });
-
         $(document).ready(function() {
-            datatableTop = $('#topContribTable').DataTable(optionDatatable_light);
-            datatableFame = $('#fameTable').DataTable(optionDatatable_light);
+            datatableTop = $('#topContribTable').DataTable(optionDatatable_top);
+            datatableFame = $('#fameTable').DataTable(optionDatatable_fame);
             datatableCateg = $('#categTable').DataTable(optionDatatable_Categ);
-            datatableProgress = $('#topProgressTable').DataTable(optionDatatable_light2);
+            datatableLast = $('#lastTable').DataTable(optionDatatable_last);
             // top contributors
             $.getJSON( "{{ url_for('getTopContributor') }}", function( data ) {
                 for (i in data) {
                     var row = data[i];
+                    i = parseInt(i);
                     var to_add = [
-                        getIndexRank(),
-                        row.progression,
+                        i+1,
+                        getRankIcon(row.rank),
                         row.logo_path,
                         row.org
                     ];
@@ -434,11 +390,12 @@ small {
             // hall of fame
             $.getJSON( "{{ url_for('getTopContributor') }}", function( data ) {
                 datatableIndex = 1;
-                var table = document.getElementById('fameTableBody');
                 for (i in data) {
                     var row = data[i];
+                    i = parseInt(i);
                     var to_add = [
-                        getIndexRank(),
+                        i+1,
+                        getRankIcon(row.rank),
                         row.logo_path,
                         row.org
                     ];
@@ -447,6 +404,38 @@ small {
                 datatableFame.draw();
             });
 
+            $.getJSON( "{{ url_for('getTopContributor') }}", function( data ) {
+                for (i in data) {
+                    var row = data[i];
+                    i = parseInt(i);
+                    var to_add = [
+                        i+1,
+                        getRankIcon(row.rank),
+                        row.logo_path,
+                        row.org
+                    ];
+                    datatableLast.row.add(to_add);
+                }
+                datatableLast.draw();
+            });
+
+            $.getJSON( "{{ url_for('getCategPerContrib') }}", function( data ) {
+                for (i in data) {
+                    var row = data[i];
+                    i = parseInt(i);
+                    var to_add = [
+                        i+1,
+                        getRankIcon(row.rank),
+                        row.logo_path,
+                        row.org,
+                        row.network_activity,
+                        row.payload_delivery,
+                        row.others
+                    ];
+                    datatableCateg.row.add(to_add);
+                }
+                datatableCateg.draw();
+            });
             // top 5 contrib overtime
             $.getJSON( "{{ url_for('getTop5Overtime') }}", function( data ) {
                 var plotLineChart = $.plot("#divTop5Overtime", data, optionsLineChart);

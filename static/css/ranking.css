@@ -12,6 +12,8 @@
 
 .table > tbody > tr > td.centerCellPic {
     padding: 5px;
+    text-align: center;
+    min-width: 45px;
 }
 
 .star1-1{
