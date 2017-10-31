@@ -9,6 +9,9 @@
     min-width: 45px;
 }
 
+.dataTables_filter > label {
+    margin-bottom: 0px;
+}
 
 .table > tbody > tr > td.centerCellPic {
     padding: 5px;
