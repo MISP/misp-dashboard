@@ -83,7 +83,7 @@
     text-align: center;
     margin-left: 8px;
     float: left;
-    padding-top: 9px;
+    padding-top: 15px;
 }
 
 .center {
@@ -115,7 +115,23 @@ small {
                     </ul>
                 <div id="ledsHolder" style="float: right; height: 50px;">
                     <div class='leftSepa textTopHeader'>
-                        <strong>Your organisation name: <input type="text" id="orgName" data-provide="typeahead" size="30" style="margin-bottom: 5px;"></strong>
+                        <strong>Organisation name:</strong>
+                    </div>
+                    <div class='textTopHeader' style="padding-top: 9px;">
+                        <input type="text" id="orgName" data-provide="typeahead" size="20" style="margin-bottom: 5px;">
+                    </div>
+                    <div class='leftSepa textTopHeader' style="min-width: 100px;">
+                        <strong id="orgText"></strong>
+                    </div>
+                    <div id="orgRankDiv" class='textTopHeader'>
+                    </div>
+                    <div class='textTopHeader'>
+                        <div class="progress">
+                          <div class="progress-bar" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width:70%">
+                          </div>
+                        </div>
+                    </div>
+                    <div id="orgNextRankDiv" class='textTopHeader'>
                     </div>
                 </div>
             </div>
@@ -295,6 +311,9 @@ small {
                 } else {
                     return process(allOrg);
                 }
+            },
+            updater: function(item) {
+                $('#orgText').text(item);
             }
         }
 
@@ -353,6 +372,9 @@ small {
 
         $(document).ready(function() {
             $('#orgName').typeahead(typeaheadOption);
+            $('#orgRankDiv').html(getRankIcon(8));
+            $('#orgNextRankDiv').html(getRankIcon(9));
+            $('#orgText').text('{{ currOrg }}');
             datatableTop = $('#topContribTable').DataTable(optionDatatable_top);
             datatableFame = $('#fameTable').DataTable(optionDatatable_fame);
             datatableCateg = $('#categTable').DataTable(optionDatatable_Categ);

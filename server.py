@@ -131,6 +131,7 @@ def geo():
 @app.route("/contrib")
 def contrib():
     return render_template('contrib.html',
+            currOrg=""
             )
 
 @app.route("/_getLastContributor")
