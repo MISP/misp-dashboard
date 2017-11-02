@@ -101,7 +101,29 @@ function getRankIcon(rank, size, header) {
     }
     return img.outerHTML;
 }
-function generateRankingSheet(rank) {
+function generateRankingSheet(rank, stepPnt, pnt, Rpnt) {
+    var Cpnt = pnt - stepPnt;
+    var Tpnt = Cpnt + Rpnt;
+    var gdiv = document.createElement('div');
+    //progressBar
+    var div = document.createElement('div');
+    div.classList.add('progress');
+    var pb_length = 187;
+    div.style.width = pb_length+'px'; //HARDCODED...
+    div.style.marginBottom = '0px';
+    var div1 = document.createElement('div')
+    div1.classList.add('progress-bar')
+    div1.style.width = 100*(Cpnt)/Tpnt+'%';
+    div1.innerHTML = pnt;
+    div.appendChild(div1);
+    var div1 = document.createElement('div')
+    div1.classList.add('progress-bar', 'progress-bar-warning')
+    div1.style.width = 100*(Rpnt)/Tpnt+'%'
+    div1.innerHTML = Rpnt;
+    div.appendChild(div1);
+    gdiv.appendChild(div);
+
+    // table
     var table = document.createElement('table');
     table.classList.add('table', 'table-striped');
     table.style.marginBottom = '0px';
@@ -135,7 +157,8 @@ function generateRankingSheet(rank) {
     }
     table.appendChild(thead);
     table.appendChild(tbody);
-    return table.outerHTML;
+    gdiv.appendChild(table);
+    return gdiv.outerHTML;
 }
 
 function addToTableFromJson(datatable, url) {
@@ -158,13 +181,12 @@ function addToTableFromJson(datatable, url) {
 function updateProgressHeader(org) {
     // get Org rank
     $.getJSON( url_getOrgRank+'?org='+org, function( data ) {
-        console.log(data);
         datatableTop.draw();
         var rank = Math.floor(data.rank);
         $('#btnCurrRank').show();
         $('#orgText').text(data.org);
         var popoverRank = $('#btnCurrRank').data('bs.popover');
-        popoverRank.options.content = generateRankingSheet(rank);
+        popoverRank.options.content = generateRankingSheet(rank, data.stepPts, data.points, data.remainingPts);
         $('#orgRankDiv').html(getRankIcon(rank, 40, true));
         $('#orgNextRankDiv').html(getRankIcon(rank+1, 40, true));
         $('#progressBarDiv').width((data.rank - rank)*150); //150 is empty bar width

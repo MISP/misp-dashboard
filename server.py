@@ -108,7 +108,7 @@ def getRemainingPoints(points):
     prev = 0
     for i in [cfg.getint('CONTRIB' ,'rankMultiplier')**x for x in range(1,17)]:
         if prev <= points < i:
-            return i-points
+            return { 'remainingPts': i-points, 'stepPts': prev }
         prev = i
     return 0
 
@@ -274,7 +274,8 @@ def getOrgRank():
         org = ''
     points = random.randint(1,2**16)
     #FIXME put 0 if org has no points
-    data = {'org': org, 'points': points, 'rank': getRankLevel(points), 'remainingPts': getRemainingPoints(points)}
+    remainingPts = getRemainingPoints(points)
+    data = {'org': org, 'points': points, 'rank': getRankLevel(points), 'remainingPts': remainingPts['remainingPts'], 'stepPts': remainingPts['stepPts']}
     return jsonify(data)
 
 @app.route("/_getTopCoord")
