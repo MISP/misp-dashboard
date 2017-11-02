@@ -7,7 +7,6 @@ var datatableFame;
 var maxRank = 16;
 var popOverOption = {
     trigger: "hover",
-    title: "Ranking icons",
     html: true,
     placement: 'bottom',
     content: generateRankingSheet()
@@ -113,7 +112,7 @@ function generateRankingSheet(rank) {
     th.innerHTML = "Rank";
     tr.appendChild(th);
     var th = document.createElement('th');
-    th.innerHTML = "Requirement";
+    th.innerHTML = "Requirement (CP)";
     tr.appendChild(th);
     thead.appendChild(tr);
     //body
@@ -125,7 +124,7 @@ function generateRankingSheet(rank) {
         td.style.padding = "2px";
         tr.appendChild(td);
         var td = document.createElement('td');
-        td.innerHTML = Math.pow(rankMultiplier, i)+" pnts";
+        td.innerHTML = Math.pow(rankMultiplier, i);
         td.style.padding = "2px";
         tr.style.textAlign = "center";
         if (i == rank) { // current org rank
@@ -156,10 +155,10 @@ function addToTableFromJson(datatable, url) {
     });
 }
 
-
 function updateProgressHeader(org) {
     // get Org rank
     $.getJSON( url_getOrgRank+'?org='+org, function( data ) {
+        console.log(data);
         datatableTop.draw();
         var rank = Math.floor(data.rank);
         $('#btnCurrRank').show();
@@ -187,6 +186,10 @@ function updateProgressHeader(org) {
             if(this.data()[3] == data.org) { row.classList.add('info'); } else { row.classList.remove('info'); }
         });
     });
+}
+
+function showOnlyOrg() {
+    datatableCateg.search( $('#orgText').text() ).draw();
 }
 
 $(document).ready(function() {
