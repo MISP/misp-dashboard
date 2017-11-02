@@ -19,6 +19,10 @@ zoomlevel = 11
 # ~meter
 clusteringDistance = 10
 
+[CONTRIB]
+#[1.5 -> +inf]
+rankMultiplier = 2
+
 [Log]
 field_to_plot = Attribute.category
 fieldname_order=["Event.id", "Attribute.Tag", "Attribute.category", "Attribute.type", ["Attribute.value", "Attribute.comment"]]
