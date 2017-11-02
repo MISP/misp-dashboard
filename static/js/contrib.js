@@ -160,7 +160,7 @@ function addToTableFromJson(datatable, url) {
 function updateProgressHeader(org) {
     // get Org rank
     $.getJSON( url_getOrgRank+'?org='+org, function( data ) {
-        console.log(data);
+        datatableTop.draw();
         var rank = Math.floor(data.rank);
         $('#btnCurrRank').show();
         $('#orgText').text(data.org);
@@ -169,6 +169,23 @@ function updateProgressHeader(org) {
         $('#orgRankDiv').html(getRankIcon(rank, 40, true));
         $('#orgNextRankDiv').html(getRankIcon(rank+1, 40, true));
         $('#progressBarDiv').width((data.rank - rank)*150); //150 is empty bar width
+        // update color in other dataTables
+        datatableTop.rows().every( function() {
+            var row = this.node();
+            if(this.data()[3] == data.org) { row.classList.add('info'); } else { row.classList.remove('info'); }
+        });
+        datatableFame.rows().every( function() {
+            var row = this.node();
+            if(this.data()[3] == data.org) { row.classList.add('info'); } else { row.classList.remove('info'); }
+        });
+        datatableCateg.rows().every( function() {
+            var row = this.node();
+            if(this.data()[3] == data.org) { row.classList.add('info'); } else { row.classList.remove('info'); }
+        });
+        datatableLast.rows().every( function() {
+            var row = this.node();
+            if(this.data()[3] == data.org) { row.classList.add('info'); } else { row.classList.remove('info'); }
+        });
     });
 }
 
