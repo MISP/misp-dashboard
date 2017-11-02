@@ -125,7 +125,7 @@ function generateRankingSheet(rank) {
         td.style.padding = "2px";
         tr.appendChild(td);
         var td = document.createElement('td');
-        td.innerHTML = i+" pnts";
+        td.innerHTML = Math.pow(rankMultiplier, i)+" pnts";
         td.style.padding = "2px";
         tr.style.textAlign = "center";
         if (i == rank) { // current org rank

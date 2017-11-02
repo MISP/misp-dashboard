@@ -100,10 +100,13 @@ def getZrange(keyCateg, date, topNum):
 
 # max lvl is 16
 def getRankLevel(points):
-    return float("{:.2f}".format(math.log(points, 2)))
+    if points == 0:
+        return 0
+    else:
+        return float("{:.2f}".format(math.log(points, cfg.getint('CONTRIB' ,'rankMultiplier'))))
 def getRemainingPoints(points):
     prev = 0
-    for i in [2**x for x in range(1,17)]:
+    for i in [cfg.getint('CONTRIB' ,'rankMultiplier')**x for x in range(1,17)]:
         if prev <= points < i:
             return i-points
         prev = i
@@ -141,7 +144,8 @@ def geo():
 @app.route("/contrib")
 def contrib():
     return render_template('contrib.html',
-            currOrg=""
+            currOrg="",
+            rankMultiplier=cfg.getint('CONTRIB' ,'rankMultiplier')
             )
 
 @app.route("/_getLastContributor")
@@ -269,6 +273,7 @@ def getOrgRank():
     except:
         org = ''
     points = random.randint(1,2**16)
+    #FIXME put 0 if org has no points
     data = {'org': org, 'points': points, 'rank': getRankLevel(points), 'remainingPts': getRemainingPoints(points)}
     return jsonify(data)
 
