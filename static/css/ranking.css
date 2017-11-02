@@ -3,6 +3,19 @@
     height: auto;
 }
 
+.popover-content {
+    padding: 3px
+}
+
+.popOverBtn {
+    float: left;
+    padding: 0px;
+    padding-right: 8px;
+    height: 46px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
 .table > tbody > tr > td.centerCell {
     text-align: center;
     min-width: 45px;

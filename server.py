@@ -249,7 +249,7 @@ def getCategPerContrib():
 
 @app.route("/_getAllOrg")
 def getAllOrg():
-    data = ['CIRCL', 'CASES', 'SMILE' ,'ORG4' ,'ORG5']
+    data = ['CIRCL', 'CASES', 'SMILE' ,'ORG4' ,'ORG5', 'SUPER HYPER LONG ORGINZATION NAME']
     return jsonify(data)
 
 @app.route("/_getTopCoord")
