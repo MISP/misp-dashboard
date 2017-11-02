@@ -28,6 +28,8 @@ serv_redis_db = redis.StrictRedis(
         port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisDB', 'db'))
 
+categories = json.loads(cfg.get('CONTRIB', 'categories'))
+
 subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)
 subscriber_log.psubscribe(cfg.get('RedisLog', 'channel'))
 subscriber_map = redis_server_map.pubsub(ignore_subscribe_messages=True)
@@ -143,9 +145,13 @@ def geo():
 
 @app.route("/contrib")
 def contrib():
+    categ_list = json.loads(cfg.get('CONTRIB', 'categories'))
+    categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in json.loads(cfg.get('CONTRIB', 'categories'))]
     return render_template('contrib.html',
             currOrg="",
-            rankMultiplier=cfg.getfloat('CONTRIB' ,'rankMultiplier')
+            rankMultiplier=cfg.getfloat('CONTRIB' ,'rankMultiplier'),
+            categ_list=json.dumps(categ_list),
+            categ_list_str=categ_list_str
             )
 
 @app.route("/_getLastContributor")
@@ -217,49 +223,18 @@ def getTop5Overtime():
 
 @app.route("/_getCategPerContrib")
 def getCategPerContrib():
-    data = [
-        {
-            'rank': random.randint(1,16),
-            'logo_path': 'logo1',
-            'org': 'CIRCL',
-            'network_activity': random.randint(100,1600),
-            'payload_delivery': random.randint(100,1600),
-            'others': random.randint(1,16)
-        },
-        {
-            'rank': random.randint(1,16),
-            'logo_path': 'logo2',
-            'org': 'CASES',
-            'network_activity': random.randint(10,1600),
-            'payload_delivery': random.randint(10,1600),
-            'others': random.randint(1,16)
-        },
-        {
-            'rank': random.randint(1,16),
-            'logo_path': 'logo3',
-            'org': 'SMILE',
-            'network_activity': random.randint(1,160),
-            'payload_delivery': random.randint(1,160),
-            'others': random.randint(1,160)
-        },
-        {
-            'rank': random.randint(1,16),
-            'logo_path': 'logo4',
-            'org': 'ORG4',
-            'network_activity': random.randint(1,160),
-            'payload_delivery': random.randint(1,160),
-            'others': random.randint(1,16)
-        },
-        {
-            'rank': random.randint(1,16),
-            'logo_path': 'logo5',
-            'org': 'ORG5',
-            'network_activity': random.randint(1,16),
-            'payload_delivery': random.randint(1,16),
-            'others': random.randint(1,16)
-        },
-    ]
-    return jsonify(data*2)
+
+    data = []
+    for d in range(15):
+        dic = {}
+        dic['rank'] = random.randint(1,16)
+        dic['logo_path'] = 'logo'
+        dic['org'] = 'Org'+str(d)
+        for f in categories:
+            dic[f] = random.randint(0,1600)
+        data.append(dic)
+
+    return jsonify(data)
 
 @app.route("/_getAllOrg")
 def getAllOrg():

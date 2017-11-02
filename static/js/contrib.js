@@ -56,6 +56,7 @@ var optionDatatable_Categ = {
     responsive: true,
     searching: true,
     scrollY:        '39vh',
+    "scrollX": true,
     scrollCollapse: true,
     paging:         false,
     "info": false,
@@ -251,10 +252,11 @@ $(document).ready(function() {
                 getRankIcon(row.rank),
                 row.logo_path,
                 row.org,
-                row.network_activity,
-                row.payload_delivery,
-                row.others
             ];
+            for (categ of categ_list) {
+                to_add.push(row[categ]);
+            }
+
             datatableCateg.row.add(to_add);
         }
         datatableCateg.draw();

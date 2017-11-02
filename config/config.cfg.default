@@ -22,6 +22,7 @@ clusteringDistance = 10
 [CONTRIB]
 #[1.5 -> +inf]
 rankMultiplier = 2
+categories = ["internal_reference", "targeting_data", "antivirus_detection", "payload_delivery", "artifacts_dropped", "payload_installation", "persistence_mechanism", "network_activity", "payload_type", "attribution", "external_analysis", "financial_fraud", "support_Tool", "social_network", "person", "other" ]
 
 [Log]
 field_to_plot = Attribute.category

@@ -155,10 +155,9 @@
                                                         <th>#</th>
                                                         <th>Org rank</th>
                                                         <th>Logo</th>
-                                                        <th>Organization name</th>
-                                                        <th>Network Activity</th>
-                                                        <th>Payload delivery</th>
-                                                        <th>Others</th>
+                                                        {% for categ in categ_list_str %}
+                                                        <th>{{ categ }}</th>
+                                                        {% endfor %}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -239,6 +238,8 @@
         /* DATA FROM CONF */
         var currOrg = "{{ currOrg }}";
         var rankMultiplier = {{ rankMultiplier }};
+        var categ_list = JSON.parse('{{ categ_list|safe }}');
+        var categ_list_str = JSON.parse("{{ categ_list_str|safe }}");
 
     </script>
     <script src="{{ url_for('static', filename='js/contrib.js') }}"></script>
