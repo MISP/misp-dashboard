@@ -197,7 +197,11 @@ function updateProgressHeader(org) {
         popoverRank.options.content = generateRankingSheet(rank, data.stepPts, data.points, data.remainingPts);
         $('#orgRankDiv').html(getRankIcon(rank, 40, true));
         $('#orgNextRankDiv').html(getRankIcon(rank+1, 40, true));
-        $('#progressBarDiv').width((data.rank - rank)*150); //150 is empty bar width
+        if (data.rank > 16){
+            $('#progressBarDiv').width(1*150); //150 is empty bar width
+        } else {
+            $('#progressBarDiv').width((data.rank - rank)*150); //150 is empty bar width
+        }
         // update color in other dataTables
         datatableTop.rows().every( function() {
             var row = this.node();
