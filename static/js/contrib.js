@@ -79,7 +79,11 @@ var typeaheadOption = {
 
 /* FUNCTIONS */
 function getRankIcon(rank, size, header) {
-    rankLogoPath = url_baseRankLogo+rank+'.png';
+    if (rank > 16) {
+        rankLogoPath = url_baseRankLogo+0+'.png';
+    } else {
+        rankLogoPath = url_baseRankLogo+rank+'.png';
+    }
     var img = document.createElement('img');
     img.src = rankLogoPath;
     if(size == undefined) {
@@ -141,18 +145,22 @@ function generateRankingSheet(rank, stepPnt, pnt, Rpnt) {
     var tbody = document.createElement('tbody');
     for (var i=1; i<=maxRank; i++) {
         var tr = document.createElement('tr');
-        var td = document.createElement('td');
-        td.innerHTML = getRankIcon(i, 20);
-        td.style.padding = "2px";
-        tr.appendChild(td);
-        var td = document.createElement('td');
-        td.innerHTML = Math.pow(rankMultiplier, i);
-        td.style.padding = "2px";
+        var td1 = document.createElement('td');
+        td1.innerHTML = getRankIcon(i, 20);
+        td1.style.padding = "2px";
+        var td2 = document.createElement('td');
+        td2.innerHTML = Math.floor(Math.pow(rankMultiplier, i));
+        td2.style.padding = "2px";
         tr.style.textAlign = "center";
         if (i == rank) { // current org rank
-            tr.classList.add('info')
+            tr.style.backgroundColor = "#337ab7";
+            tr.style.color = "white";
+        } else if (i == rank+1) {
+            tr.style.backgroundColor = "#f0ad4e";
+            tr.style.color = "white";
         }
-        tr.appendChild(td);
+        tr.appendChild(td1);
+        tr.appendChild(td2);
         tbody.appendChild(tr);
     }
     table.appendChild(thead);

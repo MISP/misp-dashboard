@@ -103,14 +103,14 @@ def getRankLevel(points):
     if points == 0:
         return 0
     else:
-        return float("{:.2f}".format(math.log(points, cfg.getint('CONTRIB' ,'rankMultiplier'))))
+        return float("{:.2f}".format(math.log(points, cfg.getfloat('CONTRIB' ,'rankMultiplier'))))
 def getRemainingPoints(points):
     prev = 0
-    for i in [cfg.getint('CONTRIB' ,'rankMultiplier')**x for x in range(1,17)]:
+    for i in [math.floor(cfg.getfloat('CONTRIB' ,'rankMultiplier')**x) for x in range(1,17)]:
         if prev <= points < i:
             return { 'remainingPts': i-points, 'stepPts': prev }
         prev = i
-    return 0
+    return { 'remainingPts': 0, 'stepPts': cfg.getfloat('CONTRIB' ,'rankMultiplier')**16 }
 
 @app.route("/")
 def index():
@@ -145,7 +145,7 @@ def geo():
 def contrib():
     return render_template('contrib.html',
             currOrg="",
-            rankMultiplier=cfg.getint('CONTRIB' ,'rankMultiplier')
+            rankMultiplier=cfg.getfloat('CONTRIB' ,'rankMultiplier')
             )
 
 @app.route("/_getLastContributor")
@@ -272,7 +272,7 @@ def getOrgRank():
         org = request.args.get('org')
     except:
         org = ''
-    points = random.randint(1,2**16)
+    points = random.randint(1,math.floor(cfg.getfloat('CONTRIB' ,'rankMultiplier')**16))
     #FIXME put 0 if org has no points
     remainingPts = getRemainingPoints(points)
     data = {'org': org, 'points': points, 'rank': getRankLevel(points), 'remainingPts': remainingPts['remainingPts'], 'stepPts': remainingPts['stepPts']}
