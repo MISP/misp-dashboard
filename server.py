@@ -98,6 +98,16 @@ def getZrange(keyCateg, date, topNum):
     data = [ [record[0].decode('utf8'), record[1]] for record in data ]
     return data
 
+# max lvl is 16
+def getRankLevel(points):
+    return float("{:.2f}".format(math.log(points, 2)))
+def getRemainingPoints(points):
+    prev = 0
+    for i in [2**x for x in range(1,17)]:
+        if prev <= points < i:
+            return i-points
+        prev = i
+    return 0
 
 @app.route("/")
 def index():
@@ -258,7 +268,8 @@ def getOrgRank():
         org = request.args.get('org')
     except:
         org = ''
-    data = {'org': org, 'rank': random.randint(1,16)}
+    points = random.randint(1,2**16)
+    data = {'org': org, 'points': points, 'rank': getRankLevel(points), 'remainingPts': getRemainingPoints(points)}
     return jsonify(data)
 
 @app.route("/_getTopCoord")

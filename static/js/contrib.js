@@ -160,12 +160,15 @@ function addToTableFromJson(datatable, url) {
 function updateProgressHeader(org) {
     // get Org rank
     $.getJSON( url_getOrgRank+'?org='+org, function( data ) {
+        console.log(data);
+        var rank = Math.floor(data.rank);
         $('#btnCurrRank').show();
         $('#orgText').text(data.org);
         var popoverRank = $('#btnCurrRank').data('bs.popover');
-        popoverRank.options.content = generateRankingSheet(data.rank);
-        $('#orgRankDiv').html(getRankIcon(data.rank, 40, true));
-        $('#orgNextRankDiv').html(getRankIcon(data.rank+1, 40, true));
+        popoverRank.options.content = generateRankingSheet(rank);
+        $('#orgRankDiv').html(getRankIcon(rank, 40, true));
+        $('#orgNextRankDiv').html(getRankIcon(rank+1, 40, true));
+        $('#progressBarDiv').width((data.rank - rank)*150); //150 is empty bar width
     });
 }
 
