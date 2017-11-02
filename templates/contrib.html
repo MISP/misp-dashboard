@@ -43,62 +43,6 @@
 
 </head>
 
-<style>
-.panel-body {
-    padding: 0px;
-}
- .panel {
-     margin-bottom: 10px;
- }
-
-.col-lg-6 {
-    padding-right: 5px;
-    padding-left: 5px;
-}
-
-.col-lg-8 {
-    padding-right: 5px;
-    padding-left: 5px;
-}
-
-.col-lg-4 {
-    padding-right: 5px;
-    padding-left: 5px;
-}
-
-.col-lg-12 {
-    padding-right: 5px;
-    padding-left: 5px;
-}
-
-.leftSepa {
-    border-left-color: rgb(221, 221, 221);
-    border-left-style: solid;
-    border-left-width: 2px;
-    padding-left: 8px;
-}
-
-.textTopHeader {
-    height: 50px;
-    text-align: center;
-    margin-left: 8px;
-    float: left;
-    padding-top: 15px;
-}
-
-.center {
-  display:block;
-  margin-left:auto;
-  margin-right:auto;
-}
-
-small {
-    font-size: 100%;
-    font-weight: bold;
-}
-
-</style>
-
 <body>
 
     <div id="wrapper">
@@ -123,7 +67,7 @@ small {
                     <div class='leftSepa textTopHeader' style="min-width: 100px;">
                         <strong id="orgText"></strong>
                     </div>
-                    <div id="orgRankDiv" class='textTopHeader'>
+                    <div id="orgRankDiv" class='textTopHeader' style="padding-top: 0px;">
                     </div>
                     <div class='textTopHeader'>
                         <div class="progress">
@@ -131,7 +75,7 @@ small {
                           </div>
                         </div>
                     </div>
-                    <div id="orgNextRankDiv" class='textTopHeader'>
+                    <div id="orgNextRankDiv" class='textTopHeader' style="padding-top: 0px;">
                     </div>
                 </div>
             </div>
@@ -286,170 +230,18 @@ small {
     <!-- Index -->
     <script>
         /* URL */
+        var url_getTopContributor = "{{ url_for('getTopContributor') }}";
+        var url_getCategPerContrib = "{{ url_for('getCategPerContrib') }}";
+        var url_getTop5Overtime = "{{ url_for('getTop5Overtime') }}";
+        var url_getAllOrg = "{{ url_for('getAllOrg') }}";
+        var url_baseRankLogo =     "{{ url_for('static', filename='pics/rankingMISP/1.png') }}";
+        url_baseRankLogo = url_baseRankLogo.substring(0, url_baseRankLogo.length-5);
 
         /* DATA FROM CONF */
-
-        function getRankIcon(rank) {
-            var imgsPath = "{{ url_for('static', filename='pics/rankingMISP/1.png') }}";
-            imgsPath = imgsPath.substring(0, imgsPath.length-5);
-            rankLogoPath = imgsPath+rank+'.png';
-            var img = document.createElement('img');
-            img.src = rankLogoPath;
-            img.height = 26;
-            img.width = 26;
-            return img.outerHTML;
-        }
-
-        var allOrg = [];
-        var typeaheadOption = {
-            source: function (query, process) {
-                if (allOrg.length == 0) { // caching
-                    return $.getJSON("{{ url_for('getAllOrg') }}", function (data) {
-                            allOrg = data;
-                            return process(data);
-                    });
-                } else {
-                    return process(allOrg);
-                }
-            },
-            updater: function(item) {
-                $('#orgText').text(item);
-            }
-        }
-
-        var datatableTop;
-        var datatableFame;
-
-        var optionsLineChart = {
-            series: {
-                    shadowSize: 0 ,
-                    lines: {
-                        fill: true,
-                        fillColor: {
-                            colors: [ { opacity: 1 }, { opacity: 0.1 } ]
-                        }
-                    }
-            },
-            points: { show: true },
-            lines: { show: true, fill: true },
-            grid: {
-                tickColor: "#dddddd",
-                borderWidth: 0
-            },
-            legend: {
-                show: true,
-                position: "nw"
-            }
-        };
-        var optionDatatable_light = {
-            responsive: true,
-            searching: false,
-            ordering: false,
-            scrollY:        '30vh',
-            scrollCollapse: true,
-            paging:         false,
-            "language": {
-                "lengthMenu": "",
-                "info": "",
-                "infoFiltered": "",
-                "infoEmpty": "",
-            },
-            "info": false,
-        };
-        var optionDatatable_top = jQuery.extend({}, optionDatatable_light)
-        var optionDatatable_last = jQuery.extend({}, optionDatatable_light)
-        var optionDatatable_fame = jQuery.extend({}, optionDatatable_light)
-        optionDatatable_fame.scrollY = '50vh';
-
-        var optionDatatable_Categ = {
-            responsive: true,
-            searching: true,
-            scrollY:        '39vh',
-            scrollCollapse: true,
-            paging:         false,
-            "info": false,
-        };
-
-        $(document).ready(function() {
-            $('#orgName').typeahead(typeaheadOption);
-            $('#orgRankDiv').html(getRankIcon(8));
-            $('#orgNextRankDiv').html(getRankIcon(9));
-            $('#orgText').text('{{ currOrg }}');
-            datatableTop = $('#topContribTable').DataTable(optionDatatable_top);
-            datatableFame = $('#fameTable').DataTable(optionDatatable_fame);
-            datatableCateg = $('#categTable').DataTable(optionDatatable_Categ);
-            datatableLast = $('#lastTable').DataTable(optionDatatable_last);
-            // top contributors
-            $.getJSON( "{{ url_for('getTopContributor') }}", function( data ) {
-                for (i in data) {
-                    var row = data[i];
-                    i = parseInt(i);
-                    var to_add = [
-                        i+1,
-                        getRankIcon(row.rank),
-                        row.logo_path,
-                        row.org
-                    ];
-                    datatableTop.row.add(to_add);
-                }
-                datatableTop.draw();
-            });
-
-            // hall of fame
-            $.getJSON( "{{ url_for('getTopContributor') }}", function( data ) {
-                for (i in data) {
-                    var row = data[i];
-                    i = parseInt(i);
-                    var to_add = [
-                        i+1,
-                        getRankIcon(row.rank),
-                        row.logo_path,
-                        row.org
-                    ];
-                    datatableFame.row.add(to_add);
-                }
-                datatableFame.draw();
-            });
-
-            $.getJSON( "{{ url_for('getTopContributor') }}", function( data ) {
-                for (i in data) {
-                    var row = data[i];
-                    i = parseInt(i);
-                    var to_add = [
-                        i+1,
-                        getRankIcon(row.rank),
-                        row.logo_path,
-                        row.org
-                    ];
-                    datatableLast.row.add(to_add);
-                }
-                datatableLast.draw();
-            });
-
-            $.getJSON( "{{ url_for('getCategPerContrib') }}", function( data ) {
-                for (i in data) {
-                    var row = data[i];
-                    i = parseInt(i);
-                    var to_add = [
-                        i+1,
-                        getRankIcon(row.rank),
-                        row.logo_path,
-                        row.org,
-                        row.network_activity,
-                        row.payload_delivery,
-                        row.others
-                    ];
-                    datatableCateg.row.add(to_add);
-                }
-                datatableCateg.draw();
-            });
-            // top 5 contrib overtime
-            $.getJSON( "{{ url_for('getTop5Overtime') }}", function( data ) {
-                var plotLineChart = $.plot("#divTop5Overtime", data, optionsLineChart);
-            });
-        });
+        var currOrg = "{{ currOrg }}";
 
     </script>
+    <script src="{{ url_for('static', filename='js/contrib.js') }}"></script>
 
 </body>
 
