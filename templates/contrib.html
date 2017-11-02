@@ -68,14 +68,14 @@
                         <strong id="orgText"></strong>
                     </div>
                     <button id="btnCurrRank" class='btn btn-default popOverBtn' data-container='body' data-toggle='popover' style="display: none;">
-                        <div id="orgRankDiv" class='textTopHeader' style="padding-top: 0px; position: relative; width: 40px;"></div>
-                        <div class='textTopHeader'>
+                        <div id="orgRankDiv" class='textTopHeader' style="padding-top: 0px; position: relative; width: 40px; height: 40px;"></div>
+                        <div class='' style="float: left; padding: 10px;">
                             <div class="progress" style=''>
-                                <div class="progress-bar progress-bar-striped" role="progressbar" aria-valuenow="70"    aria-valuemin="0" aria-valuemax="100" style="width:70%">
+                                <div id="progressBarDiv" class="progress-bar progress-bar-striped" role="progressbar" style="width:70%">
                                 </div>
                             </div>
                         </div>
-                        <div id="orgNextRankDiv" class='textTopHeader' style="padding-top: 0px; position: relative; width: 40px;"></div>
+                        <div id="orgNextRankDiv" class='textTopHeader' style="padding-top: 0px; position: relative; width: 40px; height: 40px;"></div>
                     </button>
                 </div>
             </div>
@@ -234,6 +234,7 @@
         var url_getCategPerContrib = "{{ url_for('getCategPerContrib') }}";
         var url_getTop5Overtime = "{{ url_for('getTop5Overtime') }}";
         var url_getAllOrg = "{{ url_for('getAllOrg') }}";
+        var url_getOrgRank = "{{ url_for('getOrgRank') }}";
         var url_baseRankLogo =     "{{ url_for('static', filename='pics/rankingMISP/1.png') }}";
         url_baseRankLogo = url_baseRankLogo.substring(0, url_baseRankLogo.length-5);
 

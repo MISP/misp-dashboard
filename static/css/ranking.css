@@ -9,11 +9,13 @@
 
 .popOverBtn {
     float: left;
-    padding: 0px;
+    padding-top: 2px;
+    padding-bottom: 2px;
     padding-right: 8px;
     height: 46px;
     margin-top: 2px;
     margin-bottom: 2px;
+    display: none;
 }
 
 .table > tbody > tr > td.centerCell {

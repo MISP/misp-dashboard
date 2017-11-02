@@ -73,9 +73,8 @@ var typeaheadOption = {
             return process(allOrg);
         }
     },
-    updater: function(item) {
-        $('#orgText').text(item);
-        $('#btnCurrRank').show();
+    updater: function(org) {
+        updateProgressHeader(org);
     }
 }
 
@@ -103,7 +102,7 @@ function getRankIcon(rank, size, header) {
     }
     return img.outerHTML;
 }
-function generateRankingSheet() {
+function generateRankingSheet(rank) {
     var table = document.createElement('table');
     table.classList.add('table', 'table-striped');
     table.style.marginBottom = '0px';
@@ -111,7 +110,7 @@ function generateRankingSheet() {
     var thead = document.createElement('thead');
     var tr = document.createElement('tr');
     var th = document.createElement('th');
-    th.innerHTML = "Ranking";
+    th.innerHTML = "Rank";
     tr.appendChild(th);
     var th = document.createElement('th');
     th.innerHTML = "Requirement";
@@ -128,6 +127,10 @@ function generateRankingSheet() {
         var td = document.createElement('td');
         td.innerHTML = i+" pnts";
         td.style.padding = "2px";
+        tr.style.textAlign = "center";
+        if (i == rank) { // current org rank
+            tr.classList.add('info')
+        }
         tr.appendChild(td);
         tbody.appendChild(tr);
     }
@@ -154,16 +157,23 @@ function addToTableFromJson(datatable, url) {
 }
 
 
-
+function updateProgressHeader(org) {
+    // get Org rank
+    $.getJSON( url_getOrgRank+'?org='+org, function( data ) {
+        $('#btnCurrRank').show();
+        $('#orgText').text(data.org);
+        var popoverRank = $('#btnCurrRank').data('bs.popover');
+        popoverRank.options.content = generateRankingSheet(data.rank);
+        $('#orgRankDiv').html(getRankIcon(data.rank, 40, true));
+        $('#orgNextRankDiv').html(getRankIcon(data.rank+1, 40, true));
+    });
+}
 
 $(document).ready(function() {
-    $('#orgName').typeahead(typeaheadOption);
-    $('#orgRankDiv').html(getRankIcon(8, 40, true));
-    $('#orgNextRankDiv').html(getRankIcon(9, 40, true));
-    $('#orgText').text(currOrg);
     if(currOrg != "") // currOrg selected
-        $('#btnCurrRank').show();
-    $('[data-toggle="popover"]').popover(popOverOption);
+        updateProgressHeader(org)
+    $('#orgName').typeahead(typeaheadOption);
+    $('#btnCurrRank').popover(popOverOption);
     datatableTop = $('#topContribTable').DataTable(optionDatatable_top);
     datatableFame = $('#fameTable').DataTable(optionDatatable_fame);
     datatableCateg = $('#categTable').DataTable(optionDatatable_Categ);

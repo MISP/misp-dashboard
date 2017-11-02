@@ -252,6 +252,15 @@ def getAllOrg():
     data = ['CIRCL', 'CASES', 'SMILE' ,'ORG4' ,'ORG5', 'SUPER HYPER LONG ORGINZATION NAME']
     return jsonify(data)
 
+@app.route("/_getOrgRank")
+def getOrgRank():
+    try:
+        org = request.args.get('org')
+    except:
+        org = ''
+    data = {'org': org, 'rank': random.randint(1,16)}
+    return jsonify(data)
+
 @app.route("/_getTopCoord")
 def getTopCoord():
     try:
