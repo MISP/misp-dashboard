@@ -100,9 +100,9 @@
                                                 <thead>
                                                     <tr>
                                                         <th>#</th>
-                                                        <th>Org rank</th>
+                                                        <th>Rank</th>
                                                         <th>Logo</th>
-                                                        <th>Organization name</th>
+                                                        <th>Organisation</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -127,9 +127,9 @@
                                                 <thead>
                                                     <tr>
                                                         <th>#</th>
-                                                        <th>Org rank</th>
+                                                        <th>Rank</th>
                                                         <th>Logo</th>
-                                                        <th>Org name</th>
+                                                        <th>Organisation</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -153,10 +153,11 @@
                                                 <thead>
                                                     <tr>
                                                         <th>#</th>
-                                                        <th>Org rank</th>
+                                                        <th>Rank</th>
                                                         <th>Logo</th>
+                                                        <th>Organisation</th>
                                                         {% for categ in categ_list_str %}
-                                                        <th>{{ categ }}</th>
+                                                            <th>{{ categ }}</th>
                                                         {% endfor %}
                                                     </tr>
                                                 </thead>
@@ -187,9 +188,9 @@
                                             <thead>
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>prev. rank</th>
+                                                    <th>Prev. rank</th>
                                                     <th>Logo</th>
-                                                    <th>Organization name</th>
+                                                    <th>Organisation</th>
                                                 </tr>
                                             </thead>
                                             <tbody id=fameTableBody>
@@ -239,7 +240,6 @@
         var currOrg = "{{ currOrg }}";
         var rankMultiplier = {{ rankMultiplier }};
         var categ_list = JSON.parse('{{ categ_list|safe }}');
-        var categ_list_str = JSON.parse("{{ categ_list_str|safe }}");
 
     </script>
     <script src="{{ url_for('static', filename='js/contrib.js') }}"></script>
