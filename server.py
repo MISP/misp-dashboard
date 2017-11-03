@@ -36,6 +36,11 @@ subscriber_map = redis_server_map.pubsub(ignore_subscribe_messages=True)
 subscriber_map.psubscribe(cfg.get('RedisMap', 'channelDisp'))
 eventNumber = 0
 
+##########
+## UTIL ##
+##########
+
+''' INDEX '''
 class LogItem():
 
     FIELDNAME_ORDER = []
@@ -93,12 +98,7 @@ class EventMessage():
         to_ret = { 'log': self.feed, 'feedName': self.feedName, 'zmqName': self.zmqName }
         return 'data: {}\n\n'.format(json.dumps(to_ret))
 
-def getZrange(keyCateg, date, topNum):
-    date_str = str(date.year)+str(date.month)+str(date.day)
-    keyname = "{}:{}".format(keyCateg, date_str)
-    data = serv_redis_db.zrange(keyname, 0, 5, desc=True, withscores=True)
-    data = [ [record[0].decode('utf8'), record[1]] for record in data ]
-    return data
+''' CONTRIB '''
 
 # max lvl is 16
 def getRankLevel(points):
@@ -106,6 +106,7 @@ def getRankLevel(points):
         return 0
     else:
         return float("{:.2f}".format(math.log(points, cfg.getfloat('CONTRIB' ,'rankMultiplier'))))
+
 def getRemainingPoints(points):
     prev = 0
     for i in [math.floor(cfg.getfloat('CONTRIB' ,'rankMultiplier')**x) for x in range(1,17)]:
@@ -113,6 +114,16 @@ def getRemainingPoints(points):
             return { 'remainingPts': i-points, 'stepPts': prev }
         prev = i
     return { 'remainingPts': 0, 'stepPts': cfg.getfloat('CONTRIB' ,'rankMultiplier')**16 }
+
+
+''' GENERAL '''
+
+def getZrange(keyCateg, date, topNum):
+    date_str = str(date.year)+str(date.month).zfill(2)+str(date.day).zfill(2)
+    keyname = "{}:{}".format(keyCateg, date_str)
+    data = serv_redis_db.zrange(keyname, 0, 5, desc=True, withscores=True)
+    data = [ [record[0].decode('utf8'), record[1]] for record in data ]
+    return data
 
 ###########
 ## ROUTE ##
