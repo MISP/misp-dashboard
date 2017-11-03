@@ -114,6 +114,12 @@ def getRemainingPoints(points):
         prev = i
     return { 'remainingPts': 0, 'stepPts': cfg.getfloat('CONTRIB' ,'rankMultiplier')**16 }
 
+###########
+## ROUTE ##
+###########
+
+''' MAIN ROUTE '''
+
 @app.route("/")
 def index():
     ratioCorrection = 88
@@ -153,6 +159,108 @@ def contrib():
             categ_list=json.dumps(categ_list),
             categ_list_str=categ_list_str
             )
+
+''' INDEX '''
+
+@app.route("/_logs")
+def logs():
+    return Response(event_stream_log(), mimetype="text/event-stream")
+
+@app.route("/_maps")
+def maps():
+    return Response(event_stream_maps(), mimetype="text/event-stream")
+
+@app.route("/_get_log_head")
+def getLogHead():
+    return json.dumps(LogItem('').get_head_row())
+
+def event_stream_log():
+    for msg in subscriber_log.listen():
+        content = msg['data']
+        yield EventMessage(content).to_json()
+
+def event_stream_maps():
+    for msg in subscriber_map.listen():
+        content = msg['data'].decode('utf8')
+        yield 'data: {}\n\n'.format(content)
+
+''' GEO '''
+
+@app.route("/_getTopCoord")
+def getTopCoord():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+    keyCateg = "GEO_COORD"
+    topNum = 6 # default Num
+    data = getZrange(keyCateg, date, topNum)
+    return jsonify(data)
+
+@app.route("/_getHitMap")
+def getHitMap():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+    keyCateg = "GEO_COUNTRY"
+    topNum = -1 # default Num
+    data = getZrange(keyCateg, date, topNum)
+    return jsonify(data)
+
+def isCloseTo(coord1, coord2):
+    clusterMeter = cfg.getfloat('GEO' ,'clusteringDistance')
+    clusterThres = math.pow(10, len(str(abs(clusterMeter)))-7) #map meter to coord threshold (~ big approx)
+    if abs(float(coord1[0]) - float(coord2[0])) <= clusterThres:
+        if abs(float(coord1[1]) - float(coord2[1])) <= clusterThres:
+            return True
+    return False
+
+@app.route("/_getCoordsByRadius")
+def getCoordsByRadius():
+    dico_coord = {}
+    to_return = []
+    try:
+        dateStart = datetime.datetime.fromtimestamp(float(request.args.get('dateStart')))
+        dateEnd = datetime.datetime.fromtimestamp(float(request.args.get('dateEnd')))
+        centerLat = request.args.get('centerLat')
+        centerLon = request.args.get('centerLon')
+        radius = int(math.ceil(float(request.args.get('radius'))))
+    except:
+        return jsonify(to_return)
+
+    delta = dateEnd - dateStart
+    for i in range(delta.days+1):
+        correctDatetime = dateStart + datetime.timedelta(days=i)
+        date_str = str(correctDatetime.year)+str(correctDatetime.month)+str(correctDatetime.day)
+        keyCateg = 'GEO_RAD'
+        keyname = "{}:{}".format(keyCateg, date_str)
+        res = serv_redis_db.georadius(keyname, centerLon, centerLat, radius, unit='km', withcoord=True)
+
+        #sum up really close coord
+        for data, coord in res:
+            flag_added = False
+            coord = [coord[0], coord[1]]
+            #list all coord
+            for dicoCoordStr in dico_coord.keys():
+                dicoCoord = json.loads(dicoCoordStr)
+                #if curCoord close to coord
+                if isCloseTo(dicoCoord, coord):
+                    #add data to dico coord
+                    dico_coord[dicoCoordStr].append(data)
+                    flag_added = True
+                    break
+            # coord not in dic
+            if not flag_added:
+                dico_coord[str(coord)] = [data]
+
+        for dicoCoord, array in dico_coord.items():
+            dicoCoord = json.loads(dicoCoord)
+            to_return.append([array, dicoCoord])
+
+    return jsonify(to_return)
+
+''' CONTRIB '''
 
 @app.route("/_getLastContributor")
 def getLastContributor():
@@ -257,102 +365,6 @@ def getOrgRank():
     'stepPts': remainingPts['stepPts'],
     }
     return jsonify(data)
-
-@app.route("/_getTopCoord")
-def getTopCoord():
-    try:
-        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
-    except:
-        date = datetime.datetime.now()
-    keyCateg = "GEO_COORD"
-    topNum = 6 # default Num
-    data = getZrange(keyCateg, date, topNum)
-    return jsonify(data)
-
-@app.route("/_getHitMap")
-def getHitMap():
-    try:
-        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
-    except:
-        date = datetime.datetime.now()
-    keyCateg = "GEO_COUNTRY"
-    topNum = -1 # default Num
-    data = getZrange(keyCateg, date, topNum)
-    return jsonify(data)
-
-def isCloseTo(coord1, coord2):
-    clusterMeter = cfg.getfloat('GEO' ,'clusteringDistance')
-    clusterThres = math.pow(10, len(str(abs(clusterMeter)))-7) #map meter to coord threshold (~ big approx)
-    if abs(float(coord1[0]) - float(coord2[0])) <= clusterThres:
-        if abs(float(coord1[1]) - float(coord2[1])) <= clusterThres:
-            return True
-    return False
-
-@app.route("/_getCoordsByRadius")
-def getCoordsByRadius():
-    dico_coord = {}
-    to_return = []
-    try:
-        dateStart = datetime.datetime.fromtimestamp(float(request.args.get('dateStart')))
-        dateEnd = datetime.datetime.fromtimestamp(float(request.args.get('dateEnd')))
-        centerLat = request.args.get('centerLat')
-        centerLon = request.args.get('centerLon')
-        radius = int(math.ceil(float(request.args.get('radius'))))
-    except:
-        return jsonify(to_return)
-
-    delta = dateEnd - dateStart
-    for i in range(delta.days+1):
-        correctDatetime = dateStart + datetime.timedelta(days=i)
-        date_str = str(correctDatetime.year)+str(correctDatetime.month)+str(correctDatetime.day)
-        keyCateg = 'GEO_RAD'
-        keyname = "{}:{}".format(keyCateg, date_str)
-        res = serv_redis_db.georadius(keyname, centerLon, centerLat, radius, unit='km', withcoord=True)
-
-        #sum up really close coord
-        for data, coord in res:
-            flag_added = False
-            coord = [coord[0], coord[1]]
-            #list all coord
-            for dicoCoordStr in dico_coord.keys():
-                dicoCoord = json.loads(dicoCoordStr)
-                #if curCoord close to coord
-                if isCloseTo(dicoCoord, coord):
-                    #add data to dico coord
-                    dico_coord[dicoCoordStr].append(data)
-                    flag_added = True
-                    break
-            # coord not in dic
-            if not flag_added:
-                dico_coord[str(coord)] = [data]
-
-        for dicoCoord, array in dico_coord.items():
-            dicoCoord = json.loads(dicoCoord)
-            to_return.append([array, dicoCoord])
-
-    return jsonify(to_return)
-
-@app.route("/_logs")
-def logs():
-    return Response(event_stream_log(), mimetype="text/event-stream")
-
-@app.route("/_maps")
-def maps():
-    return Response(event_stream_maps(), mimetype="text/event-stream")
-
-@app.route("/_get_log_head")
-def getLogHead():
-    return json.dumps(LogItem('').get_head_row())
-
-def event_stream_log():
-    for msg in subscriber_log.listen():
-        content = msg['data']
-        yield EventMessage(content).to_json()
-
-def event_stream_maps():
-    for msg in subscriber_map.listen():
-        content = msg['data'].decode('utf8')
-        yield 'data: {}\n\n'.format(content)
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)
