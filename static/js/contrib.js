@@ -106,10 +106,13 @@ function getRankIcon(rank, size, header) {
     }
     return img.outerHTML;
 }
-function generateRankingSheet(rank, stepPnt, pnt, Rpnt) {
+function generateRankingSheet(rank, rankDec, stepPnt, pnt, Rpnt) {
     var Cpnt = pnt - stepPnt;
     var Tpnt = Cpnt + Rpnt;
+    var OuterDiv = document.createElement('div');
     var gdiv = document.createElement('div');
+    gdiv.id = "globalDiv";
+    gdiv.style.float = 'left';
     //progressBar
     var div = document.createElement('div');
     div.classList.add('progress');
@@ -119,19 +122,18 @@ function generateRankingSheet(rank, stepPnt, pnt, Rpnt) {
     var div1 = document.createElement('div')
     div1.classList.add('progress-bar')
     div1.style.width = 100*(Cpnt)/Tpnt+'%';
-    div1.innerHTML = pnt;
+    div1.innerHTML = "<strong>"+Cpnt+"</strong>";
     div.appendChild(div1);
     var div1 = document.createElement('div')
     div1.classList.add('progress-bar', 'progress-bar-warning')
     div1.style.width = 100*(Rpnt)/Tpnt+'%'
-    div1.innerHTML = Rpnt;
+    div1.innerHTML = "<strong>"+Rpnt+"</strong>";
     div.appendChild(div1);
     gdiv.appendChild(div);
-
     // table
     var table = document.createElement('table');
     table.classList.add('table', 'table-striped');
-    table.style.marginBottom = '0px';
+    table.style.marginBottom = '5px';
     //head
     var thead = document.createElement('thead');
     var tr = document.createElement('tr');
@@ -167,7 +169,26 @@ function generateRankingSheet(rank, stepPnt, pnt, Rpnt) {
     table.appendChild(thead);
     table.appendChild(tbody);
     gdiv.appendChild(table);
-    return gdiv.outerHTML;
+    OuterDiv.appendChild(gdiv);
+    // Tot nbr points
+    var tableHeight = 440; //HARDCODED...
+    var div = document.createElement('div');
+    div.classList.add('progress');
+    div.style.width = '20px';
+    div.style.height = tableHeight+'px'; //HARDCODED...
+    div.style.display = 'flex'
+    div.style.float = 'left';
+    div.style.marginTop = '56px';
+    div.style.marginBottom = '0px';
+    div.style.marginLeft = '2px';
+    var div1 = document.createElement('div')
+    div1.classList.add('progress-bar', 'progress-bar-success', 'progress-bar-striped')
+    div1.style.height = ((rank+rankDec)*100/16)+'%';
+    div1.style.width = '100%';
+    div.appendChild(div1);
+    OuterDiv.appendChild(div);
+
+    return OuterDiv.outerHTML;
 }
 
 function addToTableFromJson(datatable, url) {
@@ -190,12 +211,14 @@ function addToTableFromJson(datatable, url) {
 function updateProgressHeader(org) {
     // get Org rank
     $.getJSON( url_getOrgRank+'?org='+org, function( data ) {
+        console.log(data);
         datatableTop.draw();
         var rank = Math.floor(data.rank);
+        var rankDec = data.rank-rank;
         $('#btnCurrRank').show();
         $('#orgText').text(data.org);
         var popoverRank = $('#btnCurrRank').data('bs.popover');
-        popoverRank.options.content = generateRankingSheet(rank, data.stepPts, data.points, data.remainingPts);
+        popoverRank.options.content = generateRankingSheet(rank, rankDec, data.stepPts, data.points, data.remainingPts);
         $('#orgRankDiv').html(getRankIcon(rank, 40, true));
         $('#orgNextRankDiv').html(getRankIcon(rank+1, 40, true));
         if (data.rank > 16){
