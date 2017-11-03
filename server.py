@@ -243,7 +243,7 @@ def getCoordsByRadius():
     delta = dateEnd - dateStart
     for i in range(delta.days+1):
         correctDatetime = dateStart + datetime.timedelta(days=i)
-        date_str = str(correctDatetime.year)+str(correctDatetime.month)+str(correctDatetime.day)
+        date_str = str(correctDatetime.year)+str(correctDatetime.month).zfill(2)+str(correctDatetime.day).zfill(2)
         keyCateg = 'GEO_RAD'
         keyname = "{}:{}".format(keyCateg, date_str)
         res = serv_redis_db.georadius(keyname, centerLon, centerLat, radius, unit='km', withcoord=True)
