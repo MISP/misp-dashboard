@@ -20,9 +20,13 @@ zoomlevel = 11
 clusteringDistance = 10
 
 [CONTRIB]
-#[1.5 -> +inf]
+max_number_of_last_contributor = 10
+#How much harder it gets to rank up (exponential multiplier) [1.5 -> +inf]
 rankMultiplier = 2
-categories = ["internal_reference", "targeting_data", "antivirus_detection", "payload_delivery", "artifacts_dropped", "payload_installation", "persistence_mechanism", "network_activity", "payload_type", "attribution", "external_analysis", "financial_fraud", "support_Tool", "social_network", "person", "other" ]
+categories_in_datatable = ["internal_reference", "targeting_data", "antivirus_detection", "payload_delivery", "artifacts_dropped", "payload_installation", "persistence_mechanism", "network_activity", "payload_type", "attribution", "external_analysis", "financial_fraud", "support_Tool", "social_network", "person", "other" ]
+default_pnts_per_contribution = 1
+# array of the form [[category, pntsRcv], ...]
+pnts_per_contribution = [["payload_delivery", 5], ["artifact_dropped", 20], ["network_activity", 5]]
 
 [Log]
 field_to_plot = Attribute.category

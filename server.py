@@ -28,7 +28,7 @@ serv_redis_db = redis.StrictRedis(
         port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisDB', 'db'))
 
-categories = json.loads(cfg.get('CONTRIB', 'categories'))
+categories_in_datatable = json.loads(cfg.get('CONTRIB', 'categories_in_datatable'))
 
 subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)
 subscriber_log.psubscribe(cfg.get('RedisLog', 'channel'))
@@ -145,8 +145,8 @@ def geo():
 
 @app.route("/contrib")
 def contrib():
-    categ_list = json.loads(cfg.get('CONTRIB', 'categories'))
-    categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in json.loads(cfg.get('CONTRIB', 'categories'))]
+    categ_list = categories_in_datatable
+    categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in categories_in_datatable]
     return render_template('contrib.html',
             currOrg="",
             rankMultiplier=cfg.getfloat('CONTRIB' ,'rankMultiplier'),
@@ -230,7 +230,7 @@ def getCategPerContrib():
         dic['rank'] = random.randint(1,16)
         dic['logo_path'] = 'logo'
         dic['org'] = 'Org'+str(d)
-        for f in categories:
+        for f in categories_in_datatable:
             dic[f] = random.randint(0,1600)
         data.append(dic)
 
@@ -250,7 +250,12 @@ def getOrgRank():
     points = random.randint(1,math.floor(cfg.getfloat('CONTRIB' ,'rankMultiplier')**16))
     #FIXME put 0 if org has no points
     remainingPts = getRemainingPoints(points)
-    data = {'org': org, 'points': points, 'rank': getRankLevel(points), 'remainingPts': remainingPts['remainingPts'], 'stepPts': remainingPts['stepPts']}
+    data = {'org': org,
+    'points': points,
+    'rank': getRankLevel(points),
+    'remainingPts': remainingPts['remainingPts'],
+    'stepPts': remainingPts['stepPts'],
+    }
     return jsonify(data)
 
 @app.route("/_getTopCoord")

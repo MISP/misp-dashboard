@@ -24,6 +24,14 @@ CHANNELDISP = cfg.get('RedisMap', 'channelDisp')
 CHANNEL_PROC = cfg.get('RedisMap', 'channelProc')
 PATH_TO_DB = cfg.get('RedisMap', 'pathMaxMindDB')
 
+DEFAULT_PNTS_REWARD = cfg.get('CONTRIB', 'default_pnts_per_contribution')
+categories_in_datatable = json.loads(cfg.get('CONTRIB', 'categories_in_datatable'))
+DICO_PNTS_REWARD = {}
+temp = json.loads(cfg.get('CONTRIB', 'pnts_per_contribution'))
+for categ, pnts in temp:
+    DICO_PNTS_REWARD[categ] = pnts
+MAX_NUMBER_OF_LAST_CONTRIBUTOR = cfg.getint('CONTRIB', 'max_number_of_last_contributor')
+
 serv_log = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
@@ -44,18 +52,17 @@ def publish_log(zmq_name, name, content):
     to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
     serv_log.publish(CHANNEL, json.dumps(to_send))
 
-def push_to_redis_zset(keyCateg, toAdd):
+def push_to_redis_zset(keyCateg, toAdd, endSubkey="", count=1):
     now = datetime.datetime.now()
-    today_str = str(now.year)+str(now.month)+str(now.day)
-    keyname = "{}:{}".format(keyCateg, today_str)
-    serv_redis_db.zincrby(keyname, toAdd)
+    today_str = str(now.year)+str(now.month).zfill(2)+str(now.day).zfill(2)
+    keyname = "{}:{}{}".format(keyCateg, today_str, endSubkey)
+    serv_redis_db.zincrby(keyname, toAdd, count)
 
 def push_to_redis_geo(keyCateg, lon, lat, content):
     now = datetime.datetime.now()
-    today_str = str(now.year)+str(now.month)+str(now.day)
+    today_str = str(now.year)+str(now.month).zfill(2)+str(now.day).zfill(2)
     keyname = "{}:{}".format(keyCateg, today_str)
     serv_redis_db.geoadd(keyname, lon, lat, content)
-
 
 def ip_to_coord(ip):
     resp = reader.city(ip)
@@ -109,6 +116,28 @@ def getFields(obj, fields):
     except KeyError as e:
         return ""
 
+def noSpaceLower(str):
+    return str.lower().replace(' ', '_')
+
+#pntMultiplier if one contribution rewards more than others. (e.g. shighting may gives more points than editing)
+def handleContribution(org, categ, action, pntMultiplier=1):
+    if action in ['edit']:
+        pass
+        #return #not a contribution?
+    # is a valid contribution
+    try:
+        pnts_to_add = DICO_PNTS_REWARD[noSpaceLower(categ)]
+    except KeyError:
+        pnts_to_add = DEFAULT_PNTS_REWARD
+    pnts_to_add *= pntMultiplier
+
+    push_to_redis_zset('CONTRIB_DAY', org, count=pnts_to_add)
+    #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
+    push_to_redis_zset('CONTRIB_CATEG', org, count=DEFAULT_PNTS_REWARD, endSubkey=':'+noSpaceLower(categ))
+    serv_redis_db.sadd('CONTRIB_ALL_ORG', org)
+    serv_redis_db.lpush('CONTRIB_LAST', org)
+    serv_redis_db.ltrim('CONTRIB_LAST', 0, MAX_NUMBER_OF_LAST_CONTRIBUTOR-1) # Limit list size
+    #serv_redis_db.lrange('CONTRIB_LAST', 0, MAX_NUMBER_OF_LAST_CONTRIBUTOR-1) # get the last 10 contributors
 
 ##############
 ## HANDLERS ##
@@ -129,6 +158,10 @@ def handler_keepalive(zmq_name, jsonevent):
 
 def handler_sighting(zmq_name, jsonsight):
     print('sending' ,'sighting')
+    org = jsonsight['org']
+    categ = jsonsight['categ']
+    action = jsonsight['action']
+    handleContribution(org, categ, action)
     return
 
 def handler_event(zmq_name, jsonobj):
@@ -165,6 +198,7 @@ def handler_attribute(zmq_name, jsonobj):
     if jsonattr['category'] == "Network activity":
         getCoordAndPublish(zmq_name, jsonattr['value'], jsonattr['category'])
 
+    handleContribution(jsonobj['Event']['Orgc']['name'], jsonattr['category'], jsonobj['action'])
     # Push to log
     publish_log(zmq_name, 'Attribute', to_push)
 
@@ -210,4 +244,3 @@ if __name__ == "__main__":
 
     main(args.zmqname)
     reader.close()
-
