@@ -197,7 +197,7 @@ function addToTableFromJson(datatable, url) {
             var row = data[i];
             i = parseInt(i);
             var to_add = [
-                i+1,
+                row.pnts,
                 getRankIcon(row.rank),
                 row.logo_path,
                 row.org
@@ -211,7 +211,6 @@ function addToTableFromJson(datatable, url) {
 function updateProgressHeader(org) {
     // get Org rank
     $.getJSON( url_getOrgRank+'?org='+org, function( data ) {
-        console.log(data);
         datatableTop.draw();
         var rank = Math.floor(data.rank);
         var rankDec = data.rank-rank;
@@ -262,9 +261,9 @@ $(document).ready(function() {
     // top contributors
     addToTableFromJson(datatableTop, url_getTopContributor);
     // hall of fame
-    addToTableFromJson(datatableFame, url_getTopContributor);
+    addToTableFromJson(datatableFame, url_getFameContributor);
     // last contributors
-    addToTableFromJson(datatableLast, url_getTopContributor);
+    addToTableFromJson(datatableLast, url_getLastContributor);
     // category per contributors
     $.getJSON( url_getCategPerContrib, function( data ) {
         for (i in data) {
@@ -286,6 +285,7 @@ $(document).ready(function() {
     });
     // top 5 contrib overtime
     $.getJSON( url_getTop5Overtime, function( data ) {
+        console.log(data);
         var plotLineChart = $.plot("#divTop5Overtime", data, optionsLineChart);
     });
 });

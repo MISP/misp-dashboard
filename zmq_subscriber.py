@@ -47,6 +47,8 @@ serv_redis_db = redis.StrictRedis(
 
 reader = geoip2.database.Reader(PATH_TO_DB)
 
+def getDateStrFormat(date):
+    return str(date.year)+str(date.month).zfill(2)+str(date.day).zfill(2)
 
 def publish_log(zmq_name, name, content):
     to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
@@ -54,13 +56,13 @@ def publish_log(zmq_name, name, content):
 
 def push_to_redis_zset(keyCateg, toAdd, endSubkey="", count=1):
     now = datetime.datetime.now()
-    today_str = str(now.year)+str(now.month).zfill(2)+str(now.day).zfill(2)
+    today_str = getDateStrFormat(now)
     keyname = "{}:{}{}".format(keyCateg, today_str, endSubkey)
     serv_redis_db.zincrby(keyname, toAdd, count)
 
 def push_to_redis_geo(keyCateg, lon, lat, content):
     now = datetime.datetime.now()
-    today_str = str(now.year)+str(now.month).zfill(2)+str(now.day).zfill(2)
+    today_str = getDateStrFormat(now)
     keyname = "{}:{}".format(keyCateg, today_str)
     serv_redis_db.geoadd(keyname, lon, lat, content)
 
@@ -135,9 +137,11 @@ def handleContribution(org, categ, action, pntMultiplier=1):
     #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
     push_to_redis_zset('CONTRIB_CATEG', org, count=DEFAULT_PNTS_REWARD, endSubkey=':'+noSpaceLower(categ))
     serv_redis_db.sadd('CONTRIB_ALL_ORG', org)
-    serv_redis_db.lpush('CONTRIB_LAST', org)
-    serv_redis_db.ltrim('CONTRIB_LAST', 0, MAX_NUMBER_OF_LAST_CONTRIBUTOR-1) # Limit list size
-    #serv_redis_db.lrange('CONTRIB_LAST', 0, MAX_NUMBER_OF_LAST_CONTRIBUTOR-1) # get the last 10 contributors
+
+    now = datetime.datetime.now()
+    nowSec = int(time.time())
+    serv_redis_db.zadd('CONTRIB_LAST:'+getDateStrFormat(now), nowSec, org)
+    serv_redis_db.expire('CONTRIB_LAST:'+getDateStrFormat(now), 60*60*24) #expire after 1 day
 
 ##############
 ## HANDLERS ##

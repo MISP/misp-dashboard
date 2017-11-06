@@ -99,7 +99,7 @@
                                             <table id="topContribTable" class="table table-hover table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th>#</th>
+                                                        <th>Points</th>
                                                         <th>Rank</th>
                                                         <th>Logo</th>
                                                         <th>Organisation</th>
@@ -126,7 +126,7 @@
                                             <table id="lastTable" class="table table-hover table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th>#</th>
+                                                        <th>Points</th>
                                                         <th>Rank</th>
                                                         <th>Logo</th>
                                                         <th>Organisation</th>
@@ -152,7 +152,7 @@
                                             <table id="categTable" class="table table-hover table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th>#</th>
+                                                        <th>Points</th>
                                                         <th>Rank</th>
                                                         <th>Logo</th>
                                                         <th>Organisation</th>
@@ -187,7 +187,7 @@
                                         <table id="fameTable" class="table table-hover table-striped" style="margin-bottom: 0px;">
                                             <thead>
                                                 <tr>
-                                                    <th>#</th>
+                                                    <th>Points</th>
                                                     <th>Prev. rank</th>
                                                     <th>Logo</th>
                                                     <th>Organisation</th>
@@ -229,8 +229,10 @@
     <script>
         /* URL */
         var url_getTopContributor = "{{ url_for('getTopContributor') }}";
+        var url_getFameContributor = "{{ url_for('getFameContributor') }}";
         var url_getCategPerContrib = "{{ url_for('getCategPerContrib') }}";
         var url_getTop5Overtime = "{{ url_for('getTop5Overtime') }}";
+        var url_getLastContributor = "{{ url_for('getLastContributor') }}";
         var url_getAllOrg = "{{ url_for('getAllOrg') }}";
         var url_getOrgRank = "{{ url_for('getOrgRank') }}";
         var url_baseRankLogo =     "{{ url_for('static', filename='pics/rankingMISP/1.png') }}";
