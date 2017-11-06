@@ -37,6 +37,8 @@ subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)
 subscriber_log.psubscribe(cfg.get('RedisLog', 'channel'))
 subscriber_map = redis_server_map.pubsub(ignore_subscribe_messages=True)
 subscriber_map.psubscribe(cfg.get('RedisMap', 'channelDisp'))
+subscriber_lastContrib = redis_server_log.pubsub(ignore_subscribe_messages=True)
+subscriber_lastContrib.psubscribe(cfg.get('RedisLog', 'channelLastContributor'))
 eventNumber = 0
 
 ##########
@@ -260,9 +262,24 @@ def getCoordsByRadius():
 
 ''' CONTRIB '''
 
-@app.route("/_getLastContributor")
+@app.route("/_getLastContributors")
+def getLastContributors():
+    return jsonify(contributor_helper.getLastContributorsFromRedis())
+
+@app.route("/_eventStreamLastContributor")
 def getLastContributor():
-    return jsonify(contributor_helper.getLastContributorFromRedis())
+    return Response(eventStreamLastContributor(), mimetype="text/event-stream")
+
+def eventStreamLastContributor():
+    for msg in subscriber_lastContrib.listen():
+        content = msg['data'].decode('utf8')
+        contentJson = json.loads(content)
+        lastContribJson = json.loads(contentJson['log'])
+        org = lastContribJson['org']
+        to_return = contributor_helper.getContributorFromRedis(org)
+        epoch = lastContribJson['epoch']
+        to_return['epoch'] = epoch
+        yield 'data: {}\n\n'.format(json.dumps(to_return))
 
 @app.route("/_getTopContributor")
 def getTopContributor(suppliedDate=None):

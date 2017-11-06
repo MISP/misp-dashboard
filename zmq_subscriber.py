@@ -20,6 +20,7 @@ cfg.read(configfile)
 
 ZMQ_URL = cfg.get('RedisLog', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')
+CHANNEL_LASTCONTRIB = cfg.get('RedisLog', 'channelLastContributor')
 CHANNELDISP = cfg.get('RedisMap', 'channelDisp')
 CHANNEL_PROC = cfg.get('RedisMap', 'channelProc')
 PATH_TO_DB = cfg.get('RedisMap', 'pathMaxMindDB')
@@ -50,9 +51,9 @@ reader = geoip2.database.Reader(PATH_TO_DB)
 def getDateStrFormat(date):
     return str(date.year)+str(date.month).zfill(2)+str(date.day).zfill(2)
 
-def publish_log(zmq_name, name, content):
+def publish_log(zmq_name, name, content, channel=CHANNEL):
     to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
-    serv_log.publish(CHANNEL, json.dumps(to_send))
+    serv_log.publish(channel, json.dumps(to_send))
 
 def push_to_redis_zset(keyCateg, toAdd, endSubkey="", count=1):
     now = datetime.datetime.now()
@@ -122,7 +123,7 @@ def noSpaceLower(str):
     return str.lower().replace(' ', '_')
 
 #pntMultiplier if one contribution rewards more than others. (e.g. shighting may gives more points than editing)
-def handleContribution(org, categ, action, pntMultiplier=1):
+def handleContribution(zmq_name, org, categ, action, pntMultiplier=1):
     if action in ['edit']:
         pass
         #return #not a contribution?
@@ -142,6 +143,8 @@ def handleContribution(org, categ, action, pntMultiplier=1):
     nowSec = int(time.time())
     serv_redis_db.zadd('CONTRIB_LAST:'+getDateStrFormat(now), nowSec, org)
     serv_redis_db.expire('CONTRIB_LAST:'+getDateStrFormat(now), 60*60*24) #expire after 1 day
+
+    publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
 
 ##############
 ## HANDLERS ##
@@ -165,7 +168,7 @@ def handler_sighting(zmq_name, jsonsight):
     org = jsonsight['org']
     categ = jsonsight['categ']
     action = jsonsight['action']
-    handleContribution(org, categ, action)
+    handleContribution(zmq_name, org, categ, action)
     return
 
 def handler_event(zmq_name, jsonobj):
@@ -202,7 +205,7 @@ def handler_attribute(zmq_name, jsonobj):
     if jsonattr['category'] == "Network activity":
         getCoordAndPublish(zmq_name, jsonattr['value'], jsonattr['category'])
 
-    handleContribution(jsonobj['Event']['Orgc']['name'], jsonattr['category'], jsonobj['action'])
+    handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'], jsonattr['category'], jsonobj['action'])
     # Push to log
     publish_log(zmq_name, 'Attribute', to_push)
 

@@ -40,6 +40,7 @@ port=6251
 [RedisLog]
 db=0
 channel=1
+channelLastContributor = lastContributor
 zmq_url=tcp://localhost:50000
 #zmq_url=tcp://192.168.56.50:50000
 

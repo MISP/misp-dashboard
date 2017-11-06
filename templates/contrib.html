@@ -130,6 +130,7 @@
                                                         <th>Rank</th>
                                                         <th>Logo</th>
                                                         <th>Organisation</th>
+                                                        <th>epoch</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -232,7 +233,8 @@
         var url_getFameContributor = "{{ url_for('getFameContributor') }}";
         var url_getCategPerContrib = "{{ url_for('getCategPerContrib') }}";
         var url_getTop5Overtime = "{{ url_for('getTop5Overtime') }}";
-        var url_getLastContributor = "{{ url_for('getLastContributor') }}";
+        var url_getLastContributor = "{{ url_for('getLastContributors') }}";
+        var url_eventStreamLastContributor = "{{ url_for('getLastContributor') }}";
         var url_getAllOrg = "{{ url_for('getAllOrg') }}";
         var url_getOrgRank = "{{ url_for('getOrgRank') }}";
         var url_baseRankLogo =     "{{ url_for('static', filename='pics/rankingMISP/1.png') }}";

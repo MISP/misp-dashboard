@@ -40,11 +40,11 @@ class Contributor_helper:
     def getOrgLogoFromRedis(self, org):
         return 'logo_'+org
 
-    def getLastContributorFromRedis(self):
+    def getLastContributorsFromRedis(self):
         date = datetime.datetime.now()
-        keyCateg = "CONTRIB_LAST"
+        keyname = "CONTRIB_LAST"
         topNum = self.MAX_NUMBER_OF_LAST_CONTRIBUTOR # default Num
-        last_contrib_org = self.getZrange(keyCateg, date, topNum)
+        last_contrib_org = self.getZrange(keyname, date, topNum)
         data = []
         for org, sec in last_contrib_org:
             dic = {}
@@ -52,8 +52,20 @@ class Contributor_helper:
             dic['logo_path'] = self.getOrgLogoFromRedis(org)
             dic['org'] = org
             dic['pnts'] = self.getOrgPntFromRedis(org, date)
+            dic['epoch'] = sec
             data.append(dic)
         return data
+
+    def getContributorFromRedis(self, org):
+        date = datetime.datetime.now()
+        epoch = self.serv_redis_db.zscore("CONTRIB_LAST", org)
+        dic = {}
+        dic['rank'] = self.getOrgRankFromRedis(org, date)
+        dic['logo_path'] = self.getOrgLogoFromRedis(org)
+        dic['org'] = org
+        dic['pnts'] = self.getOrgPntFromRedis(org, date)
+        dic['epoch'] = epoch
+        return dic
 
     def getTopContributorFromRedis(self, date):
         orgDicoPnts = {}
@@ -206,7 +218,7 @@ class Contributor_helper:
         ]
         return data2
 
-    def TEST_getLastContributorFromRedis(self):
+    def TEST_getLastContributorsFromRedis(self):
         data2 = [
             {
                 'rank': random.randint(1,self.levelMax),

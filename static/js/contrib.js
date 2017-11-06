@@ -49,6 +49,14 @@ var optionDatatable_light = {
 };
 var optionDatatable_top = jQuery.extend({}, optionDatatable_light)
 var optionDatatable_last = jQuery.extend({}, optionDatatable_light)
+optionDatatable_last.columnDefs = [
+    { 'orderData':[4], 'targets': [0] },
+    {
+        'targets': [4],
+        'visible': false,
+        'searchable': false
+    },
+]
 var optionDatatable_fame = jQuery.extend({}, optionDatatable_light)
 optionDatatable_fame.scrollY = '50vh';
 
@@ -208,6 +216,38 @@ function addToTableFromJson(datatable, url) {
     });
 }
 
+function addLastFromJson(datatable, url) {
+    $.getJSON( url, function( data ) {
+        for (i in data) {
+            var row = data[i];
+            i = parseInt(i);
+            addLastContributor(datatable, row);
+        }
+        datatable.draw();
+    });
+}
+
+function addLastContributor(datatable, data, update) {
+    var to_add = [
+        data.pnts,
+        getRankIcon(data.rank),
+        data.logo_path,
+        data.org,
+        data.epoch
+    ];
+    if (update == undefined || update == false) {
+        datatable.row.add(to_add);
+    } else if(update == true) {
+        datatable.rows().every( function() {
+            if(this.data()[3] == data.org) {
+                datatable.row( this ).data( to_add );
+            }
+        });
+    }
+}
+
+
+
 function updateProgressHeader(org) {
     // get Org rank
     $.getJSON( url_getOrgRank+'?org='+org, function( data ) {
@@ -261,7 +301,7 @@ $(document).ready(function() {
     // hall of fame
     addToTableFromJson(datatableFame, url_getFameContributor);
     // last contributors
-    addToTableFromJson(datatableLast, url_getLastContributor);
+    addLastFromJson(datatableLast, url_getLastContributor);
     // category per contributors
     $.getJSON( url_getCategPerContrib, function( data ) {
         for (i in data) {
@@ -286,5 +326,13 @@ $(document).ready(function() {
         var plotLineChart = $.plot("#divTop5Overtime", data, optionsLineChart);
     });
     if(currOrg != "") // currOrg selected
-        updateProgressHeader(currOrg)
+        //FIXME: timeout used to wait that all datatables are draw.
+        setTimeout( function() { updateProgressHeader(currOrg); }, 200);
+
+    source_lastContrib = new EventSource(url_eventStreamLastContributor);
+    source_lastContrib.onmessage = function(event) {
+        var json = jQuery.parseJSON( event.data );
+        addLastContributor(datatableLast, json, true);
+        datatableLast.draw();
+    };
 });
