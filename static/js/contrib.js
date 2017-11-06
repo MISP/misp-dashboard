@@ -250,8 +250,6 @@ function showOnlyOrg() {
 }
 
 $(document).ready(function() {
-    if(currOrg != "") // currOrg selected
-        updateProgressHeader(org)
     $('#orgName').typeahead(typeaheadOption);
     $('#btnCurrRank').popover(popOverOption);
     datatableTop = $('#topContribTable').DataTable(optionDatatable_top);
@@ -285,7 +283,8 @@ $(document).ready(function() {
     });
     // top 5 contrib overtime
     $.getJSON( url_getTop5Overtime, function( data ) {
-        console.log(data);
         var plotLineChart = $.plot("#divTop5Overtime", data, optionsLineChart);
     });
+    if(currOrg != "") // currOrg selected
+        updateProgressHeader(currOrg)
 });

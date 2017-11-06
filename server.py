@@ -255,8 +255,11 @@ def geo():
 def contrib():
     categ_list = categories_in_datatable
     categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in categories_in_datatable]
+    currOrg = request.args.get('org')
+    if currOrg is None:
+        currOrg = ""
     return render_template('contrib.html',
-            currOrg="",
+            currOrg=currOrg,
             rankMultiplier=cfg.getfloat('CONTRIB' ,'rankMultiplier'),
             categ_list=json.dumps(categ_list),
             categ_list_str=categ_list_str
