@@ -4,9 +4,9 @@
 }
 
 .questionBadgeText {
-    left: 15%;
+    left: -15%;
     position: relative;
-    bottom: 12%;
+    bottom: 18%;
 }
 
 .questionBadgeDiv {

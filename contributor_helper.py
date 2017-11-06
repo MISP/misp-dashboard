@@ -11,6 +11,18 @@ class Contributor_helper:
 
         self.MAX_NUMBER_OF_LAST_CONTRIBUTOR = cfg.getint('CONTRIB', 'max_number_of_last_contributor')
         self.categories_in_datatable = json.loads(cfg.get('CONTRIB', 'categories_in_datatable'))
+        self.default_pnts_per_contribution = json.loads(cfg.get('CONTRIB', 'default_pnts_per_contribution'))
+        temp = json.loads(cfg.get('CONTRIB', 'pnts_per_contribution'))
+        self.DICO_PNTS_REWARD = {}
+        for categ, pnts in temp:
+            self.DICO_PNTS_REWARD[categ] = pnts
+        # fill other categ with default points
+        for categ in self.categories_in_datatable:
+            if categ in self.DICO_PNTS_REWARD:
+                continue
+            else:
+                self.DICO_PNTS_REWARD[categ] = self.default_pnts_per_contribution
+
         self.rankMultiplier = cfg.getfloat('CONTRIB' ,'rankMultiplier')
         self.levelMax = 16
 

@@ -168,7 +168,7 @@ def handler_sighting(zmq_name, jsonsight):
     org = jsonsight['org']
     categ = jsonsight['categ']
     action = jsonsight['action']
-    handleContribution(zmq_name, org, categ, action)
+    handleContribution(zmq_name, org, categ, action, pntMultiplier=2)
     return
 
 def handler_event(zmq_name, jsonobj):

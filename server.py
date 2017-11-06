@@ -150,14 +150,18 @@ def geo():
 def contrib():
     categ_list = contributor_helper.categories_in_datatable
     categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in contributor_helper.categories_in_datatable]
+    categ_list_points = [contributor_helper.DICO_PNTS_REWARD[categ] for categ in categ_list]
     currOrg = request.args.get('org')
     if currOrg is None:
         currOrg = ""
     return render_template('contrib.html',
             currOrg=currOrg,
             rankMultiplier=contributor_helper.rankMultiplier,
+            default_pnts_per_contribution=contributor_helper.default_pnts_per_contribution,
+            additional_help_text=json.loads(cfg.get('CONTRIB', 'additional_help_text')),
             categ_list=json.dumps(categ_list),
             categ_list_str=categ_list_str,
+            categ_list_points=categ_list_points,
             min_between_reload=cfg.getint('CONTRIB', 'min_between_reload')
             )
 
