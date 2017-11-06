@@ -57,6 +57,14 @@
                       <li><a href="{{ url_for('geo') }}">MISP Geolocalisation</a></li>
                       <li><a href="{{ url_for('contrib') }}">MISP Contributors</a></li>
                     </ul>
+                <div id="ledsHolder" style="float: left; height: 50px;">
+                    <div class='leftSepa textTopHeader'>
+                        <label class="checkbox-inline" style="font-weight: bold; position: relative; top: -30%; left:10%">
+                            <input id="reloadCheckbox" type="checkbox" style="top: -2px;" checked>Auto reload
+                        </label>
+                        <label id='labelRemainingTime' style="font-weight: bold; position: relative; left: -38%; bottom: -30%;"></label>
+                    </div>
+                </div>
                 <div id="ledsHolder" style="float: right; height: 50px;">
                     <div class='leftSepa textTopHeader'>
                         <strong>Organisation name:</strong>
@@ -242,6 +250,7 @@
 
         /* DATA FROM CONF */
         var currOrg = "{{ currOrg }}";
+        var min_between_reload = {{ min_between_reload }};
         var rankMultiplier = {{ rankMultiplier }};
         var categ_list = JSON.parse('{{ categ_list|safe }}');
 

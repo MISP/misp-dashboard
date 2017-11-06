@@ -21,6 +21,7 @@ clusteringDistance = 10
 
 [CONTRIB]
 max_number_of_last_contributor = 10
+min_between_reload = 5
 #How much harder it gets to rank up (exponential multiplier) [1.5 -> +inf]
 rankMultiplier = 2
 categories_in_datatable = ["internal_reference", "targeting_data", "antivirus_detection", "payload_delivery", "artifacts_dropped", "payload_installation", "persistence_mechanism", "network_activity", "payload_type", "attribution", "external_analysis", "financial_fraud", "support_Tool", "social_network", "person", "other" ]

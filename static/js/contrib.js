@@ -2,6 +2,9 @@
 var allOrg = [];
 var datatableTop;
 var datatableFame;
+var refresh_speed = min_between_reload*60;
+var will_reload = $("#reloadCheckbox").is(':checked');
+var sec_before_reload = refresh_speed;
 
 /* CONFIG */
 var maxRank = 16;
@@ -246,8 +249,6 @@ function addLastContributor(datatable, data, update) {
     }
 }
 
-
-
 function updateProgressHeader(org) {
     // get Org rank
     $.getJSON( url_getOrgRank+'?org='+org, function( data ) {
@@ -289,7 +290,36 @@ function showOnlyOrg() {
     datatableCateg.search( $('#orgText').text() ).draw();
 }
 
+function timeToString(time) {
+    var min = Math.floor(time / 60);
+    min = (min < 10) ? ("0" + min) : min;
+    var sec = time - 60*min;
+    sec = (sec < 10) ? ("0" + sec) : sec;
+    return min + ":" + sec
+}
+
+function updateTimer() {
+    if ($("#reloadCheckbox").is(':checked')) {
+        sec_before_reload--;
+        if (sec_before_reload < 1) {
+            source_lastContrib.close();
+            location.reload();
+        } else {
+            $('#labelRemainingTime').text(timeToString(sec_before_reload));
+            setTimeout(function(){ updateTimer(); }, 1000);
+        }
+    } else {
+        sec_before_reload = refresh_speed;
+    }
+}
+
+$(':checkbox').change(function() {
+    if ($("#reloadCheckbox").is(':checked')) { setTimeout(function(){ updateTimer(); }, 1000); }
+});
+
 $(document).ready(function() {
+    $('#labelRemainingTime').text(timeToString(sec_before_reload));
+    updateTimer();
     $('#orgName').typeahead(typeaheadOption);
     $('#btnCurrRank').popover(popOverOption);
     datatableTop = $('#topContribTable').DataTable(optionDatatable_top);
@@ -335,5 +365,6 @@ $(document).ready(function() {
         addLastContributor(datatableLast, json, true);
         datatableLast.draw();
         updateProgressHeader(json.org)
+        sec_before_reload = refresh_speed; //reset timer at each contribution
     };
 });

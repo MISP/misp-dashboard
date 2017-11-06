@@ -157,7 +157,8 @@ def contrib():
             currOrg=currOrg,
             rankMultiplier=contributor_helper.rankMultiplier,
             categ_list=json.dumps(categ_list),
-            categ_list_str=categ_list_str
+            categ_list_str=categ_list_str,
+            min_between_reload=cfg.getint('CONTRIB', 'min_between_reload')
             )
 
 ''' INDEX '''
