@@ -334,5 +334,6 @@ $(document).ready(function() {
         var json = jQuery.parseJSON( event.data );
         addLastContributor(datatableLast, json, true);
         datatableLast.draw();
+        updateProgressHeader(json.org)
     };
 });
