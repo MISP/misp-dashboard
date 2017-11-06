@@ -117,6 +117,17 @@ function getRankIcon(rank, size, header) {
     }
     return img.outerHTML;
 }
+
+function createImg(source) {
+    var obj = document.createElement('object');
+    obj.height = 26;
+    obj.width = 26;
+    obj.style.margin = 'auto';
+    obj.data = source;
+    obj.type = "image/jpg"
+    return obj.outerHTML;
+}
+
 function generateRankingSheet(rank, rankDec, stepPnt, pnt, Rpnt) {
     var Cpnt = pnt - stepPnt;
     var Tpnt = Cpnt + Rpnt;
@@ -210,7 +221,7 @@ function addToTableFromJson(datatable, url) {
             var to_add = [
                 row.pnts,
                 getRankIcon(row.rank),
-                row.logo_path,
+                createImg(row.logo_path),
                 row.org
             ];
             datatable.row.add(to_add);
@@ -234,7 +245,7 @@ function addLastContributor(datatable, data, update) {
     var to_add = [
         data.pnts,
         getRankIcon(data.rank),
-        data.logo_path,
+        createImg(data.logo_path),
         data.org,
         data.epoch
     ];

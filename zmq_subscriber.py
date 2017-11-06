@@ -18,7 +18,7 @@ configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
-ZMQ_URL = cfg.get('RedisLog', 'zmq_url')
+ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')
 CHANNEL_LASTCONTRIB = cfg.get('RedisLog', 'channelLastContributor')
 CHANNELDISP = cfg.get('RedisMap', 'channelDisp')

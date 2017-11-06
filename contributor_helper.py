@@ -9,6 +9,7 @@ class Contributor_helper:
         self.serv_redis_db = serv_redis_db
         self.cfg = cfg
 
+        self.misp_web_url = cfg.get('RedisGlobal', 'misp_web_url')
         self.MAX_NUMBER_OF_LAST_CONTRIBUTOR = cfg.getint('CONTRIB', 'max_number_of_last_contributor')
         self.categories_in_datatable = json.loads(cfg.get('CONTRIB', 'categories_in_datatable'))
         self.default_pnts_per_contribution = json.loads(cfg.get('CONTRIB', 'default_pnts_per_contribution'))
@@ -50,7 +51,7 @@ class Contributor_helper:
         return self.getTrueRank(ptns)
 
     def getOrgLogoFromRedis(self, org):
-        return 'logo_'+org
+        return "{}/img/orgs/{}.png".format(self.misp_web_url, org)
 
     def getLastContributorsFromRedis(self):
         date = datetime.datetime.now()
@@ -205,6 +206,12 @@ class Contributor_helper:
         data2 = [
             {
                 'rank': random.randint(1,self.levelMax),
+                'logo_path': self.getOrgLogoFromRedis('MISP'),
+                'org': 'MISP',
+                'pnts': random.randint(1,2**self.levelMax)
+            },
+            {
+                'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo1',
                 'org': 'CIRCL',
                 'pnts': random.randint(1,2**self.levelMax)
@@ -239,6 +246,13 @@ class Contributor_helper:
     def TEST_getLastContributorsFromRedis(self):
         import time
         data2 = [
+            {
+                'rank': random.randint(1,self.levelMax),
+                'logo_path': self.getOrgLogoFromRedis('MISP'),
+                'org': 'MISP',
+                'pnts': random.randint(1,2**self.levelMax),
+                'epoch': time.time() - random.randint(0, 10000)
+            },
             {
                 'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo1',
@@ -278,5 +292,5 @@ class Contributor_helper:
         return data2*2
 
     def TEST_getAllOrgFromRedis(self):
-        data2 = ['CIRCL', 'CASES', 'SMILE' ,'ORG4' ,'ORG5', 'SUPER HYPER LONG ORGINZATION NAME', 'Org3']
+        data2 = ['CIRCL', 'CASES', 'SMILE' ,'ORG4' ,'ORG5', 'SUPER HYPER LONG ORGINZATION NAME', 'Org3', 'MISP']
         return data2
