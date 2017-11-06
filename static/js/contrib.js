@@ -61,7 +61,7 @@ optionDatatable_last.columnDefs = [
     },
 ]
 var optionDatatable_fame = jQuery.extend({}, optionDatatable_light)
-optionDatatable_fame.scrollY = '50vh';
+optionDatatable_fame.scrollY = '45vh';
 
 var optionDatatable_Categ = {
     responsive: true,
@@ -120,8 +120,8 @@ function getRankIcon(rank, size, header) {
 
 function createImg(source) {
     var obj = document.createElement('object');
-    obj.height = 26;
-    obj.width = 26;
+    obj.height = 22;
+    obj.width = 22;
     obj.style.margin = 'auto';
     obj.data = source;
     obj.type = "image/jpg"
