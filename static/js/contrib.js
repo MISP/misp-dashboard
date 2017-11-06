@@ -160,7 +160,7 @@ function generateRankingSheet(rank, rankDec, stepPnt, pnt, Rpnt) {
     for (var i=1; i<=maxRank; i++) {
         var tr = document.createElement('tr');
         var td1 = document.createElement('td');
-        td1.innerHTML = getRankIcon(i, 20);
+        td1.innerHTML = getRankIcon(i, 40);
         td1.style.padding = "2px";
         var td2 = document.createElement('td');
         td2.innerHTML = Math.floor(Math.pow(rankMultiplier, i));
@@ -182,7 +182,7 @@ function generateRankingSheet(rank, rankDec, stepPnt, pnt, Rpnt) {
     gdiv.appendChild(table);
     OuterDiv.appendChild(gdiv);
     // Tot nbr points
-    var tableHeight = 440; //HARDCODED...
+    var tableHeight = 720; //HARDCODED...
     var div = document.createElement('div');
     div.classList.add('progress');
     div.style.width = '20px';
@@ -269,19 +269,19 @@ function updateProgressHeader(org) {
         // update color in other dataTables
         datatableTop.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('info'); }
+            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('infoBlue'); }
         });
         datatableFame.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('info'); }
+            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('infoBlue'); }
         });
         datatableCateg.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('info'); }
+            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('infoBlue'); }
         });
         datatableLast.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('info'); }
+            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('infoBlue'); }
         });
     });
 }
@@ -338,7 +338,7 @@ $(document).ready(function() {
             var row = data[i];
             i = parseInt(i);
             var to_add = [
-                i+1,
+                row.pnts,
                 getRankIcon(row.rank),
                 row.logo_path,
                 row.org,

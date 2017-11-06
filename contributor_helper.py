@@ -188,7 +188,8 @@ class Contributor_helper:
             dic['rank'] = random.randint(1,self.levelMax)
             dic['logo_path'] = 'logo'
             dic['org'] = 'Org'+str(d)
-            for f in categories_in_datatable:
+            dic['pnts'] = random.randint(1,2**self.levelMax)
+            for f in self.categories_in_datatable:
                 dic[f] = random.randint(0,1600)
             data2.append(dic)
         return data2
@@ -206,59 +207,75 @@ class Contributor_helper:
                 'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo1',
                 'org': 'CIRCL',
+                'pnts': random.randint(1,2**self.levelMax)
             },
             {
                 'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo2',
                 'org': 'CASES',
+                'pnts': random.randint(1,2**self.levelMax)
             },
             {
                 'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo3',
                 'org': 'SMILE',
+                'pnts': random.randint(1,2**self.levelMax)
             },
             {
                 'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo4',
                 'org': 'ORG4',
+                'pnts': random.randint(1,2**self.levelMax)
             },
             {
                 'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo5',
                 'org': 'ORG5',
+                'pnts': random.randint(1,2**self.levelMax)
             },
         ]
-        return data2
+        return data2*2
 
     def TEST_getLastContributorsFromRedis(self):
+        import time
         data2 = [
             {
                 'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo1',
                 'org': 'CIRCL',
+                'pnts': random.randint(1,2**self.levelMax),
+                'epoch': time.time() - random.randint(0, 10000)
             },
             {
                 'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo2',
                 'org': 'CASES',
+                'pnts': random.randint(1,2**self.levelMax),
+                'epoch': time.time() - random.randint(0, 10000)
             },
             {
                 'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo3',
                 'org': 'SMILE',
+                'pnts': random.randint(1,2**self.levelMax),
+                'epoch': time.time() - random.randint(0, 10000)
             },
             {
                 'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo4',
                 'org': 'ORG4',
+                'pnts': random.randint(1,2**self.levelMax),
+                'epoch': time.time() - random.randint(0, 10000)
             },
             {
                 'rank': random.randint(1,self.levelMax),
                 'logo_path': 'logo5',
                 'org': 'ORG5',
+                'pnts': random.randint(1,2**self.levelMax),
+                'epoch': time.time() - random.randint(0, 10000)
             },
         ]
-        return data2
+        return data2*2
 
     def TEST_getAllOrgFromRedis(self):
         data2 = ['CIRCL', 'CASES', 'SMILE' ,'ORG4' ,'ORG5', 'SUPER HYPER LONG ORGINZATION NAME', 'Org3']

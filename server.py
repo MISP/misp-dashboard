@@ -269,7 +269,7 @@ def getCoordsByRadius():
 
 @app.route("/_getLastContributors")
 def getLastContributors():
-    return jsonify(contributor_helper.getLastContributorsFromRedis())
+    return jsonify(contributor_helper.TEST_getLastContributorsFromRedis())
 
 @app.route("/_eventStreamLastContributor")
 def getLastContributor():
@@ -296,7 +296,7 @@ def getTopContributor(suppliedDate=None):
     else:
         date = suppliedDate
 
-    data = contributor_helper.getTopContributorFromRedis(date)
+    data = contributor_helper.TEST_getTopContributorFromRedis(date)
     return jsonify(data)
 
 @app.route("/_getFameContributor")
@@ -312,7 +312,7 @@ def getFameContributor():
 
 @app.route("/_getTop5Overtime")
 def getTop5Overtime():
-    return jsonify(contributor_helper.getTop5OvertimeFromRedis())
+    return jsonify(contributor_helper.TEST_getTop5OvertimeFromRedis())
 
 @app.route("/_getCategPerContrib")
 def getCategPerContrib():
@@ -321,11 +321,11 @@ def getCategPerContrib():
     except:
         date = datetime.datetime.now()
 
-    return jsonify(contributor_helper.getCategPerContribFromRedis(date))
+    return jsonify(contributor_helper.TEST_getCategPerContribFromRedis(date))
 
 @app.route("/_getAllOrg")
 def getAllOrg():
-    return jsonify(contributor_helper.getAllOrgFromRedis())
+    return jsonify(contributor_helper.TEST_getAllOrgFromRedis())
 
 @app.route("/_getOrgRank")
 def getOrgRank():
