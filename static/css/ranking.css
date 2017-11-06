@@ -3,6 +3,25 @@
     height: auto;
 }
 
+.questionBadgeText {
+    left: 15%;
+    position: relative;
+    bottom: 12%;
+}
+
+.questionBadgeDiv {
+    float: right;
+    width: 40px;
+    height: 40px;
+    background-color: #286090;
+    font-size: xx-large;
+    border-radius: 50% 50% 50% 50%;
+    color: white;
+    top: 4px;
+    position: relative;
+    left: 78%;
+}
+
 .infoBlue {
     background-color: #719bc0 !important;
     color: white;
