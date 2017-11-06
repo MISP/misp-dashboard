@@ -269,19 +269,19 @@ function updateProgressHeader(org) {
         // update color in other dataTables
         datatableTop.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('info'); } else { row.classList.remove('info'); }
+            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('info'); }
         });
         datatableFame.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('info'); } else { row.classList.remove('info'); }
+            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('info'); }
         });
         datatableCateg.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('info'); } else { row.classList.remove('info'); }
+            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('info'); }
         });
         datatableLast.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('info'); } else { row.classList.remove('info'); }
+            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('info'); }
         });
     });
 }
