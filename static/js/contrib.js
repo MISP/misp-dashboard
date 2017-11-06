@@ -92,9 +92,9 @@ var typeaheadOption = {
 /* FUNCTIONS */
 function getRankIcon(rank, size, header) {
     if (rank > 16) {
-        rankLogoPath = url_baseRankLogo+0+'.png';
+        rankLogoPath = url_baseRankLogo+0+'.svg';
     } else {
-        rankLogoPath = url_baseRankLogo+rank+'.png';
+        rankLogoPath = url_baseRankLogo+rank+'.svg';
     }
     var img = document.createElement('img');
     img.src = rankLogoPath;
