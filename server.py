@@ -151,6 +151,10 @@ def contrib():
     categ_list = contributor_helper.categories_in_datatable
     categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in contributor_helper.categories_in_datatable]
     categ_list_points = [contributor_helper.DICO_PNTS_REWARD[categ] for categ in categ_list]
+    org_rank = contributor_helper.org_rank
+    org_rank_list = [[rank, title] for rank, title in org_rank.items()]
+    org_rank_list.sort(key=lambda x: x[0])
+
     currOrg = request.args.get('org')
     if currOrg is None:
         currOrg = ""
@@ -162,6 +166,8 @@ def contrib():
             categ_list=json.dumps(categ_list),
             categ_list_str=categ_list_str,
             categ_list_points=categ_list_points,
+            org_rank_json=json.dumps(org_rank),
+            org_rank_list=org_rank_list,
             min_between_reload=cfg.getint('CONTRIB', 'min_between_reload')
             )
 

@@ -49,13 +49,17 @@ var optionDatatable_light = {
         "infoEmpty": "",
     },
     "info": false,
+    "columnDefs": [
+        { className: "centerCellPicOrgRank", "targets": [ 2 ] },
+        { className: "centerCellPicOrgLogo", "targets": [ 3 ] }
+    ]
 };
 var optionDatatable_top = jQuery.extend({}, optionDatatable_light)
 var optionDatatable_last = jQuery.extend({}, optionDatatable_light)
 optionDatatable_last.columnDefs = [
-    { 'orderData':[4], 'targets': [0] },
+    { 'orderData':[5], 'targets': [0] },
     {
-        'targets': [4],
+        'targets': [5],
         'visible': false,
         'searchable': false
     },
@@ -71,6 +75,10 @@ var optionDatatable_Categ = {
     scrollCollapse: true,
     paging:         false,
     "info": false,
+    "columnDefs": [
+        { className: "centerCellPicOrgRank", "targets": [ 2 ] },
+        { className: "centerCellPicOrgLogo", "targets": [ 3 ], 'searchable': false, 'sortable': false }
+    ]
 };
 
 var typeaheadOption = {
@@ -90,11 +98,11 @@ var typeaheadOption = {
 }
 
 /* FUNCTIONS */
-function getRankIcon(rank, size, header) {
+function getMonthlyRankIcon(rank, size, header) {
     if (rank > 16) {
-        rankLogoPath = url_baseRankLogo+0+'.svg';
+        var rankLogoPath = url_baseRankMonthlyLogo+0+'.svg';
     } else {
-        rankLogoPath = url_baseRankLogo+rank+'.svg';
+        var rankLogoPath = url_baseRankMonthlyLogo+rank+'.svg';
     }
     var img = document.createElement('img');
     img.src = rankLogoPath;
@@ -118,13 +126,29 @@ function getRankIcon(rank, size, header) {
     return img.outerHTML;
 }
 
-function createImg(source) {
+function getOrgRankIcon(rank, size) {
+    if (rank > 16) {
+        var rankLogoPath = url_baseOrgRankLogo+0+'.svg';
+    } else {
+        var rankLogoPath = url_baseOrgRankLogo+rank+'.svg';
+    }
+    var obj = document.createElement('img');
+    obj.height = size/2;
+    obj.width = size;
+    obj.src = rankLogoPath;
+    obj.type = "image/svg"
+    obj.title = org_rank_obj[rank];
+    obj.classList.add('orgRankClass')
+    return obj.outerHTML;
+}
+
+function createImg(source, size, return_obj) {
     var obj = document.createElement('object');
-    obj.height = 22;
-    obj.width = 22;
+    obj.height = size;
+    obj.width = size;
     obj.style.margin = 'auto';
     obj.data = source;
-    obj.type = "image/jpg"
+    obj.type = "image/png"
     return obj.outerHTML;
 }
 
@@ -171,7 +195,7 @@ function generateRankingSheet(rank, rankDec, stepPnt, pnt, Rpnt) {
     for (var i=1; i<=maxRank; i++) {
         var tr = document.createElement('tr');
         var td1 = document.createElement('td');
-        td1.innerHTML = getRankIcon(i, 40);
+        td1.innerHTML = getMonthlyRankIcon(i, 40);
         td1.style.padding = "2px";
         var td2 = document.createElement('td');
         td2.innerHTML = Math.floor(Math.pow(rankMultiplier, i));
@@ -215,13 +239,15 @@ function generateRankingSheet(rank, rankDec, stepPnt, pnt, Rpnt) {
 
 function addToTableFromJson(datatable, url) {
     $.getJSON( url, function( data ) {
+        console.log(data);
         for (i in data) {
             var row = data[i];
             i = parseInt(i);
             var to_add = [
                 row.pnts,
-                getRankIcon(row.rank),
-                createImg(row.logo_path),
+                getMonthlyRankIcon(row.rank),
+                getOrgRankIcon(row.orgRank, 60),
+                createImg(row.logo_path, 32),
                 row.org
             ];
             datatable.row.add(to_add);
@@ -244,8 +270,9 @@ function addLastFromJson(datatable, url) {
 function addLastContributor(datatable, data, update) {
     var to_add = [
         data.pnts,
-        getRankIcon(data.rank),
-        createImg(data.logo_path),
+        getMonthlyRankIcon(data.rank),
+        getOrgRankIcon(data.orgRank, 60),
+        createImg(data.logo_path, 32),
         data.org,
         data.epoch
     ];
@@ -270,8 +297,8 @@ function updateProgressHeader(org) {
         $('#orgText').text(data.org);
         var popoverRank = $('#btnCurrRank').data('bs.popover');
         popoverRank.options.content = generateRankingSheet(rank, rankDec, data.stepPts, data.points, data.remainingPts);
-        $('#orgRankDiv').html(getRankIcon(rank, 40, true));
-        $('#orgNextRankDiv').html(getRankIcon(rank+1, 40, true));
+        $('#orgRankDiv').html(getMonthlyRankIcon(rank, 40, true));
+        $('#orgNextRankDiv').html(getMonthlyRankIcon(rank+1, 40, true));
         if (data.rank > 16){
             $('#progressBarDiv').width(1*150); //150 is empty bar width
         } else {
@@ -350,7 +377,8 @@ $(document).ready(function() {
             i = parseInt(i);
             var to_add = [
                 row.pnts,
-                getRankIcon(row.rank),
+                getMonthlyRankIcon(row.rank),
+                getOrgRankIcon(row.orgRank, 44),
                 row.logo_path,
                 row.org,
             ];

@@ -46,7 +46,7 @@
 <body>
     <!-- Modal -->
     <div id="myModal" class="modal fade" role="dialog">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-lg" style="width: 1300px;">
 
         <!-- Modal content-->
         <div class="modal-content">
@@ -61,23 +61,49 @@
                         <li>{{ text }}</li>
                     {% endfor %}
               </ul>
-              <div class="table-responsive">
-                  <table class="table table-striped table-bordered">
-                      <thead>
-                          <tr>
-                              <th>Category</th>
-                              <th>Point(s) awarded</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                            {% for categ in categ_list_str %}
-                                <tr>
-                                    <td>{{ categ }}</td>
-                                    <td>{{ categ_list_points[loop.index0] }}</td>
-                                </tr>
-                            {% endfor %}
-                      </tbody>
-                  </table>
+              <div class="row">
+                  <div class="col-lg-6">
+                        <h4>Points awarded by category:</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Point(s) awarded</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                      {% for categ in categ_list_str %}
+                                          <tr>
+                                              <td>{{ categ }}</td>
+                                              <td>{{ categ_list_points[loop.index0] }}</td>
+                                          </tr>
+                                      {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                  </div>
+                  <div class="col-lg-6">
+                      <h4>Organisation rank title:</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Org. rank</th>
+                                        <th>Title</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                      {% for item in org_rank_list %}
+                                          <tr>
+                                              <td style='padding: 0px; text-align: right;'><img height='32px' width='64px' style="margin-right: 20px;" src="{{ url_for('static', filename='pics/rankingMISPOrg/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img></td>
+                                              <td>{{ item[1] }}</td>
+                                          </tr>
+                                      {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                  </div>
               </div>
           </div>
           <div class="modal-footer">
@@ -115,6 +141,7 @@
                     <div class='textTopHeader' style="padding-top: 9px;">
                         <input type="text" id="orgName" data-provide="typeahead" size="20" style="margin-bottom: 5px;">
                     </div>
+                    <button type="button" class="questionBadgeDiv" data-toggle="modal" data-target="#myModal"><i class="fa fa-question-circle questionBadgeText"></i></button>
                     <button id="btnCurrRank" class='btn btn-default popOverBtn' data-container='body' data-toggle='popover' style="display: none; margin-left: 20px;" onclick="showOnlyOrg()">
                         <strong id="orgText" class="centerInBtn"></strong>
                         <div id="orgRankDiv" class='textTopHeader' style="padding-top: 0px; position: relative; width: 40px; height: 40px;"></div>
@@ -126,7 +153,6 @@
                         </div>
                         <div id="orgNextRankDiv" class='textTopHeader' style="padding-top: 0px; position: relative; width: 40px; height: 40px;"></div>
                     </button>
-                    <button type="button" class="questionBadgeDiv" data-toggle="modal" data-target="#myModal"><i class="fa fa-question-circle questionBadgeText"></i></button>
                 </div>
             </div>
             <!-- /.navbar-header -->
@@ -152,8 +178,9 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Points</th>
-                                                        <th>Rank</th>
-                                                        <th>Logo</th>
+                                                        <th>Cur. rank</th>
+                                                        <th>Org. rank</th>
+                                                        <th></th>
                                                         <th>Organisation</th>
                                                     </tr>
                                                 </thead>
@@ -170,7 +197,7 @@
                             <div class="col-lg-4">
                                 <div class="panel panel-default" style="height: 100%;">
                                     <div class="panel-heading bg-info" style="font-weight: bold;">
-                                        <i class="glyphicon glyphicon-fire " style="margin-right: 5px; color: #d9534f;"></i><b>Last contributors (24h)</b>
+                                        <i class="glyphicon glyphicon-fire " style="margin-right: 5px; color: #d9534f;"></i><b>Last contributors</b>
                                     </div>
                                     <div id="panellast" class="panel-body" style="height: 100%;">
 
@@ -179,8 +206,9 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Points</th>
-                                                        <th>Rank</th>
-                                                        <th>Logo</th>
+                                                        <th>Cur. rank</th>
+                                                        <th>Org. rank</th>
+                                                        <th></th>
                                                         <th>Organisation</th>
                                                         <th>epoch</th>
                                                     </tr>
@@ -206,8 +234,9 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Points</th>
-                                                        <th>Rank</th>
-                                                        <th>Logo</th>
+                                                        <th>Cur. rank</th>
+                                                        <th>Org. rank</th>
+                                                        <th></th>
                                                         <th>Organisation</th>
                                                         {% for categ in categ_list_str %}
                                                             <th>{{ categ }}</th>
@@ -242,7 +271,8 @@
                                                 <tr>
                                                     <th>Points</th>
                                                     <th>Prev. rank</th>
-                                                    <th>Logo</th>
+                                                    <th>Org. rank</th>
+                                                    <th></th>
                                                     <th>Organisation</th>
                                                 </tr>
                                             </thead>
@@ -289,14 +319,17 @@
         var url_eventStreamLastContributor = "{{ url_for('getLastContributor') }}";
         var url_getAllOrg = "{{ url_for('getAllOrg') }}";
         var url_getOrgRank = "{{ url_for('getOrgRank') }}";
-        var url_baseRankLogo =     "{{ url_for('static', filename='pics/rankingMISP/1.png') }}";
-        url_baseRankLogo = url_baseRankLogo.substring(0, url_baseRankLogo.length-5);
+        var url_baseRankMonthlyLogo =     "{{ url_for('static', filename='pics/rankingMISPMonthly/1.svg') }}";
+        url_baseRankMonthlyLogo = url_baseRankMonthlyLogo.substring(0, url_baseRankMonthlyLogo.length-5);
+        var url_baseOrgRankLogo =     "{{ url_for('static', filename='pics/rankingMISPOrg/1.svg') }}";
+        url_baseOrgRankLogo = url_baseOrgRankLogo.substring(0, url_baseOrgRankLogo.length-5);
 
         /* DATA FROM CONF */
         var currOrg = "{{ currOrg }}";
         var min_between_reload = {{ min_between_reload }};
         var rankMultiplier = {{ rankMultiplier }};
         var categ_list = JSON.parse('{{ categ_list|safe }}');
+        var org_rank_obj = JSON.parse('{{ org_rank_json|safe }}');
 
     </script>
     <script src="{{ url_for('static', filename='js/contrib.js') }}"></script>

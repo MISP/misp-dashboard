@@ -9,8 +9,13 @@
     bottom: 18%;
 }
 
+.orgRankClass {
+    top: 6px;
+    position: relative;
+}
+
 .questionBadgeDiv {
-    float: right;
+    float: left;
     width: 40px;
     height: 40px;
     background-color: #286090;
@@ -19,12 +24,12 @@
     color: white;
     top: 4px;
     position: relative;
-    left: 78%;
+    left: 1%;
 }
 
 .infoBlue {
-    background-color: #719bc0 !important;
-    color: white;
+    background-color: #d1d1d1 !important;
+    color: black;
 }
 
 .centerInBtn {
@@ -60,9 +65,15 @@
     margin-bottom: 0px;
 }
 
-.table > tbody > tr > td.centerCellPic {
+.table > tbody > tr > td.centerCellPicOrgLogo {
     padding: 5px;
-    text-align: center;
+    text-align: right;
+    min-width: 45px;
+}
+
+.table > tbody > tr > td.centerCellPicOrgRank {
+    padding: 0px;
+    text-align: left;
     min-width: 45px;
 }
 

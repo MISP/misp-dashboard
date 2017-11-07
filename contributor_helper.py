@@ -1,5 +1,6 @@
 import util
 import math, random
+import os
 import configparser
 import json
 import datetime
@@ -8,6 +9,13 @@ class Contributor_helper:
     def __init__(self, serv_redis_db, cfg):
         self.serv_redis_db = serv_redis_db
         self.cfg = cfg
+        self.cfg_org_rank = configparser.ConfigParser()
+        self.cfg_org_rank.read(os.path.join(os.environ['DASH_CONFIG'], 'rankTitle.cfg'))
+
+        self.org_rank_maxLevel = self.cfg_org_rank.getint('rankTitle', 'maxLevel')
+        self.org_rank = {}
+        for rank in range(1, self.org_rank_maxLevel+1):
+            self.org_rank[rank] = self.cfg_org_rank.get('rankTitle', str(rank))
 
         self.misp_web_url = cfg.get('RedisGlobal', 'misp_web_url')
         self.MAX_NUMBER_OF_LAST_CONTRIBUTOR = cfg.getint('CONTRIB', 'max_number_of_last_contributor')
@@ -187,6 +195,7 @@ class Contributor_helper:
         for d in range(15):
             dic = {}
             dic['rank'] = random.randint(1,self.levelMax)
+            dic['orgRank'] = random.randint(1,self.levelMax),
             dic['logo_path'] = 'logo'
             dic['org'] = 'Org'+str(d)
             dic['pnts'] = random.randint(1,2**self.levelMax)
@@ -206,36 +215,42 @@ class Contributor_helper:
         data2 = [
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': self.getOrgLogoFromRedis('MISP'),
                 'org': 'MISP',
                 'pnts': random.randint(1,2**self.levelMax)
             },
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': 'logo1',
                 'org': 'CIRCL',
                 'pnts': random.randint(1,2**self.levelMax)
             },
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': 'logo2',
                 'org': 'CASES',
                 'pnts': random.randint(1,2**self.levelMax)
             },
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': 'logo3',
                 'org': 'SMILE',
                 'pnts': random.randint(1,2**self.levelMax)
             },
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': 'logo4',
                 'org': 'ORG4',
                 'pnts': random.randint(1,2**self.levelMax)
             },
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': 'logo5',
                 'org': 'ORG5',
                 'pnts': random.randint(1,2**self.levelMax)
@@ -248,6 +263,7 @@ class Contributor_helper:
         data2 = [
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': self.getOrgLogoFromRedis('MISP'),
                 'org': 'MISP',
                 'pnts': random.randint(1,2**self.levelMax),
@@ -255,6 +271,7 @@ class Contributor_helper:
             },
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': 'logo1',
                 'org': 'CIRCL',
                 'pnts': random.randint(1,2**self.levelMax),
@@ -262,6 +279,7 @@ class Contributor_helper:
             },
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': 'logo2',
                 'org': 'CASES',
                 'pnts': random.randint(1,2**self.levelMax),
@@ -269,6 +287,7 @@ class Contributor_helper:
             },
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': 'logo3',
                 'org': 'SMILE',
                 'pnts': random.randint(1,2**self.levelMax),
@@ -276,6 +295,7 @@ class Contributor_helper:
             },
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': 'logo4',
                 'org': 'ORG4',
                 'pnts': random.randint(1,2**self.levelMax),
@@ -283,6 +303,7 @@ class Contributor_helper:
             },
             {
                 'rank': random.randint(1,self.levelMax),
+                'orgRank': random.randint(1,self.levelMax),
                 'logo_path': 'logo5',
                 'org': 'ORG5',
                 'pnts': random.randint(1,2**self.levelMax),
