@@ -57,6 +57,8 @@ var optionDatatable_light = {
 var optionDatatable_top = jQuery.extend({}, optionDatatable_light)
 var optionDatatable_last = jQuery.extend({}, optionDatatable_light)
 optionDatatable_last.columnDefs = [
+    { className: "centerCellPicOrgRank", "targets": [ 2 ] },
+    { className: "centerCellPicOrgLogo", "targets": [ 3 ] },
     { 'orderData':[5], 'targets': [0] },
     {
         'targets': [5],
