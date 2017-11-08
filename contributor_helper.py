@@ -10,16 +10,32 @@ class Contributor_helper:
         self.serv_redis_db = serv_redis_db
         self.cfg = cfg
         self.cfg_org_rank = configparser.ConfigParser()
-        self.cfg_org_rank.read(os.path.join(os.environ['DASH_CONFIG'], 'rankTitle.cfg'))
+        self.cfg_org_rank.read(os.path.join(os.environ['DASH_CONFIG'], 'ranking.cfg'))
 
+        #honorBadge
+        self.org_honor_badge_title = {}
+        for badgeNum in range(1, len(self.cfg_org_rank.options('HonorBadge'))+1): #get Num of honorBadge
+            self.org_honor_badge_title[badgeNum] = self.cfg_org_rank.get('HonorBadge', str(badgeNum))
+
+        #GLOBAL RANKING
         self.org_rank_maxLevel = self.cfg_org_rank.getint('rankTitle', 'maxLevel')
         self.org_rank = {}
         for rank in range(1, self.org_rank_maxLevel+1):
             self.org_rank[rank] = self.cfg_org_rank.get('rankTitle', str(rank))
+        self.org_rank_requirement_pnts = {}
+        for rank in range(1, self.org_rank_maxLevel+1):
+            self.org_rank_requirement_pnts[rank] = self.cfg_org_rank.getint('rankRequirementsPnts', str(rank))
+        self.org_rank_requirement_text = {}
+        for rank in range(1, self.org_rank_maxLevel+1):
+            self.org_rank_requirement_text[rank] = self.cfg_org_rank.get('rankRequirementsText', str(rank))
+        self.org_rank_additional_info = json.loads(self.cfg_org_rank.get('additionalInfo', 'textsArray'))
 
+        #WEB STUFF
         self.misp_web_url = cfg.get('RedisGlobal', 'misp_web_url')
         self.MAX_NUMBER_OF_LAST_CONTRIBUTOR = cfg.getint('CONTRIB', 'max_number_of_last_contributor')
         self.categories_in_datatable = json.loads(cfg.get('CONTRIB', 'categories_in_datatable'))
+
+        #MONTHLY RANKING
         self.default_pnts_per_contribution = json.loads(cfg.get('CONTRIB', 'default_pnts_per_contribution'))
         temp = json.loads(cfg.get('CONTRIB', 'pnts_per_contribution'))
         self.DICO_PNTS_REWARD = {}
@@ -196,6 +212,7 @@ class Contributor_helper:
             dic = {}
             dic['rank'] = random.randint(1,self.levelMax)
             dic['orgRank'] = random.randint(1,self.levelMax),
+            dic['honorBadge'] = [random.randint(1,2)],
             dic['logo_path'] = 'logo'
             dic['org'] = 'Org'+str(d)
             dic['pnts'] = random.randint(1,2**self.levelMax)
@@ -216,6 +233,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [1,2],
                 'logo_path': self.getOrgLogoFromRedis('MISP'),
                 'org': 'MISP',
                 'pnts': random.randint(1,2**self.levelMax)
@@ -223,6 +241,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [1],
                 'logo_path': 'logo1',
                 'org': 'CIRCL',
                 'pnts': random.randint(1,2**self.levelMax)
@@ -230,6 +249,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [2],
                 'logo_path': 'logo2',
                 'org': 'CASES',
                 'pnts': random.randint(1,2**self.levelMax)
@@ -237,6 +257,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [],
                 'logo_path': 'logo3',
                 'org': 'SMILE',
                 'pnts': random.randint(1,2**self.levelMax)
@@ -244,6 +265,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [],
                 'logo_path': 'logo4',
                 'org': 'ORG4',
                 'pnts': random.randint(1,2**self.levelMax)
@@ -251,6 +273,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [],
                 'logo_path': 'logo5',
                 'org': 'ORG5',
                 'pnts': random.randint(1,2**self.levelMax)
@@ -264,6 +287,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [1,2],
                 'logo_path': self.getOrgLogoFromRedis('MISP'),
                 'org': 'MISP',
                 'pnts': random.randint(1,2**self.levelMax),
@@ -272,6 +296,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [1],
                 'logo_path': 'logo1',
                 'org': 'CIRCL',
                 'pnts': random.randint(1,2**self.levelMax),
@@ -280,6 +305,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [2],
                 'logo_path': 'logo2',
                 'org': 'CASES',
                 'pnts': random.randint(1,2**self.levelMax),
@@ -288,6 +314,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [],
                 'logo_path': 'logo3',
                 'org': 'SMILE',
                 'pnts': random.randint(1,2**self.levelMax),
@@ -296,6 +323,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [],
                 'logo_path': 'logo4',
                 'org': 'ORG4',
                 'pnts': random.randint(1,2**self.levelMax),
@@ -304,6 +332,7 @@ class Contributor_helper:
             {
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
+                'honorBadge': [],
                 'logo_path': 'logo5',
                 'org': 'ORG5',
                 'pnts': random.randint(1,2**self.levelMax),

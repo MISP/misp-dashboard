@@ -3,6 +3,15 @@
     height: auto;
 }
 
+.circleBadge {
+    width: 80px;
+    height: 80px;
+    text-align: center;
+    border-radius: 65px;
+    background-color: #e1e1e1;
+    border: 1px solid #caccce;
+}
+
 .questionBadgeText {
     left: -15%;
     position: relative;
@@ -27,8 +36,8 @@
     left: 1%;
 }
 
-.infoBlue {
-    background-color: #d1d1d1 !important;
+.selectedOrgInTable {
+    background-color: #fff6c2 !important;
     color: black;
 }
 

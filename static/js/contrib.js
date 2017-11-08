@@ -51,7 +51,8 @@ var optionDatatable_light = {
     "info": false,
     "columnDefs": [
         { className: "centerCellPicOrgRank", "targets": [ 2 ] },
-        { className: "centerCellPicOrgLogo", "targets": [ 3 ] }
+        { className: "centerCellPicOrgLogo", "targets": [ 3 ] },
+        { className: "centerCellPicOrgLogo", "targets": [ 4 ] }
     ]
 };
 var optionDatatable_top = jQuery.extend({}, optionDatatable_light)
@@ -59,9 +60,10 @@ var optionDatatable_last = jQuery.extend({}, optionDatatable_light)
 optionDatatable_last.columnDefs = [
     { className: "centerCellPicOrgRank", "targets": [ 2 ] },
     { className: "centerCellPicOrgLogo", "targets": [ 3 ] },
-    { 'orderData':[5], 'targets': [0] },
+    { className: "centerCellPicOrgLogo", "targets": [ 4 ] },
+    { 'orderData':[6], 'targets': [0] },
     {
-        'targets': [5],
+        'targets': [6],
         'visible': false,
         'searchable': false
     },
@@ -79,7 +81,8 @@ var optionDatatable_Categ = {
     "info": false,
     "columnDefs": [
         { className: "centerCellPicOrgRank", "targets": [ 2 ] },
-        { className: "centerCellPicOrgLogo", "targets": [ 3 ], 'searchable': false, 'sortable': false }
+        { className: "centerCellPicOrgLogo", "targets": [ 3 ], 'searchable': false, 'sortable': false },
+        { className: "centerCellPicOrgLogo", "targets": [ 4 ]}
     ]
 };
 
@@ -144,14 +147,28 @@ function getOrgRankIcon(rank, size) {
     return obj.outerHTML;
 }
 
-function createImg(source, size, return_obj) {
+function createImg(source, size) {
     var obj = document.createElement('object');
     obj.height = size;
     obj.width = size;
     obj.style.margin = 'auto';
     obj.data = source;
-    obj.type = "image/png"
     return obj.outerHTML;
+}
+
+function createHonorImg(array, size) {
+    size = 32;
+    var div = document.createElement('div');
+    for (badgeNum of array) {
+        var obj = document.createElement('img');
+        obj.height = size;
+        obj.width = size;
+        obj.style.margin = 'auto';
+        obj.title = org_honor_badge_title[badgeNum];
+        obj.src = url_baseHonorLogo+badgeNum+'.svg';
+        div.appendChild(obj);
+    }
+    return div.outerHTML;
 }
 
 function generateRankingSheet(rank, rankDec, stepPnt, pnt, Rpnt) {
@@ -241,7 +258,6 @@ function generateRankingSheet(rank, rankDec, stepPnt, pnt, Rpnt) {
 
 function addToTableFromJson(datatable, url) {
     $.getJSON( url, function( data ) {
-        console.log(data);
         for (i in data) {
             var row = data[i];
             i = parseInt(i);
@@ -249,6 +265,7 @@ function addToTableFromJson(datatable, url) {
                 row.pnts,
                 getMonthlyRankIcon(row.rank),
                 getOrgRankIcon(row.orgRank, 60),
+                createHonorImg(row.honorBadge, 20),
                 createImg(row.logo_path, 32),
                 row.org
             ];
@@ -274,6 +291,7 @@ function addLastContributor(datatable, data, update) {
         data.pnts,
         getMonthlyRankIcon(data.rank),
         getOrgRankIcon(data.orgRank, 60),
+        createHonorImg(data.honorBadge, 20),
         createImg(data.logo_path, 32),
         data.org,
         data.epoch
@@ -309,19 +327,19 @@ function updateProgressHeader(org) {
         // update color in other dataTables
         datatableTop.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('infoBlue'); }
+            if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
         datatableFame.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('infoBlue'); }
+            if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
         datatableCateg.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('infoBlue'); }
+            if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
         datatableLast.rows().every( function() {
             var row = this.node();
-            if(this.data()[3] == data.org) { row.classList.add('infoBlue'); } else { row.classList.remove('infoBlue'); }
+            if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
     });
 }
@@ -381,7 +399,8 @@ $(document).ready(function() {
                 row.pnts,
                 getMonthlyRankIcon(row.rank),
                 getOrgRankIcon(row.orgRank, 44),
-                row.logo_path,
+                createHonorImg(row.honorBadge, 20),
+                createImg(row.logo_path, 32),
                 row.org,
             ];
             for (categ of categ_list) {

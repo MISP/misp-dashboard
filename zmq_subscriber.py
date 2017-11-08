@@ -18,6 +18,7 @@ configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
+ONE_DAY = 60*60*24
 ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')
 CHANNEL_LASTCONTRIB = cfg.get('RedisLog', 'channelLastContributor')
@@ -142,9 +143,56 @@ def handleContribution(zmq_name, org, categ, action, pntMultiplier=1):
     now = datetime.datetime.now()
     nowSec = int(time.time())
     serv_redis_db.zadd('CONTRIB_LAST:'+getDateStrFormat(now), nowSec, org)
-    serv_redis_db.expire('CONTRIB_LAST:'+getDateStrFormat(now), 60*60*24) #expire after 1 day
+    serv_redis_db.expire('CONTRIB_LAST:'+getDateStrFormat(now), ONE_DAY) #expire after 1 day
+
+    updateOrgRank(org, pnts_to_add, eventTime, eventClassification)
 
     publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
+
+def updateOrgRank(orgName, pnts_to_add, contribType, eventTime, isClassified):
+    keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+    #update total points
+    serv_redis_db.set(keyname.format(org=orgName, orgCateg='points'), pnts_to_add)
+    #update contribution Requirement
+    heavilyCount = 10
+    recentDays = 31
+    regularlyDays = 7
+    isRecent = True if (datetime.datetime.now() - eventTime).days > recentDays
+    contrib = [] #[[contrib_level, contrib_ttl], [], ...]
+    if contribType == 'sighting':
+        #[contrib_level, contrib_ttl]
+        contrib.append([1, ONE_DAY*365]])
+    if contribType == 'attribute' or contribType == 'object':
+        contrib.append([2, ONE_DAY*365])
+    if contribType == 'proposal' or contribType == 'discussion':
+        contrib.append([3, ONE_DAY*365])
+    if contribType == 'sighting' and isRecent:
+        contrib.append([4, ONE_DAY*recentDays])
+    if contribType == 'proposal' and isRecent:
+        contrib.append([5, ONE_DAY*recentDays])
+    if contribType == 'event':
+        contrib.append([6, ONE_DAY*365])
+    if contribType == 'event':
+        contrib.append([7, ONE_DAY*recentDays])
+    if contribType == 'event':
+        contrib.append([8, ONE_DAY*regularlyDays])
+    if contribType == 'event' and isClassified:
+        contrib.append([9, ONE_DAY*regularlyDays])
+    if contribType == 'sighting' and sightingWeekCount>heavilyCount:
+        contrib.append([10, ONE_DAY*regularlyDays])
+    if (contribType == 'attribute' or contribType == 'object') and attributeWeekCount>heavilyCount:
+        contrib.append([11, ONE_DAY*regularlyDays])
+    if contribType == 'proposal' and proposalWeekCount>heavilyCount:
+        contrib.append([12, ONE_DAY*regularlyDays])
+    if contribType == 'event' and eventWeekCount>heavilyCount:
+        contrib.append([13, ONE_DAY*regularlyDays])
+    if contribType == 'event' and eventWeekCount>heavilyCount  and isClassified:
+        contrib.append([14, ONE_DAY*regularlyDays])
+
+    for rankReq, ttl:
+        serv_redis_db.set(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq)), 1)
+        serv_redis_db.expire(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(i)), ttl)
+
 
 ##############
 ## HANDLERS ##

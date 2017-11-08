@@ -151,9 +151,17 @@ def contrib():
     categ_list = contributor_helper.categories_in_datatable
     categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in contributor_helper.categories_in_datatable]
     categ_list_points = [contributor_helper.DICO_PNTS_REWARD[categ] for categ in categ_list]
+
     org_rank = contributor_helper.org_rank
-    org_rank_list = [[rank, title] for rank, title in org_rank.items()]
+    org_rank_requirement_pnts = contributor_helper.org_rank_requirement_pnts
+    org_rank_requirement_text = contributor_helper.org_rank_requirement_text
+    org_rank_list = [[rank, title, org_rank_requirement_pnts[rank], org_rank_requirement_text[rank]] for rank, title in org_rank.items()]
     org_rank_list.sort(key=lambda x: x[0])
+    org_rank_additional_text = contributor_helper.org_rank_additional_info
+
+    org_honor_badge_title = contributor_helper.org_honor_badge_title
+    org_honor_badge_title_list = [ [num, text] for num, text in contributor_helper.org_honor_badge_title.items()]
+    org_honor_badge_title_list.sort(key=lambda x: x[0])
 
     currOrg = request.args.get('org')
     if currOrg is None:
@@ -168,6 +176,9 @@ def contrib():
             categ_list_points=categ_list_points,
             org_rank_json=json.dumps(org_rank),
             org_rank_list=org_rank_list,
+            org_rank_additional_text=org_rank_additional_text,
+            org_honor_badge_title=json.dumps(org_honor_badge_title),
+            org_honor_badge_title_list=org_honor_badge_title_list,
             min_between_reload=cfg.getint('CONTRIB', 'min_between_reload')
             )
 
