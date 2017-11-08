@@ -308,6 +308,7 @@ function addLastContributor(datatable, data, update) {
 }
 
 function updateProgressHeader(org) {
+    currOrg = org;
     // get Org rank
     $.getJSON( url_getOrgRank+'?org='+org, function( data ) {
         datatableTop.draw();
@@ -381,6 +382,25 @@ function updateProgressHeader(org) {
             } else {
                 $('#divBadge_'+(i+1)).removeClass('circlBadgeAcquired');
             }
+        }
+    });
+
+    //update overtake points
+    var prevOrg = "";
+    var prevOrgPnts = 0;
+    datatableTop.rows().every( function() {
+        var row = this.node();
+        if(this.data()[5] == currOrg) {
+            if(prevOrg == ""){ //already first
+                $('#orgToOverTake').text(this.data()[5]);
+                $('#pntsToOvertakeNext').text(0);
+            } else {
+                $('#orgToOverTake').text(prevOrg);
+                $('#pntsToOvertakeNext').text(parseInt(prevOrgPnts)-this.data()[0]);
+            }
+        } else {
+            prevOrg = this.data()[5];
+            prevOrgPnts = this.data()[0];
         }
     });
 }
@@ -458,7 +478,7 @@ $(document).ready(function() {
     });
     if(currOrg != "") // currOrg selected
         //FIXME: timeout used to wait that all datatables are draw.
-        setTimeout( function() { updateProgressHeader(currOrg); }, 200);
+        setTimeout( function() { updateProgressHeader(currOrg); }, 400);
 
     source_lastContrib = new EventSource(url_eventStreamLastContributor);
     source_lastContrib.onmessage = function(event) {

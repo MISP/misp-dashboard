@@ -14,6 +14,9 @@ import sys
 import json
 import geoip2.database
 
+import util
+import contributor_helper
+
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
@@ -52,22 +55,19 @@ contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
 
 reader = geoip2.database.Reader(PATH_TO_DB)
 
-def getDateStrFormat(date):
-    return str(date.year)+str(date.month).zfill(2)+str(date.day).zfill(2)
-
 def publish_log(zmq_name, name, content, channel=CHANNEL):
     to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
     serv_log.publish(channel, json.dumps(to_send))
 
 def push_to_redis_zset(keyCateg, toAdd, endSubkey="", count=1):
     now = datetime.datetime.now()
-    today_str = getDateStrFormat(now)
+    today_str = util.getDateStrFormat(now)
     keyname = "{}:{}{}".format(keyCateg, today_str, endSubkey)
     serv_redis_db.zincrby(keyname, toAdd, count)
 
 def push_to_redis_geo(keyCateg, lon, lat, content):
     now = datetime.datetime.now()
-    today_str = getDateStrFormat(now)
+    today_str = util.getDateStrFormat(now)
     keyname = "{}:{}".format(keyCateg, today_str)
     serv_redis_db.geoadd(keyname, lon, lat, content)
 
@@ -127,7 +127,7 @@ def noSpaceLower(str):
     return str.lower().replace(' ', '_')
 
 #pntMultiplier if one contribution rewards more than others. (e.g. shighting may gives more points than editing)
-def handleContribution(zmq_name, org, categ, action, pntMultiplier=1):
+def handleContribution(zmq_name, org, categ, action, pntMultiplier=1, eventTime=datetime.datetime.now(), isLabeled=False):
     if action in ['edit']:
         pass
         #return #not a contribution?
@@ -145,57 +145,12 @@ def handleContribution(zmq_name, org, categ, action, pntMultiplier=1):
 
     now = datetime.datetime.now()
     nowSec = int(time.time())
-    serv_redis_db.zadd('CONTRIB_LAST:'+getDateStrFormat(now), nowSec, org)
-    serv_redis_db.expire('CONTRIB_LAST:'+getDateStrFormat(now), ONE_DAY) #expire after 1 day
+    serv_redis_db.zadd('CONTRIB_LAST:'+util.getDateStrFormat(now), nowSec, org)
+    serv_redis_db.expire('CONTRIB_LAST:'+util.getDateStrFormat(now), ONE_DAY) #expire after 1 day
 
-    updateOrgRank(org, pnts_to_add, eventTime, eventClassification)
+    contributor_helper.updateOrgContributionRank(org, pnts_to_add, eventTime, eventTime=datetime.datetime.now(), isLabeled=isLabeled)
 
     publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
-
-def updateOrgRank(orgName, pnts_to_add, contribType, eventTime, isClassified):
-    keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-    #update total points
-    serv_redis_db.set(keyname.format(org=orgName, orgCateg='points'), pnts_to_add)
-    #update contribution Requirement
-    heavilyCount = contributor_helper.heavilyCount
-    recentDays = contributor_helper.recentDays
-    regularlyDays = contributor_helper.regularlyDays
-    isRecent = True if (datetime.datetime.now() - eventTime).days > recentDays
-
-    contrib = [] #[[contrib_level, contrib_ttl], [], ...]
-    if contribType == 'sighting':
-        #[contrib_level, contrib_ttl]
-        contrib.append([1, ONE_DAY*365]])
-    if contribType == 'attribute' or contribType == 'object':
-        contrib.append([2, ONE_DAY*365])
-    if contribType == 'proposal' or contribType == 'discussion':
-        contrib.append([3, ONE_DAY*365])
-    if contribType == 'sighting' and isRecent:
-        contrib.append([4, ONE_DAY*recentDays])
-    if contribType == 'proposal' and isRecent:
-        contrib.append([5, ONE_DAY*recentDays])
-    if contribType == 'event':
-        contrib.append([6, ONE_DAY*365])
-    if contribType == 'event':
-        contrib.append([7, ONE_DAY*recentDays])
-    if contribType == 'event':
-        contrib.append([8, ONE_DAY*regularlyDays])
-    if contribType == 'event' and isClassified:
-        contrib.append([9, ONE_DAY*regularlyDays])
-    if contribType == 'sighting' and sightingWeekCount>heavilyCount:
-        contrib.append([10, ONE_DAY*regularlyDays])
-    if (contribType == 'attribute' or contribType == 'object') and attributeWeekCount>heavilyCount:
-        contrib.append([11, ONE_DAY*regularlyDays])
-    if contribType == 'proposal' and proposalWeekCount>heavilyCount:
-        contrib.append([12, ONE_DAY*regularlyDays])
-    if contribType == 'event' and eventWeekCount>heavilyCount:
-        contrib.append([13, ONE_DAY*regularlyDays])
-    if contribType == 'event' and eventWeekCount>heavilyCount  and isClassified:
-        contrib.append([14, ONE_DAY*regularlyDays])
-
-    for rankReq, ttl in contrib:
-        serv_redis_db.set(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq)), 1)
-        serv_redis_db.expire(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(i)), ttl)
 
 
 ##############
@@ -257,10 +212,16 @@ def handler_attribute(zmq_name, jsonobj):
     if jsonattr['category'] == "Network activity":
         getCoordAndPublish(zmq_name, jsonattr['value'], jsonattr['category'])
 
-    handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'], jsonattr['category'], jsonobj['action'])
+    eventLabeled = False
+    #eventLabeled = len(jsonattr[]) > 0
+    handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'], jsonattr['category'], jsonobj['action'], isLabeled=eventLabeled)
     # Push to log
     publish_log(zmq_name, 'Attribute', to_push)
 
+
+###############
+## MAIN LOOP ##
+###############
 
 def process_log(zmq_name, event):
     event = event.decode('utf8')
