@@ -96,9 +96,9 @@
                                         <th>Contribution requirement</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id='bodyTablerankingModal'>
                                       {% for item in org_rank_list %}
-                                          <tr>
+                                          <tr data-rank={{ loop.index }}>
                                               <td style='padding: 0px; text-align: right;'><img height='35px' width='70px' style="margin-right: 20px;" src="{{ url_for('static', filename='pics/rankingMISPOrg/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img></td>
                                               <td>{{ item[1] }}</td>
                                               <td>{{ item[2] }}</td>
@@ -121,7 +121,7 @@
                                     {% for item in org_honor_badge_title_list %}
                                         <tr style="height: 85px">
                                             <td>
-                                                <div class="circleBadge">
+                                                <div id="divBadge_{{ loop.index }}" class="circleBadge">
                                                     <img height='64px' width='64px' style="margin-top: 5px;" src="{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img>
                                                 </div>
                                             </td>
@@ -171,6 +171,7 @@
                     </div>
                     <button type="button" class="questionBadgeDiv" data-toggle="modal" data-target="#myModal"><i class="fa fa-question-circle questionBadgeText"></i></button>
                     <button id="btnCurrRank" class='btn btn-default popOverBtn' data-container='body' data-toggle='popover' style="display: none; margin-left: 20px;" onclick="showOnlyOrg()">
+                        <object id='orgContributionRank' height=32 width=64 class="centerInBtn"></object>
                         <strong id="orgText" class="centerInBtn"></strong>
                         <div id="orgRankDiv" class='textTopHeader' style="padding-top: 0px; position: relative; width: 40px; height: 40px;"></div>
                         <div class='' style="float: left; padding: 10px;">
@@ -351,6 +352,8 @@
         var url_eventStreamLastContributor = "{{ url_for('getLastContributor') }}";
         var url_getAllOrg = "{{ url_for('getAllOrg') }}";
         var url_getOrgRank = "{{ url_for('getOrgRank') }}";
+        var url_getContributionOrgStatus = "{{ url_for('getContributionOrgStatus') }}";
+        var url_getHonorBadges = "{{ url_for('getHonorBadges') }}";
         var url_baseRankMonthlyLogo =     "{{ url_for('static', filename='pics/rankingMISPMonthly/1.svg') }}";
         url_baseRankMonthlyLogo = url_baseRankMonthlyLogo.substring(0, url_baseRankMonthlyLogo.length-5);
         var url_baseOrgRankLogo =     "{{ url_for('static', filename='pics/rankingMISPOrg/1.svg') }}";

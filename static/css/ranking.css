@@ -12,6 +12,10 @@
     border: 1px solid #caccce;
 }
 
+.circlBadgeAcquired {
+    box-shadow: 0px 0px 15px #0000ff
+}
+
 .questionBadgeText {
     left: -15%;
     position: relative;

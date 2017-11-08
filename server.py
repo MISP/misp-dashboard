@@ -350,7 +350,23 @@ def getOrgRank():
         org = request.args.get('org')
     except:
         org = ''
-    return jsonify(contributor_helper.getCurrentOrgRankFromRedis(org))
+    return jsonify(contributor_helper.TEST_getCurrentOrgRankFromRedis(org))
+
+@app.route("/_getContributionOrgStatus")
+def getContributionOrgStatus():
+    try:
+        org = request.args.get('org')
+    except:
+        org = ''
+    return jsonify(contributor_helper.TEST_getCurrentContributionStatus(org))
+
+@app.route("/_getHonorBadges")
+def getHonorBadges():
+    try:
+        org = request.args.get('org')
+    except:
+        org = ''
+    return jsonify(contributor_helper.TEST_getOrgHonorBadges(org))
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)

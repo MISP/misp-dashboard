@@ -13,8 +13,13 @@ class Contributor_helper:
         self.cfg_org_rank.read(os.path.join(os.environ['DASH_CONFIG'], 'ranking.cfg'))
 
         #honorBadge
+        self.honorBadgeNum = len(self.cfg_org_rank.options('HonorBadge'))
+        self.heavilyCount = self.cfg_org_rank.getint('rankRequirementsMisc', 'heavilyCount')
+        self.recentDays = self.cfg_org_rank.getint('rankRequirementsMisc', 'recentDays')
+        self.regularlyDays = self.cfg_org_rank.getint('rankRequirementsMisc', 'regularlyDays')
+
         self.org_honor_badge_title = {}
-        for badgeNum in range(1, len(self.cfg_org_rank.options('HonorBadge'))+1): #get Num of honorBadge
+        for badgeNum in range(1, self.honorBadgeNum+1): #get Num of honorBadge
             self.org_honor_badge_title[badgeNum] = self.cfg_org_rank.get('HonorBadge', str(badgeNum))
 
         #GLOBAL RANKING
@@ -51,6 +56,11 @@ class Contributor_helper:
         self.rankMultiplier = cfg.getfloat('CONTRIB' ,'rankMultiplier')
         self.levelMax = 16
 
+
+    ''' HELPER '''
+    def getOrgLogoFromRedis(self, org):
+        return "{}/img/orgs/{}.png".format(self.misp_web_url, org)
+
     def getZrange(self, keyCateg, date, topNum, endSubkey=""):
         date_str = util.getDateStrFormat(date)
         keyname = "{}:{}{}".format(keyCateg, date_str, endSubkey)
@@ -58,6 +68,64 @@ class Contributor_helper:
         data = [ [record[0].decode('utf8'), record[1]] for record in data ]
         return data
 
+    ''' CONTRIBUTION RANK '''
+    # return: [final_rank, requirement_fulfilled, requirement_not_fulfilled]
+    def getOrgContributionRank(self, org):
+        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        final_rank = 0
+        requirement_fulfilled = []
+        requirement_not_fulfilled = []
+        for i in range(1, self.org_rank_maxLevel+1):
+            key = keyname.format(org=org, orgCateg='CONTRIB_REQ_'+str(i))
+            if self.serv_redis_db.get(key) is None: #non existing
+                requirement_not_fulfilled.append(i)
+            else:
+                requirement_fulfilled.append(i)
+                final_rank += 1
+        num_of_previous_req_not_fulfilled = len([x for x in requirement_not_fulfilled if x<final_rank])
+        final_rank = final_rank -  num_of_previous_req_not_fulfilled
+        return [final_rank, requirement_fulfilled, requirement_not_fulfilled]
+
+    def giveContribRankToOrg(self, org, rankNum):
+        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        serv_redis_db.set(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankNum)), 1)
+
+    def removeContribRankFromOrg(self, org, rankNum):
+        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        serv_redis_db.delete(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankNum)))
+
+    # 1 for fulfilled, 0 for not fulfilled, -1 for not relevant
+    def getCurrentContributionStatus(self, org):
+        final_rank, requirement_fulfilled, requirement_not_fulfilled = self.getOrgContributionRank(org)
+        to_ret = {}
+        for i in range(1, self.org_rank_maxLevel+1):
+            if i in requirement_fulfilled:
+                to_ret[i] = 1
+            elif i in requirement_not_fulfilled and i<=final_rank:
+                to_ret[i] = 0
+            else:
+                to_ret[i] = -1
+        return to_ret
+
+    ''' HONOR BADGES '''
+    def getOrgHonorBadges(self, org):
+        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        honorBadge = []
+        for i in range(1, self.honorBadgeNum+1):
+            key = keyname.format(org=org, orgCateg='BADGE_'+str(i))
+            if self.serv_redis_db.get(key) is not None: #existing
+                honorBadge.append(i)
+        return honorBadge
+
+    def giveBadgeToOrg(self, org, badgeNum):
+        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        serv_redis_db.set(keyname.format(org=orgName, orgCateg='BADGE_'+str(badgeNum)), 1)
+
+    def removeBadgeFromOrg(self, org, badgeNum):
+        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        serv_redis_db.delete(keyname.format(org=orgName, orgCateg='BADGE_'+str(badgeNum)))
+
+    ''' MONTHLY CONTRIBUTION '''
     def getOrgPntFromRedis(self, org, date):
         keyCateg = 'CONTRIB_DAY'
         scoreSum = 0
@@ -74,8 +142,6 @@ class Contributor_helper:
         ptns = self.getOrgPntFromRedis(org, date)
         return self.getTrueRank(ptns)
 
-    def getOrgLogoFromRedis(self, org):
-        return "{}/img/orgs/{}.png".format(self.misp_web_url, org)
 
     def getLastContributorsFromRedis(self):
         date = datetime.datetime.now()
@@ -344,3 +410,50 @@ class Contributor_helper:
     def TEST_getAllOrgFromRedis(self):
         data2 = ['CIRCL', 'CASES', 'SMILE' ,'ORG4' ,'ORG5', 'SUPER HYPER LONG ORGINZATION NAME', 'Org3', 'MISP']
         return data2
+
+    def TEST_getCurrentOrgRankFromRedis(self, org):
+        date = datetime.datetime.now()
+        points = random.randint(1,2**self.levelMax)
+        remainingPts = self.getRemainingPoints(points)
+        data = {
+            'org': org,
+            'points': points,
+            'rank': self.getRankLevel(points),
+            'remainingPts': remainingPts['remainingPts'],
+            'stepPts': remainingPts['stepPts'],
+        }
+        return data
+
+    def TEST_getCurrentContributionStatus(self, org):
+        num = random.randint(1, self.org_rank_maxLevel)
+        requirement_fulfilled = [x for x in range(1,num+1)]
+        requirement_not_fulfilled = [x for x in range(num,self.org_rank_maxLevel+1-num)]
+
+        num2 = random.randint(1, self.org_rank_maxLevel)
+        if num2 < num-1:
+            to_swap = requirement_fulfilled[num2]
+            del requirement_fulfilled[num2]
+            requirement_not_fulfilled = [to_swap] + requirement_not_fulfilled
+
+        final_rank = len(requirement_fulfilled)
+        to_ret = {}
+        for i in range(1, self.org_rank_maxLevel+1):
+            if i in requirement_fulfilled:
+                to_ret[i] = 1
+            elif i in requirement_not_fulfilled and i<=final_rank:
+                to_ret[i] = 0
+            else:
+                to_ret[i] = -1
+        return {'rank': final_rank, 'status': to_ret}
+
+    def TEST_getOrgHonorBadges(self, org):
+        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        honorBadge = []
+        for i in range(1, self.honorBadgeNum+1):
+            key = keyname.format(org=org, orgCateg='BADGE_'+str(i))
+            if random.randint(0,1) == 1: #existing
+                honorBadge.append(1)
+            else:
+                honorBadge.append(0)
+        print(honorBadge)
+        return honorBadge

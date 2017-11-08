@@ -26,6 +26,7 @@ CHANNELDISP = cfg.get('RedisMap', 'channelDisp')
 CHANNEL_PROC = cfg.get('RedisMap', 'channelProc')
 PATH_TO_DB = cfg.get('RedisMap', 'pathMaxMindDB')
 
+
 DEFAULT_PNTS_REWARD = cfg.get('CONTRIB', 'default_pnts_per_contribution')
 categories_in_datatable = json.loads(cfg.get('CONTRIB', 'categories_in_datatable'))
 DICO_PNTS_REWARD = {}
@@ -46,6 +47,8 @@ serv_redis_db = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisDB', 'db'))
+
+contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
 
 reader = geoip2.database.Reader(PATH_TO_DB)
 
@@ -154,10 +157,11 @@ def updateOrgRank(orgName, pnts_to_add, contribType, eventTime, isClassified):
     #update total points
     serv_redis_db.set(keyname.format(org=orgName, orgCateg='points'), pnts_to_add)
     #update contribution Requirement
-    heavilyCount = 10
-    recentDays = 31
-    regularlyDays = 7
+    heavilyCount = contributor_helper.heavilyCount
+    recentDays = contributor_helper.recentDays
+    regularlyDays = contributor_helper.regularlyDays
     isRecent = True if (datetime.datetime.now() - eventTime).days > recentDays
+
     contrib = [] #[[contrib_level, contrib_ttl], [], ...]
     if contribType == 'sighting':
         #[contrib_level, contrib_ttl]
@@ -189,7 +193,7 @@ def updateOrgRank(orgName, pnts_to_add, contribType, eventTime, isClassified):
     if contribType == 'event' and eventWeekCount>heavilyCount  and isClassified:
         contrib.append([14, ONE_DAY*regularlyDays])
 
-    for rankReq, ttl:
+    for rankReq, ttl in contrib:
         serv_redis_db.set(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq)), 1)
         serv_redis_db.expire(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(i)), ttl)
 

@@ -342,6 +342,41 @@ function updateProgressHeader(org) {
             if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
     });
+
+    // colorize row contribution rank help
+    $.getJSON( url_getContributionOrgStatus+'?org='+org, function( data ) {
+        var status = data['status'];
+        var curContributionOrgRank = data['rank'];
+        if (curContributionOrgRank == 0) {
+            $('#orgContributionRank').attr('data', '');
+        } else {
+            $('#orgContributionRank').attr('data', url_baseOrgRankLogo+curContributionOrgRank+'.svg');
+        }
+        for (var row of $('#bodyTablerankingModal')[0].children) {
+            row = $(row);
+            var rank = row.data('rank');
+            if(status[rank] == 0){
+                row.addClass("danger");
+            } else if(status[rank] == 1) {
+                row.addClass("success");
+            } else {
+                row.removeClass("success");
+                row.removeClass("success");
+            }
+        }
+    });
+
+    $.getJSON( url_getHonorBadges+'?org='+org, function( data ) {
+        console.log(data);
+        for(var i=0; i<data.length; i++) {
+            console.log('#divBadge_'+(i+1));
+            if (data[i] == 1) {
+                $('#divBadge_'+(i+1)).addClass('circlBadgeAcquired');
+            } else {
+                $('#divBadge_'+(i+1)).removeClass('circlBadgeAcquired');
+            }
+        }
+    });
 }
 
 function showOnlyOrg() {
