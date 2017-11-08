@@ -346,7 +346,10 @@ function updateProgressHeader(org) {
     // colorize row contribution rank help
     $.getJSON( url_getContributionOrgStatus+'?org='+org, function( data ) {
         var status = data['status'];
+        console.log(data);
         var curContributionOrgRank = data['rank'];
+        var totNumPoints = data['totPoints']
+        $('#orgTotNumOfPoint').text(totNumPoints);
         if (curContributionOrgRank == 0) {
             $('#orgContributionRank').attr('data', '');
         } else {
@@ -355,21 +358,24 @@ function updateProgressHeader(org) {
         for (var row of $('#bodyTablerankingModal')[0].children) {
             row = $(row);
             var rank = row.data('rank');
+            //remove all classes
+            row.removeClass("warning");
+            row.removeClass("danger");
+            row.removeClass("success");
+            //add correct class
             if(status[rank] == 0){
                 row.addClass("danger");
-            } else if(status[rank] == 1) {
+            } else if(status[rank] == 1 && rank == curContributionOrgRank) {
                 row.addClass("success");
-            } else {
-                row.removeClass("success");
-                row.removeClass("success");
+            } else if(status[rank] == 1) {
+                row.addClass("warning");
             }
         }
     });
 
+    // colorize badge if acquired
     $.getJSON( url_getHonorBadges+'?org='+org, function( data ) {
-        console.log(data);
         for(var i=0; i<data.length; i++) {
-            console.log('#divBadge_'+(i+1));
             if (data[i] == 1) {
                 $('#divBadge_'+(i+1)).addClass('circlBadgeAcquired');
             } else {

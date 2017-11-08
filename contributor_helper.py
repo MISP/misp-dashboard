@@ -444,7 +444,7 @@ class Contributor_helper:
                 to_ret[i] = 0
             else:
                 to_ret[i] = -1
-        return {'rank': final_rank, 'status': to_ret}
+        return {'rank': final_rank, 'status': to_ret, 'totPoints': random.randint(2**final_rank, 2**self.org_rank_maxLevel*4)}
 
     def TEST_getOrgHonorBadges(self, org):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
@@ -455,5 +455,4 @@ class Contributor_helper:
                 honorBadge.append(1)
             else:
                 honorBadge.append(0)
-        print(honorBadge)
         return honorBadge
