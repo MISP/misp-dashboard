@@ -36,9 +36,9 @@ wget http://code.jquery.com/jquery-${JQVERSION}.min.js -O ./static/js/jquery.min
 FLOTVERSION="0.8.3"
 wget http://www.flotcharts.org/downloads/flot-${FLOTVERSION}.zip -O ./temp/flot-${FLOTVERSION}.zip
 unzip -o temp/flot-${FLOTVERSION}.zip -d temp/
-mv temp/flot/jquery.flot.js ./static/js 
-mv temp/flot/jquery.flot.pie.min.js ./static/js 
-mv temp/flot/jquery.flot.resize.js ./static/js 
+mv temp/flot/jquery.flot.js ./static/js
+mv temp/flot/jquery.flot.pie.min.js ./static/js
+mv temp/flot/jquery.flot.resize.js ./static/js
 
 
 JQUERYUIVERSION="1.12.1"
@@ -82,7 +82,7 @@ mv temp/jquery-jvectormap-2.0.3.css ./static/css
 mv temp/jquery-jvectormap-2.0.3.min.js ./static/js
 wget http://jvectormap.com/js/jquery-jvectormap-world-mill.js -O ./static/js/jquery-jvectormap-world-mill.js
 
-mkdir data
+mkdir -p data
 pushd data
 wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz -O GeoLite2-City.tar.gz
 tar xvfz GeoLite2-City.tar.gz
