@@ -91,17 +91,18 @@ class Contributor_helper:
             else:
                 requirement_fulfilled.append(i)
                 final_rank += 1
-        num_of_previous_req_not_fulfilled = len([x for x in requirement_not_fulfilled if x<final_rank])
-        final_rank = final_rank -  num_of_previous_req_not_fulfilled
+        #num_of_previous_req_not_fulfilled = len([x for x in requirement_not_fulfilled if x<final_rank])
+        #final_rank = final_rank -  num_of_previous_req_not_fulfilled
+        final_rank = len(requirement_fulfilled)
         return {'final_rank': final_rank, 'req_fulfilled': requirement_fulfilled, 'req_not_fulfilled': requirement_not_fulfilled}
 
     def giveContribRankToOrg(self, org, rankNum):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        self.serv_redis_db.set(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankNum)), 1)
+        self.serv_redis_db.set(keyname.format(org=org, orgCateg='CONTRIB_REQ_'+str(rankNum)), 1)
 
     def removeContribRankFromOrg(self, org, rankNum):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        self.serv_redis_db.delete(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankNum)))
+        self.serv_redis_db.delete(keyname.format(org=org, orgCateg='CONTRIB_REQ_'+str(rankNum)))
 
     # 1 for fulfilled, 0 for not fulfilled, -1 for not relevant
     def getCurrentContributionStatus(self, org):
@@ -119,16 +120,38 @@ class Contributor_helper:
                 to_ret[i] = -1
         return {'rank': final_rank, 'status': to_ret, 'totPoints': self.getOrgContributionTotalPoints(org)}
 
-    def updateOrgContributionRank(self, orgName, pnts_to_add, contribType, eventTime, isLabeled):
+    def updateOrgContributionRank(self, orgName, pnts_to_add, action, contribType, eventTime, isLabeled):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        #update total points
+        # update total points
         totOrgPnts = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='points'), pnts_to_add)
+
+        # update date variables
+        if contribType == 'Attribute':
+            attributeWeekCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='ATTR_WEEK_COUNT'), 1)
+            self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='ATTR_WEEK_COUNT'), util.ONE_DAY*7)
+
+        if contribType == 'Proposal':
+            proposalWeekCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='PROP_WEEK_COUNT'), 1)
+            self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='PROP_WEEK_COUNT'), util.ONE_DAY*7)
+
+        if contribType == 'Sighting':
+            sightingWeekCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='SIGHT_WEEK_COUNT'), 1)
+            self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='SIGHT_WEEK_COUNT'), util.ONE_DAY*7)
+
+        if contribType == 'Event':
+            eventWeekCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='EVENT_WEEK_COUNT'), 1)
+            self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='EVENT_WEEK_COUNT'), util.ONE_DAY*7)
+
+            eventMonthCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='EVENT_MONTH_COUNT'), 1)
+            self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='EVENT_MONTH_COUNT'), util.ONE_DAY*7)
+
         # getRequirement parameters
         heavilyCount = self.heavilyCount
         recentDays = self.recentDays
         regularlyDays = self.regularlyDays
         isRecent = (datetime.datetime.now() - eventTime).days > recentDays
 
+        print("contribType: {}, action: {}".format(contribType, action))
         print("isLabeled: {}, isRecent: {}, totOrgPnts".format(isLabeled, isRecent, totOrgPnts))
         #update contribution Requirement
         contrib = [] #[[contrib_level, contrib_ttl], [], ...]
@@ -145,9 +168,9 @@ class Contributor_helper:
             contrib.append([5, util.ONE_DAY*recentDays])
         if totOrgPnts >= self.org_rank_requirement_pnts[6] and contribType == 'Event':
             contrib.append([6, util.ONE_DAY*365])
-        if totOrgPnts >= self.org_rank_requirement_pnts[7] and contribType == 'Event':
+        if totOrgPnts >= self.org_rank_requirement_pnts[7] and contribType == 'Event' and eventMonthCount>=1:
             contrib.append([7, util.ONE_DAY*recentDays])
-        if totOrgPnts >= self.org_rank_requirement_pnts[8] and contribType == 'Event':
+        if totOrgPnts >= self.org_rank_requirement_pnts[8] and contribType == 'Event' and eventWeekCount>=1:
             contrib.append([8, util.ONE_DAY*regularlyDays])
         if totOrgPnts >= self.org_rank_requirement_pnts[9] and contribType == 'Event' and isLabeled:
             contrib.append([9, util.ONE_DAY*regularlyDays])
@@ -179,11 +202,11 @@ class Contributor_helper:
 
     def giveBadgeToOrg(self, org, badgeNum):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        self.serv_redis_db.set(keyname.format(org=orgName, orgCateg='BADGE_'+str(badgeNum)), 1)
+        self.serv_redis_db.set(keyname.format(org=org, orgCateg='BADGE_'+str(badgeNum)), 1)
 
     def removeBadgeFromOrg(self, org, badgeNum):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        self.serv_redis_db.delete(keyname.format(org=orgName, orgCateg='BADGE_'+str(badgeNum)))
+        self.serv_redis_db.delete(keyname.format(org=org, orgCateg='BADGE_'+str(badgeNum)))
 
     ''' MONTHLY CONTRIBUTION '''
     def getOrgPntFromRedis(self, org, date):

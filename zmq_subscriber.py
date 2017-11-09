@@ -126,34 +126,39 @@ def getFields(obj, fields):
     except KeyError as e:
         return ""
 
-def noSpaceLower(str):
-    return str.lower().replace(' ', '_')
+def noSpaceLower(text):
+    return text.lower().replace(' ', '_')
 
 #pntMultiplier if one contribution rewards more than others. (e.g. shighting may gives more points than editing)
 def handleContribution(zmq_name, org, contribType, categ, action, pntMultiplier=1, eventTime=datetime.datetime.now(), isLabeled=False):
     if action in ['edit', None]:
         pass
         #return #not a contribution?
-    # is a valid contribution
-    try:
-        pnts_to_add = DICO_PNTS_REWARD[noSpaceLower(categ)]
-    except KeyError:
-        pnts_to_add = DEFAULT_PNTS_REWARD
-    pnts_to_add *= pntMultiplier
-
-    push_to_redis_zset('CONTRIB_DAY', org, count=pnts_to_add)
-    #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
-    push_to_redis_zset('CONTRIB_CATEG', org, count=DEFAULT_PNTS_REWARD, endSubkey=':'+noSpaceLower(categ))
-    serv_redis_db.sadd('CONTRIB_ALL_ORG', org)
 
     now = datetime.datetime.now()
     nowSec = int(time.time())
+    pnts_to_add = DEFAULT_PNTS_REWARD
+
+    # is a valid contribution
+    if categ is not None:
+        try:
+            pnts_to_add = DICO_PNTS_REWARD[noSpaceLower(categ)]
+        except KeyError:
+            pnts_to_add = DEFAULT_PNTS_REWARD
+        pnts_to_add *= pntMultiplier
+
+        push_to_redis_zset('CONTRIB_DAY', org, count=pnts_to_add)
+        #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
+        push_to_redis_zset('CONTRIB_CATEG', org, count=DEFAULT_PNTS_REWARD, endSubkey=':'+noSpaceLower(categ))
+        publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
+
+    serv_redis_db.sadd('CONTRIB_ALL_ORG', org)
+
     serv_redis_db.zadd('CONTRIB_LAST:'+util.getDateStrFormat(now), nowSec, org)
     serv_redis_db.expire('CONTRIB_LAST:'+util.getDateStrFormat(now), ONE_DAY) #expire after 1 day
 
-    contributor_helper.updateOrgContributionRank(org, pnts_to_add, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled)
+    contributor_helper.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled)
 
-    publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
 
 
 ##############
@@ -172,6 +177,10 @@ def handler_keepalive(zmq_name, jsonevent):
     print('sending', 'keepalive')
     to_push = [ jsonevent['uptime'] ]
     publish_log(zmq_name, 'Keepalive', to_push)
+
+def handler_object(zmq_name, jsondata):
+    print('obj')
+    return
 
 def handler_sighting(zmq_name, jsondata):
     print('sending' ,'sighting')
@@ -198,6 +207,26 @@ def handler_event(zmq_name, jsonobj):
                 handler_attribute(zmq_name, jsoncopy)
         else:
             handler_attribute(zmq_name, attributes)
+
+    try:
+        action = jsonobj['action']
+    except KeyError:
+        action = None
+    try:
+        eventLabeled = len(jsonobj['EventTag']) > 0
+    except KeyError:
+        eventLabeled = False
+    try:
+        org = jsonobj['Orgc']['name']
+    except KeyError:
+        org = None
+
+    if org is not None:
+        handleContribution(zmq_name, org,
+                        'Event',
+                        None,
+                        action,
+                        isLabeled=eventLabeled)
 
 def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
     # check if jsonattr is an attribute object
@@ -267,6 +296,7 @@ dico_action = {
         "misp_json_event":          handler_event,
         "misp_json_self":           handler_keepalive,
         "misp_json_attribute":      handler_attribute,
+        "misp_json_object":         handler_object,
         "misp_json_sighting":       handler_sighting,
         "misp_json_organisation":   handler_log,
         "misp_json_user":           handler_log,

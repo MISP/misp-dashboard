@@ -324,6 +324,46 @@ function addLastContributor(datatable, data, update) {
     }
 }
 
+function updateProgressBar(org) {
+    if(currOrg != org)
+        return;
+    $.getJSON( url_getOrgRank+'?org='+org, function( data ) {
+        var rank = Math.floor(data.rank);
+        var rankDec = data.rank-rank;
+        var popoverRank = $('#btnCurrRank').data('bs.popover');
+        popoverRank.options.content = generateRankingSheet(rank, rankDec, data.stepPts, data.points, data.remainingPts);
+        $('#orgRankDiv').html(getMonthlyRankIcon(rank, 40, true));
+        $('#orgNextRankDiv').html(getMonthlyRankIcon(rank+1, 40, true));
+        if (data.rank > 16){
+            $('#progressBarDiv').width(1*150); //150 is empty bar width
+        } else {
+            $('#progressBarDiv').width((data.rank - rank)*150); //150 is empty bar width
+        }
+    });
+}
+
+function updateOvertakePnts() {
+    var prevOrgName = "";
+    var prevOrgPnts = 0;
+    datatableTop.rows().every( function() {
+        var row = this.node();
+        var orgRowName = $(this.data()[5])[0].text; // contained in <a>
+        var orgRowPnts = this.data()[0]
+        if(orgRowName == currOrg) {
+            if(prevOrgName == ""){ //already first
+                $('#orgToOverTake').text(orgRowName);
+                $('#pntsToOvertakeNext').text(0);
+            } else {
+                $('#orgToOverTake').text(prevOrgName);
+                $('#pntsToOvertakeNext').text(parseInt(prevOrgPnts)-orgRowPnts);
+            }
+        } else {
+            prevOrgName = orgRowName;
+            prevOrgPnts = orgRowPnts;
+        }
+    });
+}
+
 function updateProgressHeader(org) {
     currOrg = org;
     // get Org rank
@@ -395,36 +435,16 @@ function updateProgressHeader(org) {
 
     // colorize badge if acquired
     $.getJSON( url_getHonorBadges+'?org='+org, function( data ) {
-        for(var i=0; i<data.length; i++) {
-            if (data[i] == 1) {
-                $('#divBadge_'+(i+1)).addClass('circlBadgeAcquired');
-            } else {
-                $('#divBadge_'+(i+1)).removeClass('circlBadgeAcquired');
-            }
+        for(var i=0; i<numberOfBadges; i++) { // remove
+            $('#divBadge_'+(i+1)).removeClass('circlBadgeAcquired');
+        }
+        for(var i=0; i<data.length; i++) { // add
+            $('#divBadge_'+(data[i])).addClass('circlBadgeAcquired');
         }
     });
 
     //update overtake points
-    var prevOrgName = "";
-    var prevOrgPnts = 0;
-    datatableTop.rows().every( function() {
-        var row = this.node();
-        var orgRowName = $(this.data()[5])[0].text; // contained in <a>
-        var orgRowPnts = this.data()[0]
-        if(orgRowName == currOrg) {
-            if(prevOrgName == ""){ //already first
-                $('#orgToOverTake').text(orgRowName);
-                $('#pntsToOvertakeNext').text(0);
-            } else {
-                $('#orgToOverTake').text(prevOrgName);
-                $('#pntsToOvertakeNext').text(parseInt(prevOrgPnts)-orgRowPnts);
-            }
-        } else {
-            prevOrgName = orgRowName;
-            prevOrgPnts = orgRowPnts;
-        }
-    });
-
+    updateOvertakePnts();
     //Add new data to linechart
     $.getJSON( url_getOrgOvertime+'?org='+org, function( data ) {
         var toPlot = dataTop5Overtime.slice(0); //cloning data
@@ -531,7 +551,8 @@ $(document).ready(function() {
         var json = jQuery.parseJSON( event.data );
         addLastContributor(datatableLast, json, true);
         datatableLast.draw();
-        updateProgressHeader(json.org)
+        updateProgressBar(json.org);
+        updateOvertakePnts();
         sec_before_reload = refresh_speed; //reset timer at each contribution
     };
 });

@@ -397,6 +397,7 @@
         var categ_list = JSON.parse('{{ categ_list|safe }}');
         var org_rank_obj = JSON.parse('{{ org_rank_json|safe }}');
         var org_honor_badge_title = JSON.parse('{{ org_honor_badge_title|safe }}');
+        var numberOfBadges = {{ org_honor_badge_title_list|length }};
 
     </script>
     <script src="{{ url_for('static', filename='js/contrib.js') }}"></script>
