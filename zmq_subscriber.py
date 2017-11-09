@@ -130,8 +130,8 @@ def noSpaceLower(str):
     return str.lower().replace(' ', '_')
 
 #pntMultiplier if one contribution rewards more than others. (e.g. shighting may gives more points than editing)
-def handleContribution(zmq_name, org, categ, action, pntMultiplier=1, eventTime=datetime.datetime.now(), isLabeled=False):
-    if action in ['edit']:
+def handleContribution(zmq_name, org, contribType, categ, action, pntMultiplier=1, eventTime=datetime.datetime.now(), isLabeled=False):
+    if action in ['edit', None]:
         pass
         #return #not a contribution?
     # is a valid contribution
@@ -151,7 +151,7 @@ def handleContribution(zmq_name, org, categ, action, pntMultiplier=1, eventTime=
     serv_redis_db.zadd('CONTRIB_LAST:'+util.getDateStrFormat(now), nowSec, org)
     serv_redis_db.expire('CONTRIB_LAST:'+util.getDateStrFormat(now), ONE_DAY) #expire after 1 day
 
-    contributor_helper.updateOrgContributionRank(org, pnts_to_add, eventTime, eventTime=datetime.datetime.now(), isLabeled=isLabeled)
+    contributor_helper.updateOrgContributionRank(org, pnts_to_add, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled)
 
     publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
 
@@ -178,8 +178,11 @@ def handler_sighting(zmq_name, jsondata):
     jsonsight = jsondata['Sighting']
     org = jsonsight['Event']['Orgc']['name']
     categ = jsonsight['Attribute']['category']
-    action = jsondata['action']
-    handleContribution(zmq_name, org, categ, action, pntMultiplier=2)
+    try:
+        action = jsondata['action']
+    except KeyError:
+        action = None
+    handleContribution(zmq_name, org, 'Sighting', categ, action, pntMultiplier=2)
     handler_attribute(zmq_name, jsonsight, hasAlreadyBeenContributed=True)
 
 def handler_event(zmq_name, jsonobj):
@@ -217,9 +220,19 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
         getCoordAndPublish(zmq_name, jsonattr['value'], jsonattr['category'])
 
     if not hasAlreadyBeenContributed:
-        eventLabeled = False
-        #eventLabeled = len(jsonattr[]) > 0
-        handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'], jsonattr['category'], jsonobj['action'], isLabeled=eventLabeled)
+        try:
+            eventLabeled = len(jsonattr['Tag']) > 0
+        except KeyError:
+            eventLabeled = False
+        try:
+            action = jsonobj['action']
+        except KeyError:
+            action = None
+        handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'],
+                            'Attribute',
+                            jsonattr['category'],
+                            action,
+                            isLabeled=eventLabeled)
     # Push to log
     publish_log(zmq_name, 'Attribute', to_push)
 

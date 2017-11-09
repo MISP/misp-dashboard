@@ -3,6 +3,10 @@
     height: auto;
 }
 
+.successCell {
+    background-color: #dff0d8 !important
+}
+
 .circleBadge {
     width: 80px;
     height: 80px;

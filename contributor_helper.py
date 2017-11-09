@@ -69,6 +69,15 @@ class Contributor_helper:
         return data
 
     ''' CONTRIBUTION RANK '''
+    def getOrgContributionTotalPoints(self, org):
+        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        pnts = self.serv_redis_db.get(keyname.format(org=org, orgCateg='points'))
+        if pnts is None:
+            pnts = 0
+        else:
+            pnts = int(pnts.decode('utf8'))
+        return pnts
+
     # return: [final_rank, requirement_fulfilled, requirement_not_fulfilled]
     def getOrgContributionRank(self, org):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
@@ -108,53 +117,55 @@ class Contributor_helper:
                 to_ret[i] = 0
             else:
                 to_ret[i] = -1
-        return to_ret
-
+        return {'rank': final_rank, 'status': to_ret, 'totPoints': self.getOrgContributionTotalPoints(org)}
 
     def updateOrgContributionRank(self, orgName, pnts_to_add, contribType, eventTime, isLabeled):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
         #update total points
-        self.serv_redis_db.set(keyname.format(org=orgName, orgCateg='points'), pnts_to_add)
-        #update contribution Requirement
+        totOrgPnts = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='points'), pnts_to_add)
+        # getRequirement parameters
         heavilyCount = self.heavilyCount
         recentDays = self.recentDays
         regularlyDays = self.regularlyDays
         isRecent = (datetime.datetime.now() - eventTime).days > recentDays
 
+        print("isLabeled: {}, isRecent: {}, totOrgPnts".format(isLabeled, isRecent, totOrgPnts))
+        #update contribution Requirement
         contrib = [] #[[contrib_level, contrib_ttl], [], ...]
-        if contribType == 'sighting':
+        if totOrgPnts >= self.org_rank_requirement_pnts[1] and contribType == 'Sighting':
             #[contrib_level, contrib_ttl]
-            contrib.append([1, ONE_DAY*365])
-        if contribType == 'attribute' or contribType == 'object':
-            contrib.append([2, ONE_DAY*365])
-        if contribType == 'proposal' or contribType == 'discussion':
-            contrib.append([3, ONE_DAY*365])
-        if contribType == 'sighting' and isRecent:
-            contrib.append([4, ONE_DAY*recentDays])
-        if contribType == 'proposal' and isRecent:
-            contrib.append([5, ONE_DAY*recentDays])
-        if contribType == 'event':
-            contrib.append([6, ONE_DAY*365])
-        if contribType == 'event':
-            contrib.append([7, ONE_DAY*recentDays])
-        if contribType == 'event':
-            contrib.append([8, ONE_DAY*regularlyDays])
-        if contribType == 'event' and isLabeled:
-            contrib.append([9, ONE_DAY*regularlyDays])
-        if contribType == 'sighting' and sightingWeekCount>heavilyCount:
-            contrib.append([10, ONE_DAY*regularlyDays])
-        if (contribType == 'attribute' or contribType == 'object') and attributeWeekCount>heavilyCount:
-            contrib.append([11, ONE_DAY*regularlyDays])
-        if contribType == 'proposal' and proposalWeekCount>heavilyCount:
-            contrib.append([12, ONE_DAY*regularlyDays])
-        if contribType == 'event' and eventWeekCount>heavilyCount:
-            contrib.append([13, ONE_DAY*regularlyDays])
-        if contribType == 'event' and eventWeekCount>heavilyCount  and isLabeled:
-            contrib.append([14, ONE_DAY*regularlyDays])
+            contrib.append([1, util.ONE_DAY*365])
+        if totOrgPnts >= self.org_rank_requirement_pnts[2] and contribType == 'Attribute' or contribType == 'Object':
+            contrib.append([2, util.ONE_DAY*365])
+        if totOrgPnts >= self.org_rank_requirement_pnts[3] and contribType == 'Proposal' or contribType == 'Discussion':
+            contrib.append([3, util.ONE_DAY*365])
+        if totOrgPnts >= self.org_rank_requirement_pnts[4] and contribType == 'Sighting' and isRecent:
+            contrib.append([4, util.ONE_DAY*recentDays])
+        if totOrgPnts >= self.org_rank_requirement_pnts[5] and contribType == 'Proposal' and isRecent:
+            contrib.append([5, util.ONE_DAY*recentDays])
+        if totOrgPnts >= self.org_rank_requirement_pnts[6] and contribType == 'Event':
+            contrib.append([6, util.ONE_DAY*365])
+        if totOrgPnts >= self.org_rank_requirement_pnts[7] and contribType == 'Event':
+            contrib.append([7, util.ONE_DAY*recentDays])
+        if totOrgPnts >= self.org_rank_requirement_pnts[8] and contribType == 'Event':
+            contrib.append([8, util.ONE_DAY*regularlyDays])
+        if totOrgPnts >= self.org_rank_requirement_pnts[9] and contribType == 'Event' and isLabeled:
+            contrib.append([9, util.ONE_DAY*regularlyDays])
+        if totOrgPnts >= self.org_rank_requirement_pnts[10] and contribType == 'Sighting' and sightingWeekCount>heavilyCount:
+            contrib.append([10, util.ONE_DAY*regularlyDays])
+        if totOrgPnts >= self.org_rank_requirement_pnts[11] and (contribType == 'Attribute' or contribType == 'Object') and attributeWeekCount>heavilyCount:
+            contrib.append([11, util.ONE_DAY*regularlyDays])
+        if totOrgPnts >= self.org_rank_requirement_pnts[12] and contribType == 'Proposal' and proposalWeekCount>heavilyCount:
+            contrib.append([12, util.ONE_DAY*regularlyDays])
+        if totOrgPnts >= self.org_rank_requirement_pnts[13] and contribType == 'Event' and eventWeekCount>heavilyCount:
+            contrib.append([13, util.ONE_DAY*regularlyDays])
+        if totOrgPnts >= self.org_rank_requirement_pnts[14] and contribType == 'Event' and eventWeekCount>heavilyCount  and isLabeled:
+            contrib.append([14, util.ONE_DAY*regularlyDays])
 
+        print([r for r, ttl in contrib])
         for rankReq, ttl in contrib:
             self.serv_redis_db.set(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq)), 1)
-            self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(i)), ttl)
+            self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq)), ttl)
 
     ''' HONOR BADGES '''
     def getOrgHonorBadges(self, org):
@@ -357,22 +368,20 @@ class Contributor_helper:
     def TEST_getTop5OvertimeFromRedis(self):
         import time
         now = time.time()
-        ONE_DAY = 60*60*24
         data2 = [
-            {'label': 'CIRCL', 'data': [[now, random.randint(1,50)], [now-ONE_DAY, random.randint(1,50)], [now-ONE_DAY*2, random.randint(1,50)], [now-ONE_DAY*3, random.randint(1,50)], [now-ONE_DAY*4, random.randint(1,50)]]},
-            {'label': 'CASES', 'data': [[now, random.randint(1,50)], [now-ONE_DAY, random.randint(1,50)], [now-ONE_DAY*2, random.randint(1,50)], [now-ONE_DAY*3, random.randint(1,50)], [now-ONE_DAY*4, random.randint(1,50)]]},
-            {'label': 'Org1', 'data': [[now, random.randint(1,50)], [now-ONE_DAY, random.randint(1,50)], [now-ONE_DAY*2, random.randint(1,50)], [now-ONE_DAY*3, random.randint(1,50)], [now-ONE_DAY*4, random.randint(1,50)]]},
-            {'label': 'Org2', 'data': [[now, random.randint(1,50)], [now-ONE_DAY, random.randint(1,50)], [now-ONE_DAY*2, random.randint(1,50)], [now-ONE_DAY*3, random.randint(1,50)], [now-ONE_DAY*4, random.randint(1,50)]]},
-            {'label': 'SMILE', 'data': [[now, random.randint(1,50)], [now-ONE_DAY, random.randint(1,50)], [now-ONE_DAY*2, random.randint(1,50)], [now-ONE_DAY*3, random.randint(1,50)], [now-ONE_DAY*4, random.randint(1,50)]]},
+            {'label': 'CIRCL', 'data': [[now, random.randint(1,50)], [now-util.ONE_DAY, random.randint(1,50)], [now-util.ONE_DAY*2, random.randint(1,50)], [now-util.ONE_DAY*3, random.randint(1,50)], [now-util.ONE_DAY*4, random.randint(1,50)]]},
+            {'label': 'CASES', 'data': [[now, random.randint(1,50)], [now-util.ONE_DAY, random.randint(1,50)], [now-util.ONE_DAY*2, random.randint(1,50)], [now-util.ONE_DAY*3, random.randint(1,50)], [now-util.ONE_DAY*4, random.randint(1,50)]]},
+            {'label': 'Org1', 'data': [[now, random.randint(1,50)], [now-util.ONE_DAY, random.randint(1,50)], [now-util.ONE_DAY*2, random.randint(1,50)], [now-util.ONE_DAY*3, random.randint(1,50)], [now-util.ONE_DAY*4, random.randint(1,50)]]},
+            {'label': 'Org2', 'data': [[now, random.randint(1,50)], [now-util.ONE_DAY, random.randint(1,50)], [now-util.ONE_DAY*2, random.randint(1,50)], [now-util.ONE_DAY*3, random.randint(1,50)], [now-util.ONE_DAY*4, random.randint(1,50)]]},
+            {'label': 'SMILE', 'data': [[now, random.randint(1,50)], [now-util.ONE_DAY, random.randint(1,50)], [now-util.ONE_DAY*2, random.randint(1,50)], [now-util.ONE_DAY*3, random.randint(1,50)], [now-util.ONE_DAY*4, random.randint(1,50)]]},
         ]
         return data2
 
     def TEST_getOrgOvertime(self, org):
         import time
         now = time.time()
-        ONE_DAY = 60*60*24
         data = [
-            {'label': org, 'data': [[now, random.randint(1,30)], [now-ONE_DAY, random.randint(1,30)], [now-ONE_DAY*2, random.randint(1,30)], [now-ONE_DAY*3, random.randint(1,30)], [now-ONE_DAY*4, random.randint(1,40)]]}
+            {'label': org, 'data': [[now, random.randint(1,30)], [now-util.ONE_DAY, random.randint(1,30)], [now-util.ONE_DAY*2, random.randint(1,30)], [now-util.ONE_DAY*3, random.randint(1,30)], [now-util.ONE_DAY*4, random.randint(1,40)]]}
         ]
         return data
 

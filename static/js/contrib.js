@@ -156,11 +156,13 @@ function getOrgRankIcon(rank, size) {
 }
 
 function createImg(source, size) {
-    var obj = document.createElement('object');
+    var obj = document.createElement('img');
     obj.height = size;
     obj.width = size;
     obj.style.margin = 'auto';
-    obj.data = source;
+    obj.src = source;
+    obj.type = "image/png"
+    obj.alt = ""
     return obj.outerHTML;
 }
 
@@ -372,18 +374,21 @@ function updateProgressHeader(org) {
         }
         for (var row of $('#bodyTablerankingModal')[0].children) {
             row = $(row);
+            var firstCell = $(row.children()[0]);
             var rank = row.data('rank');
             //remove all classes
             row.removeClass("warning");
             row.removeClass("danger");
             row.removeClass("success");
+            firstCell.removeClass("successCell");
             //add correct class
             if(status[rank] == 0){
                 row.addClass("danger");
-            } else if(status[rank] == 1 && rank == curContributionOrgRank) {
-                row.addClass("success");
             } else if(status[rank] == 1) {
                 row.addClass("warning");
+            }
+            if(rank == curContributionOrgRank) {
+                firstCell.addClass("successCell");
             }
         }
     });
@@ -424,14 +429,13 @@ function updateProgressHeader(org) {
     $.getJSON( url_getOrgOvertime+'?org='+org, function( data ) {
         var toPlot = dataTop5Overtime.slice(0); //cloning data
         // transform secs into date
-        for(i in data){
-            var new_data = [];
-            for(list of data[i]['data']) {
-                new_data.push([new Date(list[0]*1000), list[1]]);
-            }
-            data[i]['data'] = new_data;
-            toPlot.push(data[i]);
+        var new_data = [];
+        for(list of data['data']) {
+            new_data.push([new Date(list[0]*1000), list[1]]);
         }
+        data['data'] = new_data;
+        toPlot.push(data);
+
         plotLineChart.setData(toPlot);
         plotLineChart.setupGrid();
         plotLineChart.draw();

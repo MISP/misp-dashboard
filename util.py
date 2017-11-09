@@ -1,5 +1,7 @@
 import datetime
 
+ONE_DAY = 60*60*24
+
 def getMonthSpan(date):
     ds = datetime.datetime(date.year, date.month, 1)
     dyear = 1 if ds.month+1 > 12 else 0
