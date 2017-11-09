@@ -408,7 +408,7 @@ function updateProgressHeader(org) {
         var orgRowPnts = this.data()[0]
         if(orgRowName == currOrg) {
             if(prevOrgName == ""){ //already first
-                $('#orgToOverTake').text(this.data()[5]);
+                $('#orgToOverTake').text(orgRowName);
                 $('#pntsToOvertakeNext').text(0);
             } else {
                 $('#orgToOverTake').text(prevOrgName);

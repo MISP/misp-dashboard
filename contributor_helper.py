@@ -58,7 +58,7 @@ class Contributor_helper:
 
 
     ''' HELPER '''
-    def getOrgLogoFromRedis(self, org):
+    def getOrgLogoFromMISP(self, org):
         return "{}/img/orgs/{}.png".format(self.misp_web_url, org)
 
     def getZrange(self, keyCateg, date, topNum, endSubkey=""):
@@ -84,7 +84,7 @@ class Contributor_helper:
                 final_rank += 1
         num_of_previous_req_not_fulfilled = len([x for x in requirement_not_fulfilled if x<final_rank])
         final_rank = final_rank -  num_of_previous_req_not_fulfilled
-        return [final_rank, requirement_fulfilled, requirement_not_fulfilled]
+        return {'final_rank': final_rank, 'req_fulfilled': requirement_fulfilled, 'req_not_fulfilled': requirement_not_fulfilled}
 
     def giveContribRankToOrg(self, org, rankNum):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
@@ -96,7 +96,10 @@ class Contributor_helper:
 
     # 1 for fulfilled, 0 for not fulfilled, -1 for not relevant
     def getCurrentContributionStatus(self, org):
-        final_rank, requirement_fulfilled, requirement_not_fulfilled = self.getOrgContributionRank(org)
+        temp = self.getOrgContributionRank(org)
+        final_rank = temp['final_rank']
+        requirement_fulfilled = temp['req_fulfilled']
+        requirement_not_fulfilled = temp['req_not_fulfilled']
         to_ret = {}
         for i in range(1, self.org_rank_maxLevel+1):
             if i in requirement_fulfilled:
@@ -198,7 +201,9 @@ class Contributor_helper:
         for org, sec in last_contrib_org:
             dic = {}
             dic['rank'] = self.getOrgRankFromRedis(org, date)
-            dic['logo_path'] = self.getOrgLogoFromRedis(org)
+            dic['orgRank'] = self.getOrgContributionRank(org)['final_rank']
+            dic['honorBadge'] =  self.getOrgHonorBadges(org)
+            dic['logo_path'] = self.getOrgLogoFromMISP(org)
             dic['org'] = org
             dic['pnts'] = self.getOrgPntFromRedis(org, date)
             dic['epoch'] = sec
@@ -210,7 +215,9 @@ class Contributor_helper:
         epoch = self.serv_redis_db.zscore("CONTRIB_LAST", org)
         dic = {}
         dic['rank'] = self.getOrgRankFromRedis(org, date)
-        dic['logo_path'] = self.getOrgLogoFromRedis(org)
+        dic['orgRank'] = self.getOrgContributionRank(org)['final_rank']
+        dic['honorBadge'] = self.getOrgHonorBadges(org)
+        dic['logo_path'] = self.getOrgLogoFromMISP(org)
         dic['org'] = org
         dic['pnts'] = self.getOrgPntFromRedis(org, date)
         dic['epoch'] = epoch
@@ -231,7 +238,9 @@ class Contributor_helper:
         for org, pnts in orgDicoPnts.items():
             dic = {}
             dic['rank'] = self.getTrueRank(pnts)
-            dic['logo_path'] = self.getOrgLogoFromRedis(org)
+            dic['orgRank'] = self.getOrgContributionRank(org)['final_rank']
+            dic['honorBadge'] = self.getOrgHonorBadges(org)
+            dic['logo_path'] = self.getOrgLogoFromMISP(org)
             dic['org'] = org
             dic['pnts'] = pnts
             data.append(dic)
@@ -247,16 +256,22 @@ class Contributor_helper:
         for dic in topSortedOrg[0:5]:
             org = dic['org']
             overtime = []
-            for deltaD in  range(1,6,1):
-                date = (datetime.datetime(today.year, today.month, today.day) - datetime.timedelta(days=deltaD))
-                keyname = 'CONTRIB_DAY:'+util.getDateStrFormat(date)
-                org_score =  self.serv_redis_db.zscore(keyname, org)
-                if org_score is None:
-                    org_score = 0
-                overtime.append([deltaD, org_score])
-            to_append = {'label': org, 'data': overtime}
+            to_append = self.getOrgOvertime(org)
             data.append(to_append)
         return data
+
+    def getOrgOvertime(self, org):
+        overtime = []
+        today = datetime.datetime.now()
+        for deltaD in range(1,6,1):
+            date = (datetime.datetime(today.year, today.month, today.day) - datetime.timedelta(days=deltaD))
+            keyname = 'CONTRIB_DAY:'+util.getDateStrFormat(date)
+            org_score =  self.serv_redis_db.zscore(keyname, org)
+            if org_score is None:
+                org_score = 0
+            overtime.append([deltaD, org_score])
+        to_return = {'label': org, 'data': overtime}
+        return to_return
 
     def getCategPerContribFromRedis(self, date):
         keyCateg = "CONTRIB_DAY"
@@ -266,7 +281,9 @@ class Contributor_helper:
         for org, pnts in contrib_org:
             dic = {}
             dic['rank'] = self.getTrueRank(pnts)
-            dic['logo_path'] = self.getOrgLogoFromRedis(org)
+            dic['orgRank'] = self.getOrgContributionRank(org)['final_rank']
+            dic['honorBadge'] = self.getOrgHonorBadges(org)
+            dic['logo_path'] = self.getOrgLogoFromMISP(org)
             dic['org'] = org
             dic['pnts'] = pnts
             for categ in self.categories_in_datatable:
@@ -291,6 +308,8 @@ class Contributor_helper:
             'org': org,
             'points': points,
             'rank': self.getRankLevel(points),
+            'orgRank': self.getOrgContributionRank(org)['final_rank'],
+            'honorBadge': self.getOrgHonorBadges(org),
             'remainingPts': remainingPts['remainingPts'],
             'stepPts': remainingPts['stepPts'],
         }
@@ -363,7 +382,7 @@ class Contributor_helper:
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
                 'honorBadge': [1,2],
-                'logo_path': self.getOrgLogoFromRedis('MISP'),
+                'logo_path': self.getOrgLogoFromMISP('MISP'),
                 'org': 'MISP',
                 'pnts': random.randint(1,2**self.levelMax)
             },
@@ -417,7 +436,7 @@ class Contributor_helper:
                 'rank': random.randint(1,self.levelMax),
                 'orgRank': random.randint(1,self.levelMax),
                 'honorBadge': [1,2],
-                'logo_path': self.getOrgLogoFromRedis('MISP'),
+                'logo_path': self.getOrgLogoFromMISP('MISP'),
                 'org': 'MISP',
                 'pnts': random.randint(1,2**self.levelMax),
                 'epoch': time.time() - random.randint(0, 10000)

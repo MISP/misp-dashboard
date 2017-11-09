@@ -286,7 +286,7 @@ def getCoordsByRadius():
 
 @app.route("/_getLastContributors")
 def getLastContributors():
-    return jsonify(contributor_helper.TEST_getLastContributorsFromRedis())
+    return jsonify(contributor_helper.getLastContributorsFromRedis())
 
 @app.route("/_eventStreamLastContributor")
 def getLastContributor():
@@ -313,7 +313,7 @@ def getTopContributor(suppliedDate=None):
     else:
         date = suppliedDate
 
-    data = contributor_helper.TEST_getTopContributorFromRedis(date)
+    data = contributor_helper.getTopContributorFromRedis(date)
     return jsonify(data)
 
 @app.route("/_getFameContributor")
@@ -329,7 +329,7 @@ def getFameContributor():
 
 @app.route("/_getTop5Overtime")
 def getTop5Overtime():
-    return jsonify(contributor_helper.TEST_getTop5OvertimeFromRedis())
+    return jsonify(contributor_helper.getTop5OvertimeFromRedis())
 
 @app.route("/_getOrgOvertime")
 def getOrgOvertime():
@@ -337,7 +337,7 @@ def getOrgOvertime():
         org = request.args.get('org')
     except:
         org = ''
-    return jsonify(contributor_helper.TEST_getOrgOvertime(org))
+    return jsonify(contributor_helper.getOrgOvertime(org))
 
 @app.route("/_getCategPerContrib")
 def getCategPerContrib():
@@ -346,11 +346,11 @@ def getCategPerContrib():
     except:
         date = datetime.datetime.now()
 
-    return jsonify(contributor_helper.TEST_getCategPerContribFromRedis(date))
+    return jsonify(contributor_helper.getCategPerContribFromRedis(date))
 
 @app.route("/_getAllOrg")
 def getAllOrg():
-    return jsonify(contributor_helper.TEST_getAllOrgFromRedis())
+    return jsonify(contributor_helper.getAllOrgFromRedis())
 
 @app.route("/_getOrgRank")
 def getOrgRank():
@@ -358,7 +358,7 @@ def getOrgRank():
         org = request.args.get('org')
     except:
         org = ''
-    return jsonify(contributor_helper.TEST_getCurrentOrgRankFromRedis(org))
+    return jsonify(contributor_helper.getCurrentOrgRankFromRedis(org))
 
 @app.route("/_getContributionOrgStatus")
 def getContributionOrgStatus():
@@ -366,7 +366,7 @@ def getContributionOrgStatus():
         org = request.args.get('org')
     except:
         org = ''
-    return jsonify(contributor_helper.TEST_getCurrentContributionStatus(org))
+    return jsonify(contributor_helper.getCurrentContributionStatus(org))
 
 @app.route("/_getHonorBadges")
 def getHonorBadges():
@@ -374,7 +374,7 @@ def getHonorBadges():
         org = request.args.get('org')
     except:
         org = ''
-    return jsonify(contributor_helper.TEST_getOrgHonorBadges(org))
+    return jsonify(contributor_helper.getOrgHonorBadges(org))
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)
