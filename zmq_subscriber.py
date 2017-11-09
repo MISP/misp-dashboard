@@ -86,13 +86,16 @@ def getCoordAndPublish(zmq_name, supposed_ip, categ):
         rep = ip_to_coord(supposed_ip)
         coord = rep['coord']
         coord_dic = {'lat': coord['lat'], 'lon': coord['lon']}
-        ordDic = OrderedDict()
+        ordDic = OrderedDict() #keep fields with the same layout in redis
         ordDic['lat'] = coord_dic['lat']
         ordDic['lon'] = coord_dic['lon']
         coord_list = [coord['lat'], coord['lon']]
         push_to_redis_zset('GEO_COORD', json.dumps(ordDic))
         push_to_redis_zset('GEO_COUNTRY', rep['full_rep'].country.iso_code)
-        push_to_redis_geo('GEO_RAD', coord['lon'], coord['lat'], json.dumps({ 'categ': categ, 'value': supposed_ip }))
+        ordDic = OrderedDict() #keep fields with the same layout in redis
+        ordDic['categ'] = categ
+        ordDic['value'] = supposed_ip
+        push_to_redis_geo('GEO_RAD', coord['lon'], coord['lat'], json.dumps(ordDic))
         to_send = {
                 "coord": coord,
                 "categ": categ,
@@ -170,13 +173,14 @@ def handler_keepalive(zmq_name, jsonevent):
     to_push = [ jsonevent['uptime'] ]
     publish_log(zmq_name, 'Keepalive', to_push)
 
-def handler_sighting(zmq_name, jsonsight):
+def handler_sighting(zmq_name, jsondata):
     print('sending' ,'sighting')
-    org = jsonsight['org']
-    categ = jsonsight['categ']
-    action = jsonsight['action']
+    jsonsight = jsondata['Sighting']
+    org = jsonsight['Event']['Orgc']['name']
+    categ = jsonsight['Attribute']['category']
+    action = jsondata['action']
     handleContribution(zmq_name, org, categ, action, pntMultiplier=2)
-    return
+    handler_attribute(zmq_name, jsonsight, hasAlreadyBeenContributed=True)
 
 def handler_event(zmq_name, jsonobj):
     #fields: threat_level_id, id, info
@@ -192,7 +196,7 @@ def handler_event(zmq_name, jsonobj):
         else:
             handler_attribute(zmq_name, attributes)
 
-def handler_attribute(zmq_name, jsonobj):
+def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
     # check if jsonattr is an attribute object
     if 'Attribute' in jsonobj:
         jsonattr = jsonobj['Attribute']
@@ -212,9 +216,10 @@ def handler_attribute(zmq_name, jsonobj):
     if jsonattr['category'] == "Network activity":
         getCoordAndPublish(zmq_name, jsonattr['value'], jsonattr['category'])
 
-    eventLabeled = False
-    #eventLabeled = len(jsonattr[]) > 0
-    handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'], jsonattr['category'], jsonobj['action'], isLabeled=eventLabeled)
+    if not hasAlreadyBeenContributed:
+        eventLabeled = False
+        #eventLabeled = len(jsonattr[]) > 0
+        handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'], jsonattr['category'], jsonobj['action'], isLabeled=eventLabeled)
     # Push to log
     publish_log(zmq_name, 'Attribute', to_push)
 
@@ -227,6 +232,7 @@ def process_log(zmq_name, event):
     event = event.decode('utf8')
     topic, eventdata = event.split(' ', maxsplit=1)
     jsonevent = json.loads(eventdata)
+    print(event)
     dico_action[topic](zmq_name, jsonevent)
 
 

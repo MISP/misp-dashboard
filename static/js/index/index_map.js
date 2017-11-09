@@ -125,7 +125,7 @@ class MapEventManager {
     // Add and Manage markers on the map + make Animation
     popupCoord(coord, regionCode) {
         var coord = [coord.lat, coord.lon];
-        var color = Math.random()*180;
+        var color = 0.5*180;
         var pnts = openStreetMapObj.latLngToPoint(coord[0], coord[1])
         if (pnts != false) { //sometimes latLngToPoint return false
             var addedMarker = openStreetMapObj.addMarker(this._curMarkerNum, coord, [color]);
@@ -178,7 +178,8 @@ $(function(){
         series: {
             markers: [{
               attribute: 'fill',
-              scale: ['#1A0DAB', '#e50000', '#62ff41'],
+              //scale: ['#1A0DAB', '#e50000', '#62ff41'],
+              scale: ['#ffff66'],
               values: [],
               min: 0,
               max: 180
@@ -207,10 +208,10 @@ function connect_source_map() {
         var marker = L.marker([json.coord.lat, json.coord.lon]).addTo(myOpenStreetMap);
         var mapEvent = new MapEvent(json, marker);
         mapEventManager.addMapEvent(mapEvent);
-    
+
     };
     source_map.onopen = function(){
-        console.log('connection is opened. '+source_map.readyState);  
+        console.log('connection is opened. '+source_map.readyState);
     };
     source_map.onerror = function(){
         console.log('error: '+source_map.readyState);
@@ -240,4 +241,3 @@ $(document).ready(function () {
         mapEventManager.directZoom();
     });
 });
-

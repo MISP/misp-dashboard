@@ -336,11 +336,26 @@ class Contributor_helper:
         return data2
 
     def TEST_getTop5OvertimeFromRedis(self):
+        import time
+        now = time.time()
+        ONE_DAY = 60*60*24
         data2 = [
-            {'label': 'CIRCL', 'data': [[0, 4], [1, 7], [2,14]]},
-            {'label': 'CASES', 'data': [[0, 1], [1, 5], [2,2]]}
+            {'label': 'CIRCL', 'data': [[now, random.randint(1,50)], [now-ONE_DAY, random.randint(1,50)], [now-ONE_DAY*2, random.randint(1,50)], [now-ONE_DAY*3, random.randint(1,50)], [now-ONE_DAY*4, random.randint(1,50)]]},
+            {'label': 'CASES', 'data': [[now, random.randint(1,50)], [now-ONE_DAY, random.randint(1,50)], [now-ONE_DAY*2, random.randint(1,50)], [now-ONE_DAY*3, random.randint(1,50)], [now-ONE_DAY*4, random.randint(1,50)]]},
+            {'label': 'Org1', 'data': [[now, random.randint(1,50)], [now-ONE_DAY, random.randint(1,50)], [now-ONE_DAY*2, random.randint(1,50)], [now-ONE_DAY*3, random.randint(1,50)], [now-ONE_DAY*4, random.randint(1,50)]]},
+            {'label': 'Org2', 'data': [[now, random.randint(1,50)], [now-ONE_DAY, random.randint(1,50)], [now-ONE_DAY*2, random.randint(1,50)], [now-ONE_DAY*3, random.randint(1,50)], [now-ONE_DAY*4, random.randint(1,50)]]},
+            {'label': 'SMILE', 'data': [[now, random.randint(1,50)], [now-ONE_DAY, random.randint(1,50)], [now-ONE_DAY*2, random.randint(1,50)], [now-ONE_DAY*3, random.randint(1,50)], [now-ONE_DAY*4, random.randint(1,50)]]},
         ]
         return data2
+
+    def TEST_getOrgOvertime(self, org):
+        import time
+        now = time.time()
+        ONE_DAY = 60*60*24
+        data = [
+            {'label': org, 'data': [[now, random.randint(1,30)], [now-ONE_DAY, random.randint(1,30)], [now-ONE_DAY*2, random.randint(1,30)], [now-ONE_DAY*3, random.randint(1,30)], [now-ONE_DAY*4, random.randint(1,40)]]}
+        ]
+        return data
 
     def TEST_getTopContributorFromRedis(self, date):
         data2 = [

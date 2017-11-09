@@ -331,6 +331,14 @@ def getFameContributor():
 def getTop5Overtime():
     return jsonify(contributor_helper.TEST_getTop5OvertimeFromRedis())
 
+@app.route("/_getOrgOvertime")
+def getOrgOvertime():
+    try:
+        org = request.args.get('org')
+    except:
+        org = ''
+    return jsonify(contributor_helper.TEST_getOrgOvertime(org))
+
 @app.route("/_getCategPerContrib")
 def getCategPerContrib():
     try:

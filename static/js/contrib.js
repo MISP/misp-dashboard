@@ -5,6 +5,8 @@ var datatableFame;
 var refresh_speed = min_between_reload*60;
 var will_reload = $("#reloadCheckbox").is(':checked');
 var sec_before_reload = refresh_speed;
+var dataTop5Overtime;
+var plotLineChart
 
 /* CONFIG */
 var maxRank = 16;
@@ -24,6 +26,7 @@ var optionsLineChart = {
                 }
             }
     },
+    colors: ["#2F4F4F", "#778899", "#696969", "#A9A9A9", "#D3D3D3", "#337ab7"],
     points: { show: true },
     lines: { show: true, fill: true },
     grid: {
@@ -33,6 +36,11 @@ var optionsLineChart = {
     legend: {
         show: true,
         position: "nw"
+    },
+    xaxis: {
+        mode: "time",
+        timeformat: "%m/%d",
+        minTickSize: [1, "day"]
     }
 };
 var optionDatatable_light = {
@@ -171,6 +179,13 @@ function createHonorImg(array, size) {
     return div.outerHTML;
 }
 
+function createOrgLink(org) {
+    var a = document.createElement('a');
+    a.innerHTML = org;
+    a.href = "?org="+org;
+    return a.outerHTML;
+}
+
 function generateRankingSheet(rank, rankDec, stepPnt, pnt, Rpnt) {
     var Cpnt = pnt - stepPnt;
     var Tpnt = Cpnt + Rpnt;
@@ -267,7 +282,7 @@ function addToTableFromJson(datatable, url) {
                 getOrgRankIcon(row.orgRank, 60),
                 createHonorImg(row.honorBadge, 20),
                 createImg(row.logo_path, 32),
-                row.org
+                createOrgLink(row.org)
             ];
             datatable.row.add(to_add);
         }
@@ -293,7 +308,7 @@ function addLastContributor(datatable, data, update) {
         getOrgRankIcon(data.orgRank, 60),
         createHonorImg(data.honorBadge, 20),
         createImg(data.logo_path, 32),
-        data.org,
+        createOrgLink(data.org),
         data.epoch
     ];
     if (update == undefined || update == false) {
@@ -347,7 +362,6 @@ function updateProgressHeader(org) {
     // colorize row contribution rank help
     $.getJSON( url_getContributionOrgStatus+'?org='+org, function( data ) {
         var status = data['status'];
-        console.log(data);
         var curContributionOrgRank = data['rank'];
         var totNumPoints = data['totPoints']
         $('#orgTotNumOfPoint').text(totNumPoints);
@@ -386,22 +400,41 @@ function updateProgressHeader(org) {
     });
 
     //update overtake points
-    var prevOrg = "";
+    var prevOrgName = "";
     var prevOrgPnts = 0;
     datatableTop.rows().every( function() {
         var row = this.node();
-        if(this.data()[5] == currOrg) {
-            if(prevOrg == ""){ //already first
+        var orgRowName = $(this.data()[5])[0].text; // contained in <a>
+        var orgRowPnts = this.data()[0]
+        if(orgRowName == currOrg) {
+            if(prevOrgName == ""){ //already first
                 $('#orgToOverTake').text(this.data()[5]);
                 $('#pntsToOvertakeNext').text(0);
             } else {
-                $('#orgToOverTake').text(prevOrg);
-                $('#pntsToOvertakeNext').text(parseInt(prevOrgPnts)-this.data()[0]);
+                $('#orgToOverTake').text(prevOrgName);
+                $('#pntsToOvertakeNext').text(parseInt(prevOrgPnts)-orgRowPnts);
             }
         } else {
-            prevOrg = this.data()[5];
-            prevOrgPnts = this.data()[0];
+            prevOrgName = orgRowName;
+            prevOrgPnts = orgRowPnts;
         }
+    });
+
+    //Add new data to linechart
+    $.getJSON( url_getOrgOvertime+'?org='+org, function( data ) {
+        var toPlot = dataTop5Overtime.slice(0); //cloning data
+        // transform secs into date
+        for(i in data){
+            var new_data = [];
+            for(list of data[i]['data']) {
+                new_data.push([new Date(list[0]*1000), list[1]]);
+            }
+            data[i]['data'] = new_data;
+            toPlot.push(data[i]);
+        }
+        plotLineChart.setData(toPlot);
+        plotLineChart.setupGrid();
+        plotLineChart.draw();
     });
 }
 
@@ -462,7 +495,7 @@ $(document).ready(function() {
                 getOrgRankIcon(row.orgRank, 44),
                 createHonorImg(row.honorBadge, 20),
                 createImg(row.logo_path, 32),
-                row.org,
+                createOrgLink(row.org),
             ];
             for (categ of categ_list) {
                 to_add.push(row[categ]);
@@ -474,7 +507,16 @@ $(document).ready(function() {
     });
     // top 5 contrib overtime
     $.getJSON( url_getTop5Overtime, function( data ) {
-        var plotLineChart = $.plot("#divTop5Overtime", data, optionsLineChart);
+        // transform secs into date
+        for(i in data){
+            var new_data = [];
+            for(list of data[i]['data']) {
+                new_data.push([new Date(list[0]*1000), list[1]]);
+            }
+            data[i]['data'] = new_data;
+        }
+        dataTop5Overtime = data;
+        plotLineChart = $.plot("#divTop5Overtime", data, optionsLineChart);
     });
     if(currOrg != "") // currOrg selected
         //FIXME: timeout used to wait that all datatables are draw.
