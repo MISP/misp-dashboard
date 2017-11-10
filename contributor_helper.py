@@ -229,20 +229,23 @@ class Contributor_helper:
     def getLastContributorsFromRedis(self):
         date = datetime.datetime.now()
         keyname = "CONTRIB_LAST"
+        prev_days = 7
         topNum = self.MAX_NUMBER_OF_LAST_CONTRIBUTOR # default Num
-        last_contrib_org = self.getZrange(keyname, date, topNum)
         data = []
-        for org, sec in last_contrib_org:
-            dic = {}
-            dic['rank'] = self.getOrgRankFromRedis(org, date)
-            dic['orgRank'] = self.getOrgContributionRank(org)['final_rank']
-            dic['honorBadge'] =  self.getOrgHonorBadges(org)
-            dic['logo_path'] = self.getOrgLogoFromMISP(org)
-            dic['org'] = org
-            dic['pnts'] = self.getOrgPntFromRedis(org, date)
-            dic['epoch'] = sec
-            data.append(dic)
+        for curDate in util.getXPrevDaysSpan(date, prev_days):
+            last_contrib_org = self.getZrange(keyname, curDate, topNum)
+            for org, sec in last_contrib_org:
+                dic = {}
+                dic['rank'] = self.getOrgRankFromRedis(org, date)
+                dic['orgRank'] = self.getOrgContributionRank(org)['final_rank']
+                dic['honorBadge'] =  self.getOrgHonorBadges(org)
+                dic['logo_path'] = self.getOrgLogoFromMISP(org)
+                dic['org'] = org
+                dic['pnts'] = self.getOrgPntFromRedis(org, date)
+                dic['epoch'] = sec
+                data.append(dic)
         return data
+
 
     def getContributorFromRedis(self, org):
         date = datetime.datetime.now()

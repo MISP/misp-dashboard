@@ -14,5 +14,15 @@ def getMonthSpan(date):
         to_return.append(ds + datetime.timedelta(days=i))
     return to_return
 
+def getXPrevDaysSpan(date, days):
+    de = date
+    ds = de - datetime.timedelta(days=days)
+
+    delta = de - ds
+    to_return = []
+    for i in range(delta.days+1):
+        to_return.append(de - datetime.timedelta(days=i))
+    return to_return
+
 def getDateStrFormat(date):
     return str(date.year)+str(date.month).zfill(2)+str(date.day).zfill(2)
