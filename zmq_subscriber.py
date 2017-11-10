@@ -178,6 +178,21 @@ def handler_keepalive(zmq_name, jsonevent):
     to_push = [ jsonevent['uptime'] ]
     publish_log(zmq_name, 'Keepalive', to_push)
 
+def handler_conversation(zmq_name, jsonevent):
+    try: #only consider POST, not THREAD
+        jsonpost = jsonevent['Post']
+    except KeyError:
+        return
+    print('sending' ,'Post')
+    org = jsonpost['org_name']
+    categ = None
+    action = 'add'
+    handleContribution(zmq_name, org,
+                    'Discussion',
+                    None,
+                    action,
+                    isLabeled=False)
+
 def handler_object(zmq_name, jsondata):
     print('obj')
     return
@@ -300,7 +315,7 @@ dico_action = {
         "misp_json_sighting":       handler_sighting,
         "misp_json_organisation":   handler_log,
         "misp_json_user":           handler_log,
-        "misp_json_conversation":   handler_log
+        "misp_json_conversation":   handler_conversation
         }
 
 
