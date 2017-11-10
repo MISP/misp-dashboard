@@ -1,5 +1,5 @@
 # MISP-Dashboard
-An experimental Dashboard showing live data and statistics from the ZMQ of one or more MISP instances.
+An experimental dashboard showing live data and statistics from the ZMQ of one or more MISP instances.
 
 ## Live Dashboard
 - Possibility to subscribe to multiple ZMQ feeds
