@@ -72,7 +72,6 @@ optionDatatable_last.columnDefs = [
     { 'orderData':[6], 'targets': [0] },
     {
         'targets': [6],
-        'visible': false,
         'searchable': false
     },
 ]
@@ -305,14 +304,15 @@ function addLastFromJson(datatable, url) {
 }
 
 function addLastContributor(datatable, data, update) {
+    var date = new Date(data.epoch*1000);
     var to_add = [
+        date.toTimeString().slice(0,-15) +' '+ date.toLocaleDateString(),
         data.pnts,
         getMonthlyRankIcon(data.rank),
         getOrgRankIcon(data.orgRank, 60),
         createHonorImg(data.honorBadge, 20),
         createImg(data.logo_path, 32),
         createOrgLink(data.org),
-        data.epoch
     ];
     if (update == undefined || update == false) {
         datatable.row.add(to_add);
@@ -398,7 +398,7 @@ function updateProgressHeader(org) {
         });
         datatableLast.rows().every( function() {
             var row = this.node();
-            if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
+            if(this.data()[6] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
     });
 
