@@ -310,24 +310,20 @@ class Contributor_helper:
     def getCategPerContribFromRedis(self, date):
         keyCateg = "CONTRIB_DAY"
         topNum = 0 # all
-        contrib_org = self.getZrange(keyCateg, date, topNum)
-        data = []
-        for org, pnts in contrib_org:
-            dic = {}
-            dic['rank'] = self.getTrueRank(pnts)
-            dic['orgRank'] = self.getOrgContributionRank(org)['final_rank']
-            dic['honorBadge'] = self.getOrgHonorBadges(org)
-            dic['logo_path'] = self.getOrgLogoFromMISP(org)
-            dic['org'] = org
-            dic['pnts'] = pnts
+        contrib_org = self.getTopContributorFromRedis(date)
+        for dic in contrib_org:
+            org = dic['org']
             for categ in self.categories_in_datatable:
-                keyname = 'CONTRIB_CATEG:'+util.getDateStrFormat(date)+':'+categ
-                categ_score = self.serv_redis_db.zscore(keyname, org)
-                if categ_score is None:
                     categ_score = 0
-                dic[categ] = categ_score
-            data.append(dic)
-        return data
+                    for curDate in util.getMonthSpan(date):
+                        keyname = 'CONTRIB_CATEG:'+util.getDateStrFormat(curDate)+':'+categ
+                        temp = self.serv_redis_db.zscore(keyname, org)
+                        if temp is None:
+                            temp = 0
+                        categ_score += temp
+                    dic[categ] = categ_score
+        return contrib_org
+
 
     def getAllOrgFromRedis(self):
         data = self.serv_redis_db.smembers('CONTRIB_ALL_ORG')
