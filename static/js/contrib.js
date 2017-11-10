@@ -446,21 +446,31 @@ function updateProgressHeader(org) {
 
     //update overtake points
     updateOvertakePnts();
-    //Add new data to linechart
-    $.getJSON( url_getOrgOvertime+'?org='+org, function( data ) {
-        var toPlot = dataTop5Overtime.slice(0); //cloning data
-        // transform secs into date
-        var new_data = [];
-        for(list of data['data']) {
-            new_data.push([new Date(list[0]*1000), list[1]]);
-        }
-        data['data'] = new_data;
-        toPlot.push(data);
 
-        plotLineChart.setData(toPlot);
-        plotLineChart.setupGrid();
-        plotLineChart.draw();
-    });
+    //Add new data to linechart
+    var flag_already_displayed = false;
+    for(obj of dataTop5Overtime) { //check if already displayed
+        if (obj.label == currOrg) {
+            flag_already_displayed = true;
+            break;
+        }
+    }
+    if (!flag_already_displayed) {
+        $.getJSON( url_getOrgOvertime+'?org='+org, function( data ) {
+            var toPlot = dataTop5Overtime.slice(0); //cloning data
+            // transform secs into date
+            var new_data = [];
+            for(list of data['data']) {
+                new_data.push([new Date(list[0]*1000), list[1]]);
+            }
+            data['data'] = new_data;
+            toPlot.push(data);
+
+            plotLineChart.setData(toPlot);
+            plotLineChart.setupGrid();
+            plotLineChart.draw();
+        });
+    }
 }
 
 function showOnlyOrg() {
