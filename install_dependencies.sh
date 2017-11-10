@@ -23,7 +23,7 @@ fi
 
 ## Web stuff
 pushd static/
-mkdir -p css fonts
+mkdir -p css fonts js
 popd
 mkdir -p temp
 
@@ -36,9 +36,9 @@ wget http://code.jquery.com/jquery-${JQVERSION}.min.js -O ./static/js/jquery.min
 FLOTVERSION="0.8.3"
 wget http://www.flotcharts.org/downloads/flot-${FLOTVERSION}.zip -O ./temp/flot-${FLOTVERSION}.zip
 unzip -o temp/flot-${FLOTVERSION}.zip -d temp/
-mv temp/flot/jquery.flot.js ./static/js 
-mv temp/flot/jquery.flot.pie.min.js ./static/js 
-mv temp/flot/jquery.flot.resize.js ./static/js 
+mv temp/flot/jquery.flot.js ./static/js
+mv temp/flot/jquery.flot.pie.min.js ./static/js
+mv temp/flot/jquery.flot.resize.js ./static/js
 
 
 JQUERYUIVERSION="1.12.1"
@@ -82,9 +82,23 @@ mv temp/jquery-jvectormap-2.0.3.css ./static/css
 mv temp/jquery-jvectormap-2.0.3.min.js ./static/js
 wget http://jvectormap.com/js/jquery-jvectormap-world-mill.js -O ./static/js/jquery-jvectormap-world-mill.js
 
+# maxmind DB
 mkdir data
 pushd data
 wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz -O GeoLite2-City.tar.gz
 tar xvfz GeoLite2-City.tar.gz
 rm -rf GeoLite2-City.tar.gz
+
+# DataTable
+DATATABLE_VERSION="1.10.16"
+wget https://datatables.net/download/builder?dt/dt-${DATATABLE_VERSION}.zip -O temp/DataTables.zip
+unzip -o temp/DataTables.zip -d temp/
+mv temp/DataTables/${DATATABLE_VERSION}/css/dataTables.bootstrap.css ./static/css
+mv temp/DataTables/${DATATABLE_VERSION}/js/jquery.dataTables.min.js ./static/js
+mv temp/DataTables/${DATATABLE_VERSION}/js/dataTables.bootstrap.js ./static/js
+
+#typeahead
+git clone https://github.com/bassjobsen/Bootstrap-3-Typeahead.git temp/
+mv temp/Bootstrap-3-Typeahead/bootstrap3-typeahead.min.js ./static/js
+
 rm -rf ./temp
