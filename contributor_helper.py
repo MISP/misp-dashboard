@@ -231,10 +231,13 @@ class Contributor_helper:
         keyname = "CONTRIB_LAST"
         prev_days = 7
         topNum = self.MAX_NUMBER_OF_LAST_CONTRIBUTOR # default Num
+        addedOrg = []
         data = []
         for curDate in util.getXPrevDaysSpan(date, prev_days):
             last_contrib_org = self.getZrange(keyname, curDate, topNum)
             for org, sec in last_contrib_org:
+                if org in addedOrg:
+                    continue
                 dic = {}
                 dic['rank'] = self.getOrgRankFromRedis(org, date)
                 dic['orgRank'] = self.getOrgContributionRank(org)['final_rank']
@@ -244,6 +247,7 @@ class Contributor_helper:
                 dic['pnts'] = self.getOrgPntFromRedis(org, date)
                 dic['epoch'] = sec
                 data.append(dic)
+                addedOrg.append(org)
         return data
 
 
