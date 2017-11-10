@@ -19,6 +19,17 @@ zoomlevel = 11
 # ~meter
 clusteringDistance = 10
 
+[CONTRIB]
+max_number_of_last_contributor = 10
+min_between_reload = 5
+#How much harder it gets to rank up (exponential multiplier) [1.5 -> +inf]
+rankMultiplier = 2
+categories_in_datatable = ["internal_reference", "targeting_data", "antivirus_detection", "payload_delivery", "artifacts_dropped", "payload_installation", "persistence_mechanism", "network_activity", "payload_type", "attribution", "external_analysis", "financial_fraud", "support_Tool", "social_network", "person", "other" ]
+default_pnts_per_contribution = 1
+# array of the form [[category, pntsRcv], ...]
+pnts_per_contribution = [["payload_delivery", 1], ["artifact_dropped", 1], ["network_activity", 1]]
+additional_help_text = ["Sightings multiplies earned points by 2", "Editing an attribute earns you the same as creating one"]
+
 [Log]
 field_to_plot = Attribute.category
 fieldname_order=["Event.id", "Attribute.Tag", "Attribute.category", "Attribute.type", ["Attribute.value", "Attribute.comment"]]
@@ -27,12 +38,15 @@ char_separator=||
 [RedisGlobal]
 host=localhost
 port=6251
+#misp_web_url = http://192.168.56.50
+misp_web_url = http://localhost
+#zmq_url=tcp://192.168.56.50:50000
+zmq_url=tcp://localhost:50000
 
 [RedisLog]
 db=0
 channel=1
-zmq_url=tcp://localhost:50000
-#zmq_url=tcp://192.168.56.50:50000
+channelLastContributor = lastContributor
 
 [RedisMap]
 db=1

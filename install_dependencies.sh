@@ -17,13 +17,11 @@ fi
 pip3 install -U pip argparse redis zmq geoip2 flask
 
 ## config
-if [ ! -f config/config.cfg ]; then
-    cp config/config.cfg.sample config/config.cfg
-fi
+cp -i config/config.cfg.default config/config.cfg
 
 ## Web stuff
 pushd static/
-mkdir -p css fonts
+mkdir -p css fonts js
 popd
 mkdir -p temp
 
@@ -33,14 +31,16 @@ wget http://www.misp-project.org/assets/images/misp-small.png -O static/pics/MIS
 JQVERSION="3.2.1"
 wget http://code.jquery.com/jquery-${JQVERSION}.min.js -O ./static/js/jquery.min.js
 
+# jquery flot
 FLOTVERSION="0.8.3"
 wget http://www.flotcharts.org/downloads/flot-${FLOTVERSION}.zip -O ./temp/flot-${FLOTVERSION}.zip
 unzip -o temp/flot-${FLOTVERSION}.zip -d temp/
 mv temp/flot/jquery.flot.js ./static/js
 mv temp/flot/jquery.flot.pie.min.js ./static/js
 mv temp/flot/jquery.flot.resize.js ./static/js
+mv temp/flot/jquery.flot.time.js ./static/js
 
-
+# jquery UI
 JQUERYUIVERSION="1.12.1"
 wget https://jqueryui.com/resources/download/jquery-ui-${JQUERYUIVERSION}.zip -O temp/jquery-ui.zip
 unzip -o temp/jquery-ui.zip -d temp/
@@ -64,6 +64,8 @@ unzip -o temp/${SBADMIN_VERSION}-2.zip -d temp/
 mv temp/startbootstrap-sb-admin-2-${SBADMIN_VERSION}/dist/js/* ./static/js/
 mv temp/startbootstrap-sb-admin-2-${SBADMIN_VERSION}/dist/css/* ./static/css/
 mv temp/startbootstrap-sb-admin-2-${SBADMIN_VERSION}/bower_components/font-awesome/fonts/* ./static/fonts
+mv temp/startbootstrap-sb-admin-2-${SBADMIN_VERSION}/bower_components/font-awesome/css/* ./static/css
+mv temp/startbootstrap-sb-admin-2-${SBADMIN_VERSION}/bower_components/bootstrap/fonts/* ./static/fonts
 
 # leaflet
 LEAFLET_VERSION="1.2.0"
@@ -82,9 +84,22 @@ mv temp/jquery-jvectormap-2.0.3.css ./static/css
 mv temp/jquery-jvectormap-2.0.3.min.js ./static/js
 wget http://jvectormap.com/js/jquery-jvectormap-world-mill.js -O ./static/js/jquery-jvectormap-world-mill.js
 
+# maxmind DB
 mkdir -p data
 pushd data
 wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz -O GeoLite2-City.tar.gz
 tar xvfz GeoLite2-City.tar.gz
 rm -rf GeoLite2-City.tar.gz
+popd
+
+# DataTable
+DATATABLE_VERSION="1.10.16"
+wget https://cdn.datatables.net/${DATATABLE_VERSION}/js/jquery.dataTables.min.js -O ./static/js/jquery.dataTables.min.js
+wget https://cdn.datatables.net/${DATATABLE_VERSION}/css/dataTables.bootstrap.css -O ./static/css/dataTables.bootstrap.css
+wget https://cdn.datatables.net/${DATATABLE_VERSION}/js/dataTables.bootstrap.js -O ./static/js/dataTables.bootstrap.js
+
+#typeahead
+git clone https://github.com/bassjobsen/Bootstrap-3-Typeahead.git temp/Bootstrap-3-Typeahead
+mv temp/Bootstrap-3-Typeahead/bootstrap3-typeahead.min.js ./static/js
+
 rm -rf ./temp

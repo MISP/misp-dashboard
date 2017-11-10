@@ -1,0 +1,154 @@
+.ranking {
+    position: relative;
+    height: auto;
+}
+
+.successCell {
+    background-color: #dff0d8 !important
+}
+
+.circleBadge {
+    width: 80px;
+    height: 80px;
+    text-align: center;
+    border-radius: 65px;
+    background-color: #e1e1e1;
+    border: 1px solid #caccce;
+}
+
+.circlBadgeAcquired {
+    box-shadow: 0px 0px 15px #0000ff
+}
+
+.questionBadgeText {
+    left: -15%;
+    position: relative;
+    bottom: 18%;
+}
+
+.orgRankClass {
+    top: 6px;
+    position: relative;
+}
+
+.questionBadgeDiv {
+    float: left;
+    width: 40px;
+    height: 40px;
+    background-color: #286090;
+    font-size: xx-large;
+    border-radius: 50% 50% 50% 50%;
+    color: white;
+    top: 4px;
+    position: relative;
+    left: 1%;
+}
+
+.selectedOrgInTable {
+    background-color: #fff6c2 !important;
+    color: black;
+}
+
+.centerInBtn {
+    float: left;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 40px;
+    margin-right: 10px;
+    font-size: x-large;
+}
+
+.popover-content {
+    padding: 3px
+}
+
+.popOverBtn {
+    float: left;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-right: 8px;
+    height: 46px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    display: none;
+}
+
+.table > tbody > tr > td.centerCell {
+    text-align: center;
+    min-width: 45px;
+}
+
+.dataTables_filter > label {
+    margin-bottom: 0px;
+}
+
+.table > tbody > tr > td.centerCellPicOrgLogo {
+    padding: 5px;
+    text-align: left;
+}
+
+.table > tbody > tr > td.verticalAlign {
+    vertical-align: middle;
+}
+
+.table > tbody > tr > td.centerCellPicOrgRank {
+    padding: 0px;
+    text-align: left;
+}
+
+.progress {
+    width: 150px;
+}
+
+.panel-body {
+    padding: 0px;
+}
+ .panel {
+     margin-bottom: 10px;
+ }
+
+.col-lg-6 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.col-lg-8 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.col-lg-4 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.col-lg-12 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.leftSepa {
+    border-left-color: rgb(221, 221, 221);
+    border-left-style: solid;
+    border-left-width: 2px;
+    padding-left: 8px;
+}
+
+.textTopHeader {
+    height: 50px;
+    text-align: center;
+    margin-left: 8px;
+    float: left;
+    padding-top: 15px;
+}
+
+.center {
+  display:block;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+small {
+    font-size: 100%;
+    font-weight: bold;
+}

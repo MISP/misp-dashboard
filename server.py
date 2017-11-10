@@ -9,6 +9,9 @@ from time import sleep, strftime
 import datetime
 import os
 
+import util
+import contributor_helper
+
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
@@ -28,12 +31,21 @@ serv_redis_db = redis.StrictRedis(
         port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisDB', 'db'))
 
+contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
+
 subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)
 subscriber_log.psubscribe(cfg.get('RedisLog', 'channel'))
 subscriber_map = redis_server_map.pubsub(ignore_subscribe_messages=True)
 subscriber_map.psubscribe(cfg.get('RedisMap', 'channelDisp'))
+subscriber_lastContrib = redis_server_log.pubsub(ignore_subscribe_messages=True)
+subscriber_lastContrib.psubscribe(cfg.get('RedisLog', 'channelLastContributor'))
 eventNumber = 0
 
+##########
+## UTIL ##
+##########
+
+''' INDEX '''
 class LogItem():
 
     FIELDNAME_ORDER = []
@@ -91,13 +103,19 @@ class EventMessage():
         to_ret = { 'log': self.feed, 'feedName': self.feedName, 'zmqName': self.zmqName }
         return 'data: {}\n\n'.format(json.dumps(to_ret))
 
-def getZrange(keyCateg, date, topNum):
-    date_str = str(date.year)+str(date.month)+str(date.day)
-    keyname = "{}:{}".format(keyCateg, date_str)
-    data = serv_redis_db.zrange(keyname, 0, 5, desc=True, withscores=True)
-    data = [ [record[0].decode('utf8'), record[1]] for record in data ] 
+''' GENERAL '''
+def getZrange(keyCateg, date, topNum, endSubkey=""):
+    date_str = util.getDateStrFormat(date)
+    keyname = "{}:{}{}".format(keyCateg, date_str, endSubkey)
+    data = serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
+    data = [ [record[0].decode('utf8'), record[1]] for record in data ]
     return data
 
+###########
+## ROUTE ##
+###########
+
+''' MAIN ROUTE '''
 
 @app.route("/")
 def index():
@@ -108,7 +126,7 @@ def index():
             "{:.0f}".format(cfg.getint('Dashboard' ,'size_world_pannel_perc')/100*ratioCorrection),
             "{:.0f}".format((100-cfg.getint('Dashboard' ,'size_world_pannel_perc'))/100*ratioCorrection)
             ]
-    return render_template('index.html', 
+    return render_template('index.html',
             pannelSize=pannelSize,
             size_dashboard_width=[cfg.getint('Dashboard' ,'size_dashboard_left_width'), 12-cfg.getint('Dashboard', 'size_dashboard_left_width')],
             itemToPlot=cfg.get('Dashboard', 'item_to_plot'),
@@ -128,6 +146,68 @@ def geo():
             default_updateFrequency=cfg.getint('GEO' ,'updateFrequency')
             )
 
+@app.route("/contrib")
+def contrib():
+    categ_list = contributor_helper.categories_in_datatable
+    categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in contributor_helper.categories_in_datatable]
+    categ_list_points = [contributor_helper.DICO_PNTS_REWARD[categ] for categ in categ_list]
+
+    org_rank = contributor_helper.org_rank
+    org_rank_requirement_pnts = contributor_helper.org_rank_requirement_pnts
+    org_rank_requirement_text = contributor_helper.org_rank_requirement_text
+    org_rank_list = [[rank, title, org_rank_requirement_pnts[rank], org_rank_requirement_text[rank]] for rank, title in org_rank.items()]
+    org_rank_list.sort(key=lambda x: x[0])
+    org_rank_additional_text = contributor_helper.org_rank_additional_info
+
+    org_honor_badge_title = contributor_helper.org_honor_badge_title
+    org_honor_badge_title_list = [ [num, text] for num, text in contributor_helper.org_honor_badge_title.items()]
+    org_honor_badge_title_list.sort(key=lambda x: x[0])
+
+    currOrg = request.args.get('org')
+    if currOrg is None:
+        currOrg = ""
+    return render_template('contrib.html',
+            currOrg=currOrg,
+            rankMultiplier=contributor_helper.rankMultiplier,
+            default_pnts_per_contribution=contributor_helper.default_pnts_per_contribution,
+            additional_help_text=json.loads(cfg.get('CONTRIB', 'additional_help_text')),
+            categ_list=json.dumps(categ_list),
+            categ_list_str=categ_list_str,
+            categ_list_points=categ_list_points,
+            org_rank_json=json.dumps(org_rank),
+            org_rank_list=org_rank_list,
+            org_rank_additional_text=org_rank_additional_text,
+            org_honor_badge_title=json.dumps(org_honor_badge_title),
+            org_honor_badge_title_list=org_honor_badge_title_list,
+            min_between_reload=cfg.getint('CONTRIB', 'min_between_reload')
+            )
+
+''' INDEX '''
+
+@app.route("/_logs")
+def logs():
+    return Response(event_stream_log(), mimetype="text/event-stream")
+
+@app.route("/_maps")
+def maps():
+    return Response(event_stream_maps(), mimetype="text/event-stream")
+
+@app.route("/_get_log_head")
+def getLogHead():
+    return json.dumps(LogItem('').get_head_row())
+
+def event_stream_log():
+    for msg in subscriber_log.listen():
+        content = msg['data']
+        yield EventMessage(content).to_json()
+
+def event_stream_maps():
+    for msg in subscriber_map.listen():
+        content = msg['data'].decode('utf8')
+        yield 'data: {}\n\n'.format(content)
+
+''' GEO '''
+
 @app.route("/_getTopCoord")
 def getTopCoord():
     try:
@@ -146,7 +226,7 @@ def getHitMap():
     except:
         date = datetime.datetime.now()
     keyCateg = "GEO_COUNTRY"
-    topNum = -1 # default Num
+    topNum = 0 # all
     data = getZrange(keyCateg, date, topNum)
     return jsonify(data)
 
@@ -174,7 +254,7 @@ def getCoordsByRadius():
     delta = dateEnd - dateStart
     for i in range(delta.days+1):
         correctDatetime = dateStart + datetime.timedelta(days=i)
-        date_str = str(correctDatetime.year)+str(correctDatetime.month)+str(correctDatetime.day)
+        date_str = util.getDateStrFormat(correctDatetime)
         keyCateg = 'GEO_RAD'
         keyname = "{}:{}".format(keyCateg, date_str)
         res = serv_redis_db.georadius(keyname, centerLon, centerLat, radius, unit='km', withcoord=True)
@@ -202,27 +282,99 @@ def getCoordsByRadius():
 
     return jsonify(to_return)
 
-@app.route("/_logs")
-def logs():
-    return Response(event_stream_log(), mimetype="text/event-stream")
+''' CONTRIB '''
 
-@app.route("/_maps")
-def maps():
-    return Response(event_stream_maps(), mimetype="text/event-stream")
+@app.route("/_getLastContributors")
+def getLastContributors():
+    return jsonify(contributor_helper.getLastContributorsFromRedis())
 
-@app.route("/_get_log_head")
-def getLogHead():
-    return json.dumps(LogItem('').get_head_row())
+@app.route("/_eventStreamLastContributor")
+def getLastContributor():
+    return Response(eventStreamLastContributor(), mimetype="text/event-stream")
 
-def event_stream_log():
-    for msg in subscriber_log.listen():
-        content = msg['data']
-        yield EventMessage(content).to_json()
-
-def event_stream_maps():
-    for msg in subscriber_map.listen():
+def eventStreamLastContributor():
+    for msg in subscriber_lastContrib.listen():
         content = msg['data'].decode('utf8')
-        yield 'data: {}\n\n'.format(content)
+        contentJson = json.loads(content)
+        lastContribJson = json.loads(contentJson['log'])
+        org = lastContribJson['org']
+        to_return = contributor_helper.getContributorFromRedis(org)
+        epoch = lastContribJson['epoch']
+        to_return['epoch'] = epoch
+        yield 'data: {}\n\n'.format(json.dumps(to_return))
+
+@app.route("/_getTopContributor")
+def getTopContributor(suppliedDate=None):
+    if suppliedDate is None:
+        try:
+            date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+        except:
+            date = datetime.datetime.now()
+    else:
+        date = suppliedDate
+
+    data = contributor_helper.getTopContributorFromRedis(date)
+    return jsonify(data)
+
+@app.route("/_getFameContributor")
+def getFameContributor():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        today = datetime.datetime.now()
+        # get previous month
+        date = (datetime.datetime(today.year, today.month, 1) - datetime.timedelta(days=1))
+    return getTopContributor(suppliedDate=date)
+
+
+@app.route("/_getTop5Overtime")
+def getTop5Overtime():
+    return jsonify(contributor_helper.getTop5OvertimeFromRedis())
+
+@app.route("/_getOrgOvertime")
+def getOrgOvertime():
+    try:
+        org = request.args.get('org')
+    except:
+        org = ''
+    return jsonify(contributor_helper.getOrgOvertime(org))
+
+@app.route("/_getCategPerContrib")
+def getCategPerContrib():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    return jsonify(contributor_helper.getCategPerContribFromRedis(date))
+
+@app.route("/_getAllOrg")
+def getAllOrg():
+    return jsonify(contributor_helper.getAllOrgFromRedis())
+
+@app.route("/_getOrgRank")
+def getOrgRank():
+    try:
+        org = request.args.get('org')
+    except:
+        org = ''
+    return jsonify(contributor_helper.getCurrentOrgRankFromRedis(org))
+
+@app.route("/_getContributionOrgStatus")
+def getContributionOrgStatus():
+    try:
+        org = request.args.get('org')
+    except:
+        org = ''
+    return jsonify(contributor_helper.getCurrentContributionStatus(org))
+
+@app.route("/_getHonorBadges")
+def getHonorBadges():
+    try:
+        org = request.args.get('org')
+    except:
+        org = ''
+    return jsonify(contributor_helper.getOrgHonorBadges(org))
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)
