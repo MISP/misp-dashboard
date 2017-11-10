@@ -68,6 +68,11 @@ class Contributor_helper:
         data = [ [record[0].decode('utf8'), record[1]] for record in data ]
         return data
 
+    def addContributionToCateg(self, date, categ, org, count=1):
+        today_str = util.getDateStrFormat(date)
+        keyname = "CONTRIB_CATEG:{}:{}".format(today_str, categ)
+        self.serv_redis_db.zincrby(keyname, org, count)
+
     ''' CONTRIBUTION RANK '''
     def getOrgContributionTotalPoints(self, org):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
@@ -133,10 +138,15 @@ class Contributor_helper:
         if contribType == 'Proposal':
             proposalWeekCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='PROP_WEEK_COUNT'), 1)
             self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='PROP_WEEK_COUNT'), util.ONE_DAY*7)
+            addContributionToCateg(datetime.datetime.now(), 'proposal')
 
         if contribType == 'Sighting':
             sightingWeekCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='SIGHT_WEEK_COUNT'), 1)
             self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='SIGHT_WEEK_COUNT'), util.ONE_DAY*7)
+            self.addContributionToCateg(datetime.datetime.now(), 'sighting', orgName)
+
+        if contribType == 'Discussion':
+            self.addContributionToCateg(datetime.datetime.now(), 'discussion', orgName)
 
         if contribType == 'Event':
             eventWeekCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='EVENT_WEEK_COUNT'), 1)
