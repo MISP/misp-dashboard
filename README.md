@@ -7,13 +7,14 @@ An experimental Dashboard showing live data and statistics from the MISP ZMQ
   - Fields that you may change:
     - RedisGlobal -> host
     - RedisGlobal -> port
-    - RedisLog -> zmq_url
-    - RedisMap -> pathMaxMindDB
-
+    - RedisGlobal -> zmq_url
+    - RedisGlobal -> misp_web_url
+    
 ## Starting the System
 - Activate your virtualenv ```. ./DASHENV/bin/activate```
 - Listen to the MISP feed by starting the zmq_subscriber ```./zmq_subscriber.py```
 - Start the Flask server ```./server.py```
+- Access the interface at ```http://localhost:8001/```
 
 ## zmq_subscriber options
 ```usage: zmq_subscriber.py [-h] [-n ZMQNAME] [-u ZMQURL]
@@ -27,6 +28,18 @@ optional arguments:
   -u ZMQURL, --url ZMQURL
                         The URL to connect to
 ```
+
+## Screenshots
+
+### Live Dashboard
+![MISP event view](./screenshots/dashboard-live.png)
+
+### Geo Dashboard
+![MISP event view](./screenshots/dashboard-geo.png)
+
+### Contributors Dashboard
+![Dashboard-contributor2](./screenshots/dashboard-contributors2.png)
+![Dashboard-contributor3](./screenshots/dashboard-contributors3.png)
 
 ## License
 Images and logos are handmade for:
