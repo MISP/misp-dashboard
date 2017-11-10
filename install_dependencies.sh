@@ -85,7 +85,7 @@ mv temp/jquery-jvectormap-2.0.3.min.js ./static/js
 wget http://jvectormap.com/js/jquery-jvectormap-world-mill.js -O ./static/js/jquery-jvectormap-world-mill.js
 
 # maxmind DB
-mkdir data
+mkdir -p data
 pushd data
 wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz -O GeoLite2-City.tar.gz
 tar xvfz GeoLite2-City.tar.gz
