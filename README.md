@@ -1,7 +1,40 @@
 # MISP-Dashboard
-An experimental Dashboard showing live data and statistics from the MISP ZMQ
+An experimental Dashboard showing live data and statistics from the ZMQ of one or more MISP instances.
 
-## Installation
+## Live Dashboard
+- Possibility to subscribe to multiple ZMQ feeds
+- Shows direct contribution made by organisations
+- Shows live resolvable posted locations
+
+![MISP event view](./screenshots/dashboard-live.png)
+
+## Geolocalisation Dashboard
+
+- Provides historical geolocalised information to support security teams, CSIRTs or SOC finding threats in their constituency
+- Possibility to get geospatial information from specific regions
+
+![MISP event view](./screenshots/dashboard-geo.png)
+
+## Contributors Dashboard
+
+__Shows__:
+- The monthly rank of all organisation
+- The last organisation that contributed (dynamic updates)
+- The contribution level of all organisation
+- Each category of contribution per organisation
+- The current ranking of the selected organisation (dynamic updates)
+
+__Includes__:
+
+- Gamification of the platform:
+  - Two different levels of ranking with unique icons
+  - Exclusive obtainable badges for source code contributors and donator
+  
+![Dashboard-contributor2](./screenshots/dashboard-contributors2.png)
+![Dashboard-contributor3](./screenshots/dashboard-contributors3.png)
+
+
+# Installation
 - Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory
 - Update the configuration file ```config.cfg``` so that it matches your system
   - Fields that you may change:
@@ -10,13 +43,13 @@ An experimental Dashboard showing live data and statistics from the MISP ZMQ
     - RedisGlobal -> zmq_url
     - RedisGlobal -> misp_web_url
     
-## Starting the System
+# Starting the System
 - Activate your virtualenv ```. ./DASHENV/bin/activate```
 - Listen to the MISP feed by starting the zmq_subscriber ```./zmq_subscriber.py```
 - Start the Flask server ```./server.py```
 - Access the interface at ```http://localhost:8001/```
 
-## zmq_subscriber options
+# zmq_subscriber options
 ```usage: zmq_subscriber.py [-h] [-n ZMQNAME] [-u ZMQURL]
 
 A zmq subscriber. It subscribe to a ZMQ then redispatch it to the MISP-dashboard
@@ -28,18 +61,6 @@ optional arguments:
   -u ZMQURL, --url ZMQURL
                         The URL to connect to
 ```
-
-## Screenshots
-
-### Live Dashboard
-![MISP event view](./screenshots/dashboard-live.png)
-
-### Geo Dashboard
-![MISP event view](./screenshots/dashboard-geo.png)
-
-### Contributors Dashboard
-![Dashboard-contributor2](./screenshots/dashboard-contributors2.png)
-![Dashboard-contributor3](./screenshots/dashboard-contributors3.png)
 
 ## License
 Images and logos are handmade for:
