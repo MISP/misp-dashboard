@@ -42,6 +42,7 @@
     top: 4px;
     position: relative;
     left: 1%;
+    padding: 0px;
 }
 
 .selectedOrgInTable {
