@@ -66,9 +66,13 @@ var optionDatatable_light = {
 var optionDatatable_top = jQuery.extend({}, optionDatatable_light)
 var optionDatatable_last = jQuery.extend({}, optionDatatable_light)
 optionDatatable_last.columnDefs = [
-    { className: "centerCellPicOrgRank", "targets": [ 2 ] },
+    { className: "small", "targets": [ 0 ] },
+    { className: "verticalAlign", "targets": [ 1 ] },
+    { className: "centerCellPicOrgRank verticalAlign", "targets": [ 2 ] },
     { className: "centerCellPicOrgLogo", "targets": [ 3 ] },
-    { className: "centerCellPicOrgLogo", "targets": [ 4 ] },
+    { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 4 ] },
+    { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 5 ] },
+    { className: "verticalAlign", "targets": [ 6 ] },
     { 'orderData':[6], 'targets': [0] },
     {
         'targets': [6],
@@ -169,6 +173,8 @@ function createImg(source, size) {
 function createHonorImg(array, size) {
     size = 32;
     var div = document.createElement('div');
+    div.style.boxShadow = '0px 0px 5px #00000099';
+    div.style.backgroundColor = '#e1e1e1';
     for (badgeNum of array) {
         var obj = document.createElement('img');
         obj.height = size;
@@ -178,6 +184,8 @@ function createHonorImg(array, size) {
         obj.src = url_baseHonorLogo+badgeNum+'.svg';
         div.appendChild(obj);
     }
+    div.style.width = 32*array.length+'px';
+    div.style.borderRadius = '15px';
     return div.outerHTML;
 }
 
@@ -555,7 +563,7 @@ $(document).ready(function() {
     });
     if(currOrg != "") // currOrg selected
         //FIXME: timeout used to wait that all datatables are draw.
-        setTimeout( function() { updateProgressHeader(currOrg); }, 400);
+        setTimeout( function() { updateProgressHeader(currOrg); }, 500);
 
     source_lastContrib = new EventSource(url_eventStreamLastContributor);
     source_lastContrib.onmessage = function(event) {

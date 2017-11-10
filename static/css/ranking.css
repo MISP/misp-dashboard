@@ -84,14 +84,16 @@
 
 .table > tbody > tr > td.centerCellPicOrgLogo {
     padding: 5px;
-    text-align: right;
-    min-width: 45px;
+    text-align: left;
+}
+
+.table > tbody > tr > td.verticalAlign {
+    vertical-align: middle;
 }
 
 .table > tbody > tr > td.centerCellPicOrgRank {
     padding: 0px;
     text-align: left;
-    min-width: 45px;
 }
 
 .progress {
