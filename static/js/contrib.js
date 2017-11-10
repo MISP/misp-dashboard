@@ -469,7 +469,7 @@ function updateProgressHeader(org) {
             // transform secs into date
             var new_data = [];
             for(list of data['data']) {
-                new_data.push([new Date(list[0]*1000), list[1]]);
+                new_data.push([list[0]*1000, list[1]]);
             }
             data['data'] = new_data;
             toPlot.push(data);
@@ -554,7 +554,7 @@ $(document).ready(function() {
         for(i in data){
             var new_data = [];
             for(list of data[i]['data']) {
-                new_data.push([new Date(list[0]*1000), list[1]]);
+                new_data.push([list[0]*1000, list[1]]);
             }
             data[i]['data'] = new_data;
         }

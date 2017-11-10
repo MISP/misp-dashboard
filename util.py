@@ -1,4 +1,4 @@
-import datetime
+import datetime, time
 
 ONE_DAY = 60*60*24
 
@@ -26,3 +26,6 @@ def getXPrevDaysSpan(date, days):
 
 def getDateStrFormat(date):
     return str(date.year)+str(date.month).zfill(2)+str(date.day).zfill(2)
+
+def getTimestamp(date):
+    return time.mktime(date.timetuple())

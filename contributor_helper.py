@@ -292,21 +292,21 @@ class Contributor_helper:
         # show current top 5 org points overtime (last 5 days)
         for dic in topSortedOrg[0:5]:
             org = dic['org']
-            overtime = []
             to_append = self.getOrgOvertime(org)
             data.append(to_append)
         return data
 
     def getOrgOvertime(self, org):
         overtime = []
-        today = datetime.datetime.now()
-        for deltaD in range(1,6,1):
-            date = (datetime.datetime(today.year, today.month, today.day) - datetime.timedelta(days=deltaD))
-            keyname = 'CONTRIB_DAY:'+util.getDateStrFormat(date)
+        today = datetime.datetime.today()
+        today = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        for curDate in util.getXPrevDaysSpan(today, 7):
+            timestamp = util.getTimestamp(curDate)
+            keyname = 'CONTRIB_DAY:'+util.getDateStrFormat(curDate)
             org_score =  self.serv_redis_db.zscore(keyname, org)
             if org_score is None:
                 org_score = 0
-            overtime.append([deltaD, org_score])
+            overtime.append([timestamp, org_score])
         to_return = {'label': org, 'data': overtime}
         return to_return
 
