@@ -17,10 +17,6 @@ fi
 pip3 install -U pip argparse redis zmq geoip2 flask
 
 ## config
-if [ ! -f config/config.cfg ]; then
-    cp config/config.cfg.sample config/config.cfg
-fi
-
 cp -i config/config.cfg.default config/config.cfg
 
 ## Web stuff
