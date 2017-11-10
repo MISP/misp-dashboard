@@ -149,7 +149,7 @@ def handleContribution(zmq_name, org, contribType, categ, action, pntMultiplier=
 
         push_to_redis_zset('CONTRIB_DAY', org, count=pnts_to_add)
         #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
-        push_to_redis_zset('CONTRIB_CATEG', org, count=DEFAULT_PNTS_REWARD, endSubkey=':'+noSpaceLower(categ))
+        push_to_redis_zset('CONTRIB_CATEG', org, count=1, endSubkey=':'+noSpaceLower(categ))
         publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
 
     serv_redis_db.sadd('CONTRIB_ALL_ORG', org)
