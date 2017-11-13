@@ -149,7 +149,7 @@ def geo():
 @app.route("/contrib")
 def contrib():
     categ_list = contributor_helper.categories_in_datatable
-    categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in contributor_helper.categories_in_datatable]
+    categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in categ_list]
     categ_list_points = [contributor_helper.DICO_PNTS_REWARD[categ] for categ in categ_list]
 
     org_rank = contributor_helper.org_rank
@@ -162,6 +162,10 @@ def contrib():
     org_honor_badge_title = contributor_helper.org_honor_badge_title
     org_honor_badge_title_list = [ [num, text] for num, text in contributor_helper.org_honor_badge_title.items()]
     org_honor_badge_title_list.sort(key=lambda x: x[0])
+
+    trophy_categ_list = contributor_helper.categories_in_trophy
+    trophy_categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in trophy_categ_list]
+    trophy_title = contributor_helper.trophy_title
 
     currOrg = request.args.get('org')
     if currOrg is None:
@@ -179,6 +183,10 @@ def contrib():
             org_rank_additional_text=org_rank_additional_text,
             org_honor_badge_title=json.dumps(org_honor_badge_title),
             org_honor_badge_title_list=org_honor_badge_title_list,
+            trophy_categ_list=json.dumps(trophy_categ_list),
+            trophy_categ_list_id=trophy_categ_list,
+            trophy_categ_list_str=trophy_categ_list_str,
+            trophy_title=json.dumps(trophy_title),
             min_between_reload=cfg.getint('CONTRIB', 'min_between_reload')
             )
 
@@ -375,6 +383,14 @@ def getHonorBadges():
     except:
         org = ''
     return jsonify(contributor_helper.getOrgHonorBadges(org))
+
+@app.route("/_getTrophies")
+def getTrophies():
+    try:
+        org = request.args.get('org')
+    except:
+        org = ''
+    return jsonify(contributor_helper.TEST_getOrgTrophies(org))
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)

@@ -452,6 +452,23 @@ function updateProgressHeader(org) {
         }
     });
 
+    // set trophies if acquired
+    $.getJSON( url_getTrophies+'?org='+org, function( data ) {
+        var source = url_baseTrophyLogo+0+'.png'
+        for(var i=0; i<trophy_categ_list.length; i++) { // remove
+            categ = trophy_categ_list[i];
+            $('#trophy_'+categ).attr('src', source);
+            $('#trophy_'+categ).attr('title', "");
+        }
+        for(var i=0; i<data.length; i++) { // add
+            categ = data[i].categName;
+            rank = data[i].rank;
+            source = url_baseTrophyLogo+rank+'.png'
+            $('#trophy_'+categ).attr('src', source);
+            $('#trophy_'+categ).attr('title', trophy_title[rank]);
+        }
+    });
+
     //update overtake points
     updateOvertakePnts();
 
@@ -564,6 +581,10 @@ $(document).ready(function() {
     if(currOrg != "") // currOrg selected
         //FIXME: timeout used to wait that all datatables are draw.
         setTimeout( function() { updateProgressHeader(currOrg); }, 500);
+
+    $('#trophyForm input').on('change', function() {
+       alert($('input[name=radioTrophyName]:checked', '#trophyForm').val());
+    });
 
     source_lastContrib = new EventSource(url_eventStreamLastContributor);
     source_lastContrib.onmessage = function(event) {

@@ -22,6 +22,12 @@ class Contributor_helper:
         for badgeNum in range(1, self.honorBadgeNum+1): #get Num of honorBadge
             self.org_honor_badge_title[badgeNum] = self.cfg_org_rank.get('HonorBadge', str(badgeNum))
 
+        self.trophyNum = len(self.cfg_org_rank.options('HonorTrophyCateg'))
+        self.categories_in_trophy = json.loads(self.cfg_org_rank.get('HonorTrophyCateg', 'categ'))
+        self.trophy_title = {}
+        for trophyNum in range(0, len(self.cfg_org_rank.options('HonorTrophy'))): #get Num of trophy
+            self.trophy_title[trophyNum] = self.cfg_org_rank.get('HonorTrophy', str(trophyNum))
+
         #GLOBAL RANKING
         self.org_rank_maxLevel = self.cfg_org_rank.getint('rankTitle', 'maxLevel')
         self.org_rank = {}
@@ -217,6 +223,17 @@ class Contributor_helper:
     def removeBadgeFromOrg(self, org, badgeNum):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
         self.serv_redis_db.delete(keyname.format(org=org, orgCateg='BADGE_'+str(badgeNum)))
+
+    ''' TROPHIES '''
+    def getOrgTrophies(self, org):
+        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        trophy = []
+        for i in range(1, self.trophyNum+1):
+            key = keyname.format(org=org, orgCateg='TROPHY_'+str(i))
+            trophy_Pnts = self.serv_redis_db.get(key)
+            if trophy_Pnts is not None: #existing
+                trophy.append(trophy_Pnts)
+        return trophy
 
     ''' MONTHLY CONTRIBUTION '''
     def getOrgPntFromRedis(self, org, date):
@@ -583,3 +600,12 @@ class Contributor_helper:
             else:
                 honorBadge.append(0)
         return honorBadge
+
+    def TEST_getOrgTrophies(self, org):
+        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        trophy = []
+        for categ in self.categories_in_trophy:
+            key = keyname.format(org=org, orgCateg='TROPHY_'+categ)
+            trophy_Pnts = random.randint(0,10)
+            trophy.append({'categName': categ, 'rank': trophy_Pnts})
+        return trophy
