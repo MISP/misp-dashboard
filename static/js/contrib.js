@@ -344,6 +344,18 @@ function addLastContributor(datatable, data, update) {
     }
 }
 
+function addAwards(datatableAwards, json) {
+    var date = new Date(json.epoch*1000);
+    var to_add = [
+        date.toTimeString().slice(0,-15) +' '+ date.toLocaleDateString(),
+        getOrgRankIcon(json.orgRank, 60),
+        createImg(json.logo_path, 32),
+        createOrgLink(json.org),
+        createHonorImg(json.honorBadge, 20),
+    ];
+    datatableAwards.row.add(to_add);
+}
+
 function updateProgressBar(org) {
     if(currOrg != org)
         return;
@@ -461,8 +473,10 @@ function updateProgressHeader(org) {
     $.getJSON( url_getHonorBadges+'?org='+org, function( data ) {
         for(var i=0; i<numberOfBadges; i++) { // remove
             $('#divBadge_'+(i+1)).removeClass('circlBadgeAcquired');
+            $('#divBadge_'+(i+1)).addClass('circlBadgeNotAcquired');
         }
         for(var i=0; i<data.length; i++) { // add
+            $('#divBadge_'+(i+1)).removeClass('circlBadgeNotAcquired');
             $('#divBadge_'+(data[i])).addClass('circlBadgeAcquired');
         }
     });
@@ -586,5 +600,12 @@ $(document).ready(function() {
         updateProgressBar(json.org);
         updateOvertakePnts();
         sec_before_reload = refresh_speed; //reset timer at each contribution
+    };
+
+    source_awards = new EventSource(url_eventStreamAwards);
+    source_awards.onmessage = function(event) {
+        var json = jQuery.parseJSON( event.data );
+        addAwards(datatableAwards, json);
+        datatableAwards.draw();
     };
 });

@@ -136,22 +136,6 @@
                                 {% endfor %}
                             </ul>
                         </div>
-                        <div class="col-lg-6">
-                            <table>
-                                <tbody>
-                                    {% for item in org_honor_badge_title_list %}
-                                        <tr style="height: 85px">
-                                            <td>
-                                                <div id="divBadge_{{ loop.index }}" class="circleBadge">
-                                                    <img height='64px' width='64px' style="margin-top: 5px;" src="{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img>
-                                                </div>
-                                            </td>
-                                            <td style="padding-left: 15px;">{{ item[1] }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
                   </div>
               </div>
           </div>
@@ -187,7 +171,7 @@
                                 {% for item in org_honor_badge_title_list %}
                                     <tr>
                                         <td>
-                                            <div id="divBadge_{{ loop.index }}" class="circleBadgeSmall circlBadgeAcquired">
+                                            <div id="divBadge_{{ loop.index }}" class="circleBadgeSmall circlBadgeNotAcquired">
                                                 <img height='64px' width='64px' class="" style="margin-top: 3px;" src="{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img>
                                             </div>
                                         </td>
@@ -490,6 +474,7 @@
         var url_getLastContributor = "{{ url_for('getLastContributors') }}";
         var url_getLatestAwards = "{{ url_for('getLatestAwards') }}";
         var url_eventStreamLastContributor = "{{ url_for('getLastContributor') }}";
+        var url_eventStreamAwards = "{{ url_for('getLastStreamAwards') }}";
         var url_getAllOrg = "{{ url_for('getAllOrg') }}";
         var url_getOrgRank = "{{ url_for('getOrgRank') }}";
         var url_getContributionOrgStatus = "{{ url_for('getContributionOrgStatus') }}";
