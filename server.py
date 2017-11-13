@@ -356,6 +356,16 @@ def getCategPerContrib():
 
     return jsonify(contributor_helper.getCategPerContribFromRedis(date))
 
+@app.route("/_getLatestAwards")
+def getLatestAwards():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    return getLastContributors()
+    #return jsonify(contributor_helper.getCategPerContribFromRedis(date))
+
 @app.route("/_getAllOrg")
 def getAllOrg():
     return jsonify(contributor_helper.getAllOrgFromRedis())

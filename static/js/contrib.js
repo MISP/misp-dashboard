@@ -1,11 +1,10 @@
 /* GLOB VAR */
 var allOrg = [];
 var datatableTop;
-var datatableFame;
+var datatableFameQuant;
 var refresh_speed = min_between_reload*60;
 var will_reload = $("#reloadCheckbox").is(':checked');
 var sec_before_reload = refresh_speed;
-var dataTop5Overtime;
 var plotLineChart
 
 /* CONFIG */
@@ -98,6 +97,17 @@ var optionDatatable_Categ = {
         { className: "centerCellPicOrgLogo", "targets": [ 4 ]}
     ]
 };
+var optionDatatable_awards = jQuery.extend({}, optionDatatable_light)
+optionDatatable_awards.columnDefs = [
+    { className: "small", "targets": [ 0 ] },
+    { className: "centerCellPicOrgLogo", "targets": [ 1 ] },
+    { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 2 ] },
+    { 'orderData':[1], 'targets': [0] },
+    {
+        'targets': [1],
+        'searchable': false
+    },
+]
 
 var typeaheadOption = {
     source: function (query, process) {
@@ -327,7 +337,7 @@ function addLastContributor(datatable, data, update) {
         datatable.row.add(to_add);
     } else if(update == true) {
         datatable.rows().every( function() {
-            if(this.data()[3] == data.org) {
+            if($(this.data()[6])[0].text == data.org) {
                 datatable.row( this ).data( to_add );
             }
         });
@@ -395,19 +405,23 @@ function updateProgressHeader(org) {
         // update color in other dataTables
         datatableTop.rows().every( function() {
             var row = this.node();
-            if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
+            var orgRowName = $(this.data()[5])[0].text;
+            if(orgRowName == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
-        datatableFame.rows().every( function() {
+        datatableFameQuant.rows().every( function() {
             var row = this.node();
-            if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
+            var orgRowName = $(this.data()[5])[0].text;
+            if(orgRowName == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
         datatableCateg.rows().every( function() {
             var row = this.node();
-            if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
+            var orgRowName = $(this.data()[5])[0].text;
+            if(orgRowName == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
         datatableLast.rows().every( function() {
             var row = this.node();
-            if(this.data()[6] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
+            var orgRowName = $(this.data()[6])[0].text;
+            if(orgRowName == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
     });
 
@@ -473,31 +487,6 @@ function updateProgressHeader(org) {
 
     //update overtake points
     updateOvertakePnts();
-
-    //Add new data to linechart
-    var flag_already_displayed = false;
-    for(obj of dataTop5Overtime) { //check if already displayed
-        if (obj.label == currOrg) {
-            flag_already_displayed = true;
-            break;
-        }
-    }
-    if (!flag_already_displayed) {
-        $.getJSON( url_getOrgOvertime+'?org='+org, function( data ) {
-            var toPlot = dataTop5Overtime.slice(0); //cloning data
-            // transform secs into date
-            var new_data = [];
-            for(list of data['data']) {
-                new_data.push([list[0]*1000, list[1]]);
-            }
-            data['data'] = new_data;
-            toPlot.push(data);
-
-            plotLineChart.setData(toPlot);
-            plotLineChart.setupGrid();
-            plotLineChart.draw();
-        });
-    }
 }
 
 function showOnlyOrg() {
@@ -537,13 +526,15 @@ $(document).ready(function() {
     $('#orgName').typeahead(typeaheadOption);
     $('#btnCurrRank').popover(popOverOption);
     datatableTop = $('#topContribTable').DataTable(optionDatatable_top);
-    datatableFame = $('#fameTable').DataTable(optionDatatable_fame);
+    datatableFameQuant = $('#fameTableQuantity').DataTable(optionDatatable_fame);
+    datatableFameQual = $('#fameTableQuality').DataTable(optionDatatable_fame);
     datatableCateg = $('#categTable').DataTable(optionDatatable_Categ);
     datatableLast = $('#lastTable').DataTable(optionDatatable_last);
+    datatableAwards = $('#awardTable').DataTable(optionDatatable_awards);
     // top contributors
     addToTableFromJson(datatableTop, url_getTopContributor);
     // hall of fame
-    addToTableFromJson(datatableFame, url_getFameContributor);
+    addToTableFromJson(datatableFameQuant, url_getFameContributor);
     // last contributors
     addLastFromJson(datatableLast, url_getLastContributor);
     // category per contributors
@@ -567,19 +558,22 @@ $(document).ready(function() {
         }
         datatableCateg.draw();
     });
-    // top 5 contrib overtime
-    $.getJSON( url_getTop5Overtime, function( data ) {
-        // transform secs into date
-        for(i in data){
-            var new_data = [];
-            for(list of data[i]['data']) {
-                new_data.push([list[0]*1000, list[1]]);
-            }
-            data[i]['data'] = new_data;
+    // latest awards
+    $.getJSON( url_getLatestAwards, function( data ) {
+        for (i in data) {
+            var date = new Date(data[i].epoch*1000);
+            var to_add = [
+                date.toTimeString().slice(0,-15) +' '+ date.toLocaleDateString(),
+                getOrgRankIcon(data[i].orgRank, 60),
+                createImg(data[i].logo_path, 32),
+                createOrgLink(data[i].org),
+                createHonorImg(data[i].honorBadge, 20),
+            ];
+            datatableAwards.row.add(to_add);
         }
-        dataTop5Overtime = data;
-        plotLineChart = $.plot("#divTop5Overtime", data, optionsLineChart);
+        datatableAwards.draw();
     });
+
     if(currOrg != "") // currOrg selected
         //FIXME: timeout used to wait that all datatables are draw.
         setTimeout( function() { updateProgressHeader(currOrg); }, 500);
