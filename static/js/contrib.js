@@ -14,7 +14,8 @@ var popOverOption = {
     trigger: "hover",
     html: true,
     placement: 'bottom',
-    content: generateRankingSheet()
+    content: generateRankingSheet(),
+    template: '<div class="popover" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content popoverNoPadding"></div></div>'
 }
 var optionsLineChart = {
     series: {
@@ -466,6 +467,7 @@ function updateProgressHeader(org) {
             source = url_baseTrophyLogo+rank+'.png'
             $('#trophy_'+categ).attr('src', source);
             $('#trophy_'+categ).attr('title', trophy_title[rank]);
+            $('#trophy_'+categ).popover({title: trophy_title[rank], content: rank, trigger: "hover", placement: "bottom"});
         }
     });
 
@@ -581,10 +583,6 @@ $(document).ready(function() {
     if(currOrg != "") // currOrg selected
         //FIXME: timeout used to wait that all datatables are draw.
         setTimeout( function() { updateProgressHeader(currOrg); }, 500);
-
-    $('#trophyForm input').on('change', function() {
-       alert($('input[name=radioTrophyName]:checked', '#trophyForm').val());
-    });
 
     source_lastContrib = new EventSource(url_eventStreamLastContributor);
     source_lastContrib.onmessage = function(event) {

@@ -188,7 +188,7 @@
                                     <tr>
                                         <td>
                                             <div id="divBadge_{{ loop.index }}" class="circleBadgeSmall circlBadgeAcquired">
-                                                <img height='32px' width='32px' class="" style="margin-top: 3px;" src="{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img>
+                                                <img height='64px' width='64px' class="" style="margin-top: 3px;" src="{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img>
                                             </div>
                                         </td>
                                         <td style="padding-left: 15px;">{{ item[1] }}</td>
@@ -208,18 +208,13 @@
                                 </tr>
                             </thead>
                             <tbody id='bodyTableTrophyModal'>
-                                <form id="trophyForm">
-                                    <tr>
-                                        {% for categ in trophy_categ_list_id %}
-                                                <td>
-                                                    <label style="cursor: pointer; display: block; margin-left: auto; margin-right: auto;">
-                                                        <input class="radioTrophy" type="radio" name="radioTrophyName" value="{{categ}}"/>
-                                                        <img id='trophy_{{categ}}' style="display: block; margin-left: auto; margin-right: auto;" height="64" width="64" src="{{ url_for('static', filename='pics/MISPTrophy/0.png') }}" type='image/png'>
-                                                    </label>
-                                                </td>
-                                        {% endfor %}
+                                <tr>
+                                    {% for categ in trophy_categ_list_id %}
+                                            <td>
+                                                <input type='image' id='trophy_{{categ}}' style="display: block; margin-left: auto; margin-right: auto;" height="64" width="64" src="{{ url_for('static', filename='pics/MISPTrophy/0.png') }}">
+                                            </td>
+                                    {% endfor %}
                                     </tr>
-                                </from>
                             </tbody>
                         </table>
                     </div>
