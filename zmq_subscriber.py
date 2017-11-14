@@ -187,6 +187,18 @@ def handler_keepalive(zmq_name, jsonevent):
     to_push = [ jsonevent['uptime'] ]
     publish_log(zmq_name, 'Keepalive', to_push)
 
+def handler_user(zmq_name, jsondata):
+    json_user = jsondata['User']
+    userID = json_user['id']
+    try: #only consider user login
+        timestamp = json_user['current_login']
+    except KeyError:
+        return
+    now = datetime.datetime.now()
+    today_str = util.getDateStrFormat(now)
+    keyname = "{}:{}".format('USER_LOGIN', today_str)
+    serv_redis_db.sadd(keyname, timestamp)
+
 def handler_conversation(zmq_name, jsonevent):
     try: #only consider POST, not THREAD
         jsonpost = jsonevent['Post']
@@ -323,7 +335,7 @@ dico_action = {
         "misp_json_object":         handler_object,
         "misp_json_sighting":       handler_sighting,
         "misp_json_organisation":   handler_log,
-        "misp_json_user":           handler_log,
+        "misp_json_user":           handler_user,
         "misp_json_conversation":   handler_conversation
         }
 

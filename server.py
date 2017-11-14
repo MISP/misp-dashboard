@@ -198,6 +198,45 @@ def users():
     return render_template('users.html',
             )
 
+
+@app.route("/_getUserLogins")
+def getUserLogins():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    keyname = "USER_LOGIN:{}"
+    prev_days = 6
+    week = {}
+    for curDate in util.getXPrevDaysSpan(date, prev_days):
+        timestamps = serv_redis_db.smembers(keyname.format(util.getDateStrFormat(curDate)))
+        timestamps = [int(timestamp.decode('utf8')) for timestamp in timestamps]
+        day = {}
+        for timestamp in timestamps:
+            date = datetime.datetime.fromtimestamp(float(timestamp))
+            if date.hour not in day:
+                day[date.hour] = 0
+            day[date.hour] += 1
+        week[curDate.weekday()] = day
+
+    # Format data
+    data = []
+    for d in range(7):
+        try:
+            to_append = []
+            for h in range(24):
+                try:
+                    to_append.append(week[d][h])
+                except KeyError:
+                    to_append.append(0)
+            # swap 24 and 1. (punchcard starts at 1h)
+            temp = to_append[1:]+[to_append[0]]
+            data.append(temp)
+        except KeyError:
+            data.append([0 for x in range(24)])
+    return jsonify(data)
+
 ''' INDEX '''
 
 @app.route("/_logs")
