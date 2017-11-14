@@ -322,11 +322,12 @@ def eventStreamAwards():
     for msg in subscriber_lastAwards.listen():
         content = msg['data'].decode('utf8')
         contentJson = json.loads(content)
-        lastContribJson = json.loads(contentJson['log'])
-        org = lastContribJson['org']
+        data = json.loads(contentJson['data'])
+        org = data['org']
         to_return = contributor_helper.getContributorFromRedis(org)
-        epoch = lastContribJson['epoch']
+        epoch = data['epoch']
         to_return['epoch'] = epoch
+        to_return['award'] = data['award']
         yield 'data: {}\n\n'.format(json.dumps(to_return))
 
 @app.route("/_getTopContributor")
@@ -381,8 +382,7 @@ def getLatestAwards():
     except:
         date = datetime.datetime.now()
 
-    return getLastContributors()
-    #return jsonify(contributor_helper.getCategPerContribFromRedis(date))
+    return jsonify(contributor_helper.getLastAwardsFromRedis())
 
 @app.route("/_getAllOrg")
 def getAllOrg():
@@ -418,7 +418,7 @@ def getTrophies():
         org = request.args.get('org')
     except:
         org = ''
-    return jsonify(contributor_helper.TEST_getOrgTrophies(org))
+    return jsonify(contributor_helper.getOrgTrophies(org))
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)

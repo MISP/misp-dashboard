@@ -97,17 +97,14 @@ var optionDatatable_Categ = {
         { className: "centerCellPicOrgLogo", "targets": [ 4 ]}
     ]
 };
-var optionDatatable_awards = jQuery.extend({}, optionDatatable_light)
+var optionDatatable_awards = jQuery.extend({}, optionDatatable_light);
+optionDatatable_awards["ordering"] = true;
+optionDatatable_awards["order"] = [[ 0, "dec" ]];
 optionDatatable_awards.columnDefs = [
     { className: "small", "targets": [ 0 ] },
     { className: "centerCellPicOrgLogo", "targets": [ 1 ] },
-    { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 2 ] },
-    { 'orderData':[1], 'targets': [0] },
-    {
-        'targets': [1],
-        'searchable': false
-    },
-]
+    { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 2 ] }
+];
 
 var typeaheadOption = {
     source: function (query, process) {
@@ -339,19 +336,28 @@ function addLastContributor(datatable, data, update) {
         datatable.rows().every( function() {
             if($(this.data()[6])[0].text == data.org) {
                 datatable.row( this ).data( to_add );
+                $(this).addClass( "warning" );
             }
         });
     }
 }
 
 function addAwards(datatableAwards, json) {
+    if(json.award[0] == 'contribution_status') {
+        var award = getOrgRankIcon(json.award[1], 60)
+    } else if (json.award[0] == 'badge') {
+        var award = createHonorImg([json.award[1]], 20)
+    } else if (json.award[0] == 'trophy') {
+        var award = createHonorImg(json.award[1], 20)
+    }
     var date = new Date(json.epoch*1000);
+    date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
     var to_add = [
-        date.toTimeString().slice(0,-15) +' '+ date.toLocaleDateString(),
+        date,
         getOrgRankIcon(json.orgRank, 60),
         createImg(json.logo_path, 32),
         createOrgLink(json.org),
-        createHonorImg(json.honorBadge, 20),
+        award,
     ];
     datatableAwards.row.add(to_add);
 }
@@ -488,10 +494,12 @@ function updateProgressHeader(org) {
             categ = trophy_categ_list[i];
             $('#trophy_'+categ).attr('src', source);
             $('#trophy_'+categ).attr('title', "");
+            $('#trophy_'+categ).popover("destroy")
         }
         for(var i=0; i<data.length; i++) { // add
-            categ = data[i].categName;
-            rank = data[i].rank;
+            categ = data[i].categ;
+            rank = data[i].trophy_true_rank;
+            trophy_points = data[i].trophy_points
             source = url_baseTrophyLogo+rank+'.png'
             $('#trophy_'+categ).attr('src', source);
             $('#trophy_'+categ).attr('title', trophy_title[rank]);
@@ -575,15 +583,7 @@ $(document).ready(function() {
     // latest awards
     $.getJSON( url_getLatestAwards, function( data ) {
         for (i in data) {
-            var date = new Date(data[i].epoch*1000);
-            var to_add = [
-                date.toTimeString().slice(0,-15) +' '+ date.toLocaleDateString(),
-                getOrgRankIcon(data[i].orgRank, 60),
-                createImg(data[i].logo_path, 32),
-                createOrgLink(data[i].org),
-                createHonorImg(data[i].honorBadge, 20),
-            ];
-            datatableAwards.row.add(to_add);
+            addAwards(datatableAwards, data[i]);
         }
         datatableAwards.draw();
     });
