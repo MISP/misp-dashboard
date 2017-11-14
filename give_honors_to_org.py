@@ -76,6 +76,7 @@ def main():
     ContributionStatus = chelper.getCurrentContributionStatus(org)
     OLD_org_c_status = ContributionStatus['status']
     OLD_org_honor_badge = chelper.getOrgHonorBadges(org)
+    OLD_org_trophy = chelper.getOrgTrophies(org)
 
     # ranks
     while True:
@@ -180,15 +181,28 @@ def main():
     ContributionStatus = chelper.getCurrentContributionStatus(org)
     NEW_org_c_status = ContributionStatus['status']
     NEW_org_honor_badge = chelper.getOrgHonorBadges(org)
+    NEW_org_trophy = chelper.getOrgTrophies(org)
     awards_given = []
 
     for i in NEW_org_c_status.keys():
         if OLD_org_c_status[i] < NEW_org_c_status[i] and i != ContributionStatus['rank']:
-            awards_given.append(['contribution_status', i])
+            awards_given.append(['contribution_status', ContributionStatus['rank']])
 
     for badgeNum in NEW_org_honor_badge:
         if badgeNum not in  OLD_org_honor_badge:
             awards_given.append(['badge', badgeNum])
+
+    temp = {}
+    for item in OLD_org_trophy:
+        categ = item['categ']
+        rank = item['trophy_true_rank']
+        temp[categ] = rank
+
+    for item in NEW_org_trophy:
+        categ = item['categ']
+        rank = item['trophy_true_rank']
+        if rank > temp[categ]:
+            awards_given.append(['trophy', [categ, rank]])
 
     for award in awards_given:
         # update awards given

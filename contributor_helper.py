@@ -133,13 +133,16 @@ class Contributor_helper:
         return {'rank': final_rank, 'status': to_ret, 'totPoints': self.getOrgContributionTotalPoints(org)}
 
     # return the awards given to the organisation
-    def updateOrgContributionRank(self, orgName, pnts_to_add, action, contribType, eventTime, isLabeled):
-        ContributionStatus = chelper.getCurrentContributionStatus(org)
-        oldRank = ContributionStatus['final_rank']
+    def updateOrgContributionRank(self, orgName, pnts_to_add, action, contribType, eventTime, isLabeled, categ=""):
+        ContributionStatus = self.getCurrentContributionStatus(orgName)
         oldContributionStatus = ContributionStatus['status']
+        oldHonorBadges = self.getOrgHonorBadges(orgName)
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
         # update total points
         totOrgPnts = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='points'), pnts_to_add)
+
+        #FIXME TEMPORARY, JUST TO TEST IF IT WORKS CORRECLTY
+        self.giveTrophyPointsToOrg(orgName, categ, 1)
 
         # update date variables
         if contribType == 'Attribute':
@@ -204,22 +207,23 @@ class Contributor_helper:
         if totOrgPnts >= self.org_rank_requirement_pnts[14] and contribType == 'Event' and eventWeekCount>heavilyCount  and isLabeled:
             contrib.append([14, util.ONE_DAY*regularlyDays])
 
-        print([r for r, ttl in contrib])
         for rankReq, ttl in contrib:
             self.serv_redis_db.set(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq)), 1)
             self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq)), ttl)
 
-        ContributionStatus = chelper.getCurrentContributionStatus(org)
-        newRank = ContributionStatus['final_rank']
+        ContributionStatus = self.getCurrentContributionStatus(orgName)
         newContributionStatus = ContributionStatus['status']
+        newHonorBadges = self.getOrgHonorBadges(orgName)
+
         awards_given = []
-        if newRank > oldRank:
-            awards_given.append(['rank', newRank])
-        for i in range(len(oldContributionStatus)):
-            if oldContributionStatus[i] != newContributionStatus[i]:
+        for i in newContributionStatus.keys():
+            if oldContributionStatus[i] < newContributionStatus[i] and i != ContributionStatus['rank']:
                 awards_given.append(['contribution_status', i])
 
-        print(awards_given)
+        for badgeNum in newHonorBadges:
+            if badgeNum not in  oldHonorBadges:
+                awards_given.append(['badge', badgeNum])
+
         return awards_given
 
     ''' HONOR BADGES '''
@@ -448,15 +452,17 @@ class Contributor_helper:
         return { 'remainingPts': 0, 'stepPts': self.rankMultiplier**self.levelMax }
 
     def getRankTrophy(self, points):
-        if points == 0:
+        if points <= 0:
             return 0
         elif points == 1:
             return 1
         else:
-            return float("{:.2f}".format(math.log(points, self.trophyDifficulty)))
+            return float("{:.2f}".format(math.sqrt(points/self.trophyDifficulty)))
 
     def getTrueRankTrophy(self, ptns):
-        return int(self.getRankTrophy(ptns))
+        to_ret = int(self.getRankTrophy(ptns))
+        to_ret = len(self.trophy_title) if to_ret > len(self.trophy_title) else to_ret
+        return to_ret
 
     '''           '''
     ''' TEST DATA '''

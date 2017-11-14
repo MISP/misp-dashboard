@@ -152,13 +152,15 @@ def handleContribution(zmq_name, org, contribType, categ, action, pntMultiplier=
         #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
         push_to_redis_zset('CONTRIB_CATEG', org, count=1, endSubkey=':'+noSpaceLower(categ))
         publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
+    else:
+        categ = ""
 
     serv_redis_db.sadd('CONTRIB_ALL_ORG', org)
 
     serv_redis_db.zadd('CONTRIB_LAST:'+util.getDateStrFormat(now), nowSec, org)
     serv_redis_db.expire('CONTRIB_LAST:'+util.getDateStrFormat(now), ONE_DAY*7) #expire after 7 day
 
-    awards_given = contributor_helper.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled)
+    awards_given = contributor_helper.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled, categ=noSpaceLower(categ))
 
     for award in awards_given:
         # update awards given

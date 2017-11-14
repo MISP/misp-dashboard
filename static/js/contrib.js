@@ -5,7 +5,9 @@ var datatableFameQuant;
 var refresh_speed = min_between_reload*60;
 var will_reload = $("#reloadCheckbox").is(':checked');
 var sec_before_reload = refresh_speed;
-var plotLineChart
+var plotLineChart;
+var source_awards;
+var source_lastContrib;
 
 /* CONFIG */
 var maxRank = 16;
@@ -65,6 +67,8 @@ var optionDatatable_light = {
 };
 var optionDatatable_top = jQuery.extend({}, optionDatatable_light)
 var optionDatatable_last = jQuery.extend({}, optionDatatable_light)
+optionDatatable_last["ordering"] = true;
+optionDatatable_last["order"] = [[ 0, "dec" ]];
 optionDatatable_last.columnDefs = [
     { className: "small", "targets": [ 0 ] },
     { className: "verticalAlign", "targets": [ 1 ] },
@@ -72,12 +76,7 @@ optionDatatable_last.columnDefs = [
     { className: "centerCellPicOrgLogo", "targets": [ 3 ] },
     { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 4 ] },
     { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 5 ] },
-    { className: "verticalAlign", "targets": [ 6 ] },
-    { 'orderData':[6], 'targets': [0] },
-    {
-        'targets': [6],
-        'searchable': false
-    },
+    { className: "verticalAlign", "targets": [ 6 ] }
 ]
 var optionDatatable_fame = jQuery.extend({}, optionDatatable_light)
 optionDatatable_fame.scrollY = '45vh';
@@ -100,10 +99,12 @@ var optionDatatable_Categ = {
 var optionDatatable_awards = jQuery.extend({}, optionDatatable_light);
 optionDatatable_awards["ordering"] = true;
 optionDatatable_awards["order"] = [[ 0, "dec" ]];
+optionDatatable_awards["scrollX"] = false;
 optionDatatable_awards.columnDefs = [
     { className: "small", "targets": [ 0 ] },
     { className: "centerCellPicOrgLogo", "targets": [ 1 ] },
-    { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 2 ] }
+    { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 2 ] },
+    { className: "centerCellPicOrgLogo", "targets": [ 4 ] },
 ];
 
 var typeaheadOption = {
@@ -178,11 +179,25 @@ function createImg(source, size) {
     return obj.outerHTML;
 }
 
+function createTrophyImg(rank, size, categ) {
+    var obj = document.createElement('img');
+    obj.height = size;
+    obj.width = size;
+    obj.style.margin = 'auto';
+    obj.src = url_baseTrophyLogo+rank+'.png';;
+    obj.title = trophy_title[rank] + " in " + categ;
+    obj.type = "image/png"
+    obj.alt = ""
+    return obj.outerHTML;
+}
+
 function createHonorImg(array, size) {
     size = 32;
     var div = document.createElement('div');
     div.style.boxShadow = '0px 0px 5px #00000099';
     div.style.backgroundColor = '#e1e1e1';
+    if (!Array.isArray(array))
+        array = [array];
     for (badgeNum of array) {
         var obj = document.createElement('img');
         obj.height = size;
@@ -321,8 +336,9 @@ function addLastFromJson(datatable, url) {
 
 function addLastContributor(datatable, data, update) {
     var date = new Date(data.epoch*1000);
+    date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
     var to_add = [
-        date.toTimeString().slice(0,-15) +' '+ date.toLocaleDateString(),
+        date,
         data.pnts,
         getMonthlyRankIcon(data.rank),
         getOrgRankIcon(data.orgRank, 60),
@@ -332,23 +348,32 @@ function addLastContributor(datatable, data, update) {
     ];
     if (update == undefined || update == false) {
         datatable.row.add(to_add);
+        datatable.draw();
     } else if(update == true) {
+        var row_added = false;
         datatable.rows().every( function() {
             if($(this.data()[6])[0].text == data.org) {
+                var node = $(datatable.row( this ).node());
                 datatable.row( this ).data( to_add );
-                $(this).addClass( "warning" );
+                row_added = true;
             }
+            datatable.draw();
         });
+        if (!row_added) {
+            var node = $(datatable.row.add(to_add).draw().node());
+            node.effect("slide", 700);
+        }
     }
 }
 
-function addAwards(datatableAwards, json) {
+function addAwards(datatableAwards, json, playAnim) {
     if(json.award[0] == 'contribution_status') {
-        var award = getOrgRankIcon(json.award[1], 60)
+        var award = getOrgRankIcon(json.award[1], 60);
     } else if (json.award[0] == 'badge') {
-        var award = createHonorImg([json.award[1]], 20)
+        var award = createHonorImg(json.award[1], 20);
     } else if (json.award[0] == 'trophy') {
-        var award = createHonorImg(json.award[1], 20)
+        var categ = json.award[1][0];
+        var award = createTrophyImg(json.award[1][1], 40, categ);
     }
     var date = new Date(json.epoch*1000);
     date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
@@ -359,7 +384,9 @@ function addAwards(datatableAwards, json) {
         createOrgLink(json.org),
         award,
     ];
-    datatableAwards.row.add(to_add);
+    var node = $(datatableAwards.row.add(to_add).draw().node());
+    if(playAnim)
+        node.effect("slide", 700);
 }
 
 function updateProgressBar(org) {
@@ -503,7 +530,7 @@ function updateProgressHeader(org) {
             source = url_baseTrophyLogo+rank+'.png'
             $('#trophy_'+categ).attr('src', source);
             $('#trophy_'+categ).attr('title', trophy_title[rank]);
-            $('#trophy_'+categ).popover({title: trophy_title[rank], content: rank, trigger: "hover", placement: "bottom"});
+            $('#trophy_'+categ).popover({title: trophy_title[rank], content: 'Level: '+rank+' ('+trophy_points+' points)', trigger: "hover", placement: "bottom"});
         }
     });
 
@@ -528,6 +555,7 @@ function updateTimer() {
         sec_before_reload--;
         if (sec_before_reload < 1) {
             source_lastContrib.close();
+            source_awards.close();
             location.reload();
         } else {
             $('#labelRemainingTime').text(timeToString(sec_before_reload));
@@ -583,9 +611,8 @@ $(document).ready(function() {
     // latest awards
     $.getJSON( url_getLatestAwards, function( data ) {
         for (i in data) {
-            addAwards(datatableAwards, data[i]);
+            addAwards(datatableAwards, data[i], false);
         }
-        datatableAwards.draw();
     });
 
     if(currOrg != "") // currOrg selected
@@ -596,7 +623,6 @@ $(document).ready(function() {
     source_lastContrib.onmessage = function(event) {
         var json = jQuery.parseJSON( event.data );
         addLastContributor(datatableLast, json, true);
-        datatableLast.draw();
         updateProgressBar(json.org);
         updateOvertakePnts();
         sec_before_reload = refresh_speed; //reset timer at each contribution
@@ -605,7 +631,6 @@ $(document).ready(function() {
     source_awards = new EventSource(url_eventStreamAwards);
     source_awards.onmessage = function(event) {
         var json = jQuery.parseJSON( event.data );
-        addAwards(datatableAwards, json);
-        datatableAwards.draw();
+        addAwards(datatableAwards, json, true);
     };
 });

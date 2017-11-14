@@ -95,6 +95,12 @@
     min-width: 45px;
 }
 
+
+#panelawards .dataTables_scrollBody {
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+}
+
 .dataTables_filter > label {
     margin-bottom: 0px;
 }
