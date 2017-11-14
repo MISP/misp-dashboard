@@ -235,7 +235,11 @@ class Contributor_helper:
         for item in newTrophy:
             categ = item['categ']
             rank = item['trophy_true_rank']
-            if rank > temp[categ]:
+            try:
+                oldCategRank = temp[categ]
+            except KeyError:
+                oldCategRank = 0
+            if rank > oldCategRank:
                 awards_given.append(['trophy', [categ, rank]])
 
         return awards_given
