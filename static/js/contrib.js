@@ -594,6 +594,7 @@ $(document).ready(function() {
     addToTableFromJson(datatableTop, url_getTopContributor);
     // hall of fame
     addToTableFromJson(datatableFameQuant, url_getFameContributor);
+    addToTableFromJson(datatableFameQual, url_getFameQualContributor);
     // last contributors
     addLastFromJson(datatableLast, url_getLastContributor);
     // category per contributors

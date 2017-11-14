@@ -193,6 +193,11 @@ def contrib():
             min_between_reload=cfg.getint('CONTRIB', 'min_between_reload')
             )
 
+@app.route("/users")
+def users():
+    return render_template('users.html',
+            )
+
 ''' INDEX '''
 
 @app.route("/_logs")
@@ -353,6 +358,15 @@ def getFameContributor():
         date = (datetime.datetime(today.year, today.month, 1) - datetime.timedelta(days=1))
     return getTopContributor(suppliedDate=date)
 
+@app.route("/_getFameQualContributor")
+def getFameQualContributor():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        today = datetime.datetime.now()
+        # get previous month
+        date = (datetime.datetime(today.year, today.month, 1) - datetime.timedelta(days=1))
+    return getTopContributor(suppliedDate=date)
 
 @app.route("/_getTop5Overtime")
 def getTop5Overtime():
