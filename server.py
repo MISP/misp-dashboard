@@ -322,12 +322,12 @@ def eventStreamAwards():
     for msg in subscriber_lastAwards.listen():
         content = msg['data'].decode('utf8')
         contentJson = json.loads(content)
-        data = json.loads(contentJson['data'])
-        org = data['org']
+        lastAwardJson = json.loads(contentJson['log'])
+        org = lastAwardJson['org']
         to_return = contributor_helper.getContributorFromRedis(org)
-        epoch = data['epoch']
+        epoch = lastAwardJson['epoch']
         to_return['epoch'] = epoch
-        to_return['award'] = data['award']
+        to_return['award'] = lastAwardJson['award']
         yield 'data: {}\n\n'.format(json.dumps(to_return))
 
 @app.route("/_getTopContributor")

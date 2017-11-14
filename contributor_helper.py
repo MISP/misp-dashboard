@@ -137,6 +137,7 @@ class Contributor_helper:
         ContributionStatus = self.getCurrentContributionStatus(orgName)
         oldContributionStatus = ContributionStatus['status']
         oldHonorBadges = self.getOrgHonorBadges(orgName)
+        oldTrophy = self.getOrgTrophies(orgName)
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
         # update total points
         totOrgPnts = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='points'), pnts_to_add)
@@ -214,7 +215,9 @@ class Contributor_helper:
         ContributionStatus = self.getCurrentContributionStatus(orgName)
         newContributionStatus = ContributionStatus['status']
         newHonorBadges = self.getOrgHonorBadges(orgName)
+        newTrophy = self.getOrgTrophies(orgName)
 
+        # awards to publish
         awards_given = []
         for i in newContributionStatus.keys():
             if oldContributionStatus[i] < newContributionStatus[i] and i != ContributionStatus['rank']:
@@ -223,6 +226,17 @@ class Contributor_helper:
         for badgeNum in newHonorBadges:
             if badgeNum not in  oldHonorBadges:
                 awards_given.append(['badge', badgeNum])
+
+        temp = {}
+        for item in oldTrophy:
+            categ = item['categ']
+            rank = item['trophy_true_rank']
+            temp[categ] = rank
+        for item in newTrophy:
+            categ = item['categ']
+            rank = item['trophy_true_rank']
+            if rank > temp[categ]:
+                awards_given.append(['trophy', [categ, rank]])
 
         return awards_given
 

@@ -3,6 +3,7 @@ var allOrg = [];
 var datatableTop;
 var datatableFameQuant;
 var refresh_speed = min_between_reload*60;
+var next_effect = new Date();
 var will_reload = $("#reloadCheckbox").is(':checked');
 var sec_before_reload = refresh_speed;
 var plotLineChart;
@@ -355,6 +356,10 @@ function addLastContributor(datatable, data, update) {
             if($(this.data()[6])[0].text == data.org) {
                 var node = $(datatable.row( this ).node());
                 datatable.row( this ).data( to_add );
+                if(next_effect <= new Date()) {
+                    node.effect("slide", 500);
+                    next_effect.setSeconds(next_effect.getSeconds() + 5);
+                }
                 row_added = true;
             }
             datatable.draw();
@@ -554,8 +559,6 @@ function updateTimer() {
     if ($("#reloadCheckbox").is(':checked')) {
         sec_before_reload--;
         if (sec_before_reload < 1) {
-            source_lastContrib.close();
-            source_awards.close();
             location.reload();
         } else {
             $('#labelRemainingTime').text(timeToString(sec_before_reload));
@@ -575,6 +578,12 @@ $(document).ready(function() {
     updateTimer();
     $('#orgName').typeahead(typeaheadOption);
     $('#btnCurrRank').popover(popOverOption);
+
+    $(window).on("beforeunload", function() {
+        source_lastContrib.close();
+        source_awards.close();
+    });
+
     datatableTop = $('#topContribTable').DataTable(optionDatatable_top);
     datatableFameQuant = $('#fameTableQuantity').DataTable(optionDatatable_fame);
     datatableFameQual = $('#fameTableQuality').DataTable(optionDatatable_fame);
@@ -617,7 +626,7 @@ $(document).ready(function() {
 
     if(currOrg != "") // currOrg selected
         //FIXME: timeout used to wait that all datatables are draw.
-        setTimeout( function() { updateProgressHeader(currOrg); }, 500);
+        setTimeout( function() { updateProgressHeader(currOrg); }, 700);
 
     source_lastContrib = new EventSource(url_eventStreamLastContributor);
     source_lastContrib.onmessage = function(event) {
@@ -632,5 +641,6 @@ $(document).ready(function() {
     source_awards.onmessage = function(event) {
         var json = jQuery.parseJSON( event.data );
         addAwards(datatableAwards, json, true);
+        updateProgressHeader(currOrg);
     };
 });
