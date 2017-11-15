@@ -249,10 +249,11 @@ small {
         }
         function updateDatePieApi() {
             var date = datePickerWidgetApi.datepicker( "getDate" );
-            $.getJSON( "{{ url_for('getUserLogins') }}"+"?date="+date.getTime()/1000, function( data ) {
-                data = [{label: 'org1', data:[ Math.floor(Math.random() * 100) + 1]},
-                {label: 'org2', data:[ Math.floor(Math.random() * 100) + 1]},
-                {label: 'org3', data:[ Math.floor(Math.random() * 100) + 1]}]
+            $.getJSON( "{{ url_for('getLoginVSCOntribution') }}"+"?date="+date.getTime()/1000, function( data ) {
+                data = [
+                    {label: 'Has contributed during the day', data: data[0], color: '#4da74d' },
+                    {label: 'Has not contributed during the day', data:data[1], color: '#cb4b4b' }
+                ]
 
                 if (!pieApiWidget === undefined) {
                     pieApiWidget.setData(toPlot);
