@@ -192,12 +192,13 @@ def handler_keepalive(zmq_name, jsonevent):
 def handler_user(zmq_name, jsondata):
     json_user = jsondata['User']
     userID = json_user['id']
+    org = userID
     try: #only consider user login
         timestamp = json_user['current_login']
     except KeyError:
         return
     if timestamp != 0: # "invited_by": "xxxx" ???
-        users_helper.add_user_login(timestamp)
+        users_helper.add_user_login(timestamp, org)
 
 def handler_conversation(zmq_name, jsonevent):
     try: #only consider POST, not THREAD

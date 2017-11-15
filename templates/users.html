@@ -43,6 +43,11 @@
 
 <style>
 
+ .highlightDay {
+     background-color: #edc240;
+     box-shadow: black 0px 0px 2px;
+ }
+
  .panel {
      margin-bottom: 10px;
  }
@@ -110,6 +115,9 @@ small {
                             <div class="panel panel-default" style="">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
                                     <b>Punch card - login</b>
+                                    <strong  class='leftSepa textTopHeader' style="float: none; padding: 11px;">Dates:
+                                        <input type="text" id="datepickerPunch" size="10" style="">
+                                    </strong>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
                                     <div id="punchcard" style="width:100%; height: 100%;"></div>
@@ -120,19 +128,25 @@ small {
                         <div class="col-lg-4">
                             <div class="panel panel-default" style="">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
-                                    <b>Top login per organisation</b>
+                                    <b>Top organisation login</b>
+                                    <strong  class='leftSepa textTopHeader' style="float: none; padding: 11px;">Dates:
+                                        <input type="text" id="datepickerOrgLogin" size="10" style="">
+                                    </strong>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="barChart" style="width:100%; height: 20vh;"></div>
+                                    <div id="pieOrg" style="width:100%; height: 20vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
 
                             <div class="panel panel-default" style="">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
                                     <b>Contribution after login (API vs non-API)</b>
+                                    <strong  class='leftSepa textTopHeader' style="float: none; padding: 11px;">Dates:
+                                        <input type="text" id="datepickerApi" size="10" style="">
+                                    </strong>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="pieChart" style="width:100%; height: 20vh;"></div>
+                                    <div id="pieApi" style="width:100%; height: 20vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
                         </div>
@@ -142,6 +156,9 @@ small {
                         <div class="panel panel-default" style="">
                             <div class="panel-heading bg-info" style="font-weight: bold;">
                                 <b>Login overtime</b>
+                                <strong  class='leftSepa textTopHeader' style="float: none; padding: 11px;">Dates:
+                                    <input type="text" id="datepickerOvertimeLogin" size="10" style="">
+                                </strong>
                             </div>
                             <div id="panelbody" class="panel-body" style="">
                                 <div id="lineChart" style="width:100%; height: 20vh;"></div>
@@ -162,78 +179,173 @@ small {
     <!-- Index -->
     <script>
         /* URL */
+        var urlIconCalendar = "{{ url_for('static', filename='pics/calendar.gif') }}";
 
         /* DATA FROM CONF */
 
     </script>
 
     <script>
-        $(document).ready(function () {
+        var punchcardWidget;
+        var pieOrgWidget;
+        var pieApiWidget;
+        var overtimeWidget;
 
-            $.getJSON( "{{ url_for('getUserLogins') }}", function( data ) {
-                $('#punchcard').punchcard({
-                    data: data,
-                    singular: 'login',
-                    plural: 'logins',
-                    timezones: ['local'],
-                    timezoneIndex:0
-                });
+        var div_day;
+        function highlight_punchDay() {
+            if (!(div_day === undefined)) {
+                div_day.removeClass('highlightDay');
+            }
+
+            var curDay = datePickerWidgetPunch.datepicker( "getDate" ).getDay();
+            if (curDay == 7)
+                curDay = 0;
+            div_day = $('[data-daynum="'+curDay+'"]');
+            div_day.addClass('highlightDay')
+        }
+
+        function updateDatePunch() {
+            var date = datePickerWidgetPunch.datepicker( "getDate" );
+            $.getJSON( "{{ url_for('getUserLogins') }}"+"?date="+date.getTime()/1000, function( data ) {
+                if (!(punchcardWidget === undefined)) {
+                    punchcardWidget.settings.data = data;
+                    punchcardWidget.refresh();
+                    highlight_punchDay();
+                } else {
+                    punchcardWidget = $('#punchcard').punchcard({
+                        data: data,
+                        singular: 'login',
+                        plural: 'logins',
+                        timezones: ['local'],
+                        timezoneIndex:0
+                    });
+                    punchcardWidget = punchcardWidget.data("plugin_" + "punchcard");
+                    highlight_punchDay();
+                }
             });
-
-            $.getJSON( "{{ url_for('getUserLogins') }}", function( data ) {
-                data = [{
-                    label: "Contribution with login",
-                    data: Math.floor(Math.random() * 100) + 1
-                },
-                {
-                    label: "Contribution without login",
-                    data: Math.floor(Math.random() * 100) + 1
-                    }
-                ];
-                $.plot('#pieChart', data, {
-                    series: {
-                        pie: {
-                            innerRadius: 0.5,
-                            show: true
+        }
+        function updateDatePieOrg() {
+            var date = datePickerWidgetOrg.datepicker( "getDate" );
+            $.getJSON( "{{ url_for('getTopOrglogin') }}"+"?date="+date.getTime()/1000, function( data ) {
+                toPlot = [];
+                for (item of data) { toPlot.push({ label: item[0], data: item[1] }); }
+                if (toPlot.length == 0) {
+                    toPlot = [{ label: 'No data', data: 100 }];
+                }
+                if (!pieOrgWidget === undefined) {
+                    pieOrgWidget.setData(toPlot);
+                    pieOrgWidget.draw();
+                } else {
+                    pieOrgWidget = $.plot('#pieOrg', toPlot, {
+                        series: {
+                            pie: {
+                                innerRadius: 0.5,
+                                show: true
+                            }
                         }
-                    }
-                });
+                    });
+                }
             });
-
-            $.getJSON( "{{ url_for('getUserLogins') }}", function( data ) {
+        }
+        function updateDatePieApi() {
+            var date = datePickerWidgetApi.datepicker( "getDate" );
+            $.getJSON( "{{ url_for('getUserLogins') }}"+"?date="+date.getTime()/1000, function( data ) {
                 data = [{label: 'org1', data:[ Math.floor(Math.random() * 100) + 1]},
                 {label: 'org2', data:[ Math.floor(Math.random() * 100) + 1]},
                 {label: 'org3', data:[ Math.floor(Math.random() * 100) + 1]}]
-                $.plot('#barChart', data, {
-                    series: {
-                        pie: {
-                            innerRadius: 0.5,
-                            show: true
-                        }
-                    }
-                });
-            });
 
-            $.getJSON( "{{ url_for('getUserLoginsOvertime') }}", function( data ) {
+                if (!pieApiWidget === undefined) {
+                    pieApiWidget.setData(toPlot);
+                    pieApiWidget.draw();
+                } else {
+                    pieApiWidget = $.plot('#pieApi', data, {
+                        series: {
+                            pie: {
+                                innerRadius: 0.5,
+                                show: true
+                            }
+                        }
+                    });
+                }
+            });
+        }
+        function updateDateOvertime() {
+            var date = datePickerWidgetOvertime.datepicker( "getDate" );
+            var now = new Date();
+            if (date.toDateString() == now.toDateString()) {
+                date = now;
+            } else {
+                date.setTime(date.getTime() + (24*60*60*1000-1)); // include data of selected date
+            }
+            $.getJSON( "{{ url_for('getUserLoginsOvertime') }}"+"?date="+parseInt(date.getTime()/1000), function( data ) {
                 temp = [];
                 var i=0;
                 for (item of data) {
                     temp.push([new Date(item[0]*1000), item[1]]);
                 }
-                console.log(temp);
                 data = {label: 'Login overtime', data: temp}
-                $.plot('#lineChart', [data], {
-                    lines: {
-                        show: true,
-                        steps: true,
-                        fill: true
-                    },
-                    xaxis: {
-                        mode: "time",
-                        minTickSize: [1, "hour"],
-                    }
-                });
+                if (!overtimeWidget === undefined) {
+                    overtimeWidget.setData(toPlot);
+                    overtimeWidget.draw();
+                } else {
+                    overtimeWidget = $.plot('#lineChart', [data], {
+                        lines: {
+                            show: true,
+                            steps: true,
+                            fill: true
+                        },
+                        xaxis: {
+                            mode: "time",
+                            minTickSize: [1, "day"],
+                        }
+                    });
+                }
             });
+
+        }
+    </script>
+
+    <script>
+        $(document).ready(function () {
+
+            var datePickerOptions = {
+                showOn: "button",
+                // minDate: -31,
+                maxDate: 0,
+                buttonImage: urlIconCalendar,
+                buttonImageOnly: true,
+                buttonText: "Select date",
+                showAnim: "slideDown"
+            };
+            // punch
+            var datePickerOptionsPunch = jQuery.extend({}, datePickerOptions);
+            datePickerOptionsPunch['onSelect'] = updateDatePunch;
+            datePickerWidgetPunch = $( "#datepickerPunch" );
+            datePickerWidgetPunch.datepicker(datePickerOptionsPunch);
+            datePickerWidgetPunch.datepicker("setDate", new Date());
+            // org login
+            var datePickerOptionsOrg = jQuery.extend({}, datePickerOptions);
+            datePickerOptionsOrg['onSelect'] = updateDatePieOrg;
+            datePickerWidgetOrg = $( "#datepickerOrgLogin" );
+            datePickerWidgetOrg.datepicker(datePickerOptionsOrg);
+            datePickerWidgetOrg.datepicker("setDate", new Date());
+            // api
+            var datePickerOptionsApi = jQuery.extend({}, datePickerOptions);
+            datePickerOptionsApi['onSelect'] = updateDatePieApi;
+            datePickerWidgetApi = $( "#datepickerApi" );
+            datePickerWidgetApi.datepicker(datePickerOptionsApi);
+            datePickerWidgetApi.datepicker("setDate", new Date());
+            // overtime
+            var datePickerOptionsOvertime = jQuery.extend({}, datePickerOptions);
+            datePickerOptionsOvertime['onSelect'] = updateDateOvertime;
+            datePickerWidgetOvertime = $( "#datepickerOvertimeLogin" );
+            datePickerWidgetOvertime.datepicker(datePickerOptionsOvertime);
+            datePickerWidgetOvertime.datepicker("setDate", new Date());
+
+            updateDatePunch();
+            updateDatePieOrg();
+            updateDatePieApi();
+            updateDateOvertime();
 
         });
     </script>

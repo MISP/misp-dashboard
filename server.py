@@ -201,26 +201,6 @@ def users():
             )
 
 
-@app.route("/_getUserLogins")
-def getUserLogins():
-    try:
-        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
-    except:
-        date = datetime.datetime.now()
-
-    data = users_helper.getUserLoginsForPunchCard(date)
-    return jsonify(data)
-
-@app.route("/_getUserLoginsOvertime")
-def getUserLoginsOvertime():
-    try:
-        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
-    except:
-        date = datetime.datetime.now()
-
-    data = users_helper.getUserLoginsOvertime(date)
-    return jsonify(data)
-
 ''' INDEX '''
 
 @app.route("/_logs")
@@ -456,6 +436,39 @@ def getTrophies():
     except:
         org = ''
     return jsonify(contributor_helper.getOrgTrophies(org))
+
+
+''' USERS '''
+
+@app.route("/_getUserLogins")
+def getUserLogins():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = users_helper.getUserLoginsForPunchCard(date)
+    return jsonify(data)
+
+@app.route("/_getUserLoginsOvertime")
+def getUserLoginsOvertime():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = users_helper.getUserLoginsOvertime(date)
+    return jsonify(data)
+
+@app.route("/_getTopOrglogin")
+def getTopOrglogin():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = users_helper.getTopOrglogin(date)
+    return jsonify(data)
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)

@@ -10,17 +10,27 @@ class Users_helper:
         self.serv_redis_db = serv_redis_db
         self.cfg = cfg
 
-    def add_user_login(self, timestamp):
+    def add_user_login(self, timestamp, org):
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
         timestampDate_str = util.getDateStrFormat(timestampDate)
-        keyname = "{}:{}".format('USER_LOGIN', timestampDate_str)
-        self.serv_redis_db.sadd(keyname, timestamp)
+
+        keyname_timestamp = "{}:{}".format('LOGIN_TIMESTAMP', timestampDate_str)
+        self.serv_redis_db.sadd(keyname_timestamp, timestamp)
+
+        keyname_org = "{}:{}".format('LOGIN_ORG', timestampDate_str)
+        self.serv_redis_db.zincrby(keyname_org, org, 1)
 
     def getUserLogins(self, date):
-        keyname = "USER_LOGIN:{}"
-        timestamps = self.serv_redis_db.smembers(keyname.format(util.getDateStrFormat(date)))
+        keyname = "LOGIN_TIMESTAMP:{}".format(util.getDateStrFormat(date))
+        timestamps = self.serv_redis_db.smembers(keyname)
         timestamps = [int(timestamp.decode('utf8')) for timestamp in timestamps]
         return timestamps
+
+    def getTopOrglogin(self, date, topNum=0):
+        keyname = "LOGIN_ORG:{}".format(util.getDateStrFormat(date))
+        data = self.serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
+        data = [ [record[0].decode('utf8'), record[1]] for record in data ]
+        return data
 
     def getUserLoginsForPunchCard(self, date, prev_days=6):
         week = {}
@@ -49,7 +59,8 @@ class Users_helper:
                 data.append(temp)
             except KeyError: # no data
                 data.append([0 for x in range(24)])
-
+        # swap: punchcard day starts on monday
+        data = [data[6]]+data[:6]
         return data
 
     def getUserLoginsOvertime(self, date, prev_days=6):
@@ -60,14 +71,14 @@ class Users_helper:
         for curDate in util.getXPrevDaysSpan(date, prev_days):
             timestamps = self.getUserLogins(curDate)
             for timestamp in timestamps: # sum occurence during the current hour
-                date = datetime.datetime.fromtimestamp(float(timestamp))
-                date = date.replace(minute=0, second=0, microsecond=0)
-                dico_hours[util.getTimestamp(date)] += 1
+                dateTimestamp = datetime.datetime.fromtimestamp(float(timestamp))
+                dateTimestamp = dateTimestamp.replace(minute=0, second=0, microsecond=0)
+                dico_hours[util.getTimestamp(dateTimestamp)] += 1
 
         # Format data
         data = []
-        for date, occ in dico_hours.items():
-            data.append([date, occ])
+        for curDate, occ in dico_hours.items():
+            data.append([curDate, occ])
 
         data.sort(key=lambda x: x[0])
         return data
