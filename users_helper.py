@@ -37,7 +37,6 @@ class Users_helper:
         orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=False)
         orgs_contri = [ org.decode('utf8') for org in orgs_contri ]
         orgs_login = [ org[0] for org in self.getTopOrglogin(date, topNum=0) ]
-
         contributed_num = 0
         non_contributed_num = 0
         for org in orgs_login:
