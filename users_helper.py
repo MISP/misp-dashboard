@@ -26,17 +26,59 @@ class Users_helper:
         timestamps = [int(timestamp.decode('utf8')) for timestamp in timestamps]
         return timestamps
 
-    def getTopOrglogin(self, date, topNum=12):
+    def getOrgslogin(self, date, topNum=12):
         keyname = "LOGIN_ORG:{}".format(util.getDateStrFormat(date))
         data = self.serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
         data = [ [record[0].decode('utf8'), record[1]] for record in data ]
         return data
 
+    def getAllLoggedInOrgs(self, date, prev_days=31):
+        orgs = set()
+        for curDate in util.getXPrevDaysSpan(date, prev_days):
+            keyname = "LOGIN_ORG:{}".format(util.getDateStrFormat(curDate))
+            data = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=True)
+            for org in data:
+                orgs.add(org[0].decode('utf8'))
+        return list(orgs)
+
+    def getOrgContribAndLogin(self, date, org, prev_days=31):
+        keyname_log = "LOGIN_ORG:{}"
+        keyname_contrib = "CONTRIB_DAY:{}"
+        data = []
+        for curDate in util.getXPrevDaysSpan(date, prev_days):
+            log = self.serv_redis_db.zscore(keyname_log.format(util.getDateStrFormat(curDate)), org)
+            log = 0 if log is None else 1
+            contrib = self.serv_redis_db.zscore(keyname_contrib.format(util.getDateStrFormat(curDate)), org)
+            contrib = 0 if contrib is None else 1
+            data.append([log, contrib])
+        return data
+
+    def getContribOverLoginScore(self, array):
+        totLog = 0
+        totContrib = 0
+        for log, contrib in array:
+            totLog += log
+            totContrib += contrib
+        if totLog == 0: # avoid div by 0
+            totLog = 1
+        return totContrib/totLog
+
+    def getTopOrglogin(self, date, maxNum=12, prev_days=31):
+        all_logged_in_orgs = self.getAllLoggedInOrgs(date, prev_days)
+        data = []
+        for org in all_logged_in_orgs:
+            orgStatus = self.getOrgContribAndLogin(date, org, prev_days)
+            orgScore = self.getContribOverLoginScore(orgStatus)
+            data.append([org, orgScore])
+        data.sort(key=lambda x: x[1], reverse=True)
+        return data[:maxNum]
+
+
     def getLoginVSCOntribution(self, date):
         keyname = "CONTRIB_DAY:{}".format(util.getDateStrFormat(date))
         orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=False)
         orgs_contri = [ org.decode('utf8') for org in orgs_contri ]
-        orgs_login = [ org[0] for org in self.getTopOrglogin(date, topNum=0) ]
+        orgs_login = [ org[0] for org in self.getOrgslogin(date, topNum=0) ]
         contributed_num = 0
         non_contributed_num = 0
         for org in orgs_login:

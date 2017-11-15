@@ -128,7 +128,7 @@ small {
                         <div class="col-lg-4">
                             <div class="panel panel-default" style="">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
-                                    <b>Top organisation login</b>
+                                    <b>Top organisation contribution/login (last 31 days)</b>
                                     <strong  class='leftSepa textTopHeader' style="float: none; padding: 11px;">Dates:
                                         <input type="text" id="datepickerOrgLogin" size="10" style="">
                                     </strong>
@@ -251,8 +251,8 @@ small {
             var date = datePickerWidgetApi.datepicker( "getDate" );
             $.getJSON( "{{ url_for('getLoginVSCOntribution') }}"+"?date="+date.getTime()/1000, function( data ) {
                 toPlot = [
-                    {label: 'Has contributed during the day', data: data[0], color: '#4da74d' },
-                    {label: 'Has not contributed during the day', data:data[1], color: '#cb4b4b' }
+                    {label: 'Login with contribution during the day', data: data[0], color: '#4da74d' },
+                    {label: 'Login without contribution during the day', data:data[1], color: '#cb4b4b' }
                 ];
                 if (data[0] == 0 && data[1] == 0) {
                     toPlot = [{ label: 'No data', data: 100 }];
@@ -314,7 +314,6 @@ small {
 
             var datePickerOptions = {
                 showOn: "button",
-                // minDate: -31,
                 maxDate: 0,
                 buttonImage: urlIconCalendar,
                 buttonImageOnly: true,

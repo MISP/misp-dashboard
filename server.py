@@ -467,7 +467,7 @@ def getTopOrglogin():
     except:
         date = datetime.datetime.now()
 
-    data = users_helper.getTopOrglogin(date)
+    data = users_helper.getTopOrglogin(date, maxNum=12)
     return jsonify(data)
 
 @app.route("/_getLoginVSCOntribution")
