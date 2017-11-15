@@ -24,6 +24,7 @@
     <script src="{{ url_for('static', filename='js/jquery.flot.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.flot.pie.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.flot.resize.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.flot.time.js') }}"></script>
     <!-- Bootstrap Core JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
     <link href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
@@ -104,29 +105,50 @@ small {
                 <div class="row">
                     <div style="height: 10px;"></div>
 
-                    <div class="col-lg-8">
-                        <div class="panel panel-default" style="">
-                            <div class="panel-heading bg-info" style="font-weight: bold;">
-                                <b>Punch card - login</b>
-                            </div>
-                            <div id="panelbody" class="panel-body" style="">
-                                <div id="punchcard" style="width:100%; height: 100%;"></div>
-                            </div>
-                        </div><!-- /.panel-body -->
-                    </div>
+                    <div class="col-lg-12">
+                        <div class="col-lg-8">
+                            <div class="panel panel-default" style="">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <b>Punch card - login</b>
+                                </div>
+                                <div id="panelbody" class="panel-body" style="">
+                                    <div id="punchcard" style="width:100%; height: 100%;"></div>
+                                </div>
+                            </div><!-- /.panel-body -->
+                        </div>
 
-                    <div class="col-lg-4">
-                        <div class="panel panel-default" style="">
-                            <div class="panel-heading bg-info" style="font-weight: bold;">
-                                <b>Contribution after login (API vs non-API)</b>
-                            </div>
-                            <div id="panelbody" class="panel-body" style="">
-                                <div id="pieChart" style="width:100%; height: 20vh;"></div>
-                            </div>
-                        </div><!-- /.panel-body -->
-                    </div>
+                        <div class="col-lg-4">
+                            <div class="panel panel-default" style="">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <b>Top login per organisation</b>
+                                </div>
+                                <div id="panelbody" class="panel-body" style="">
+                                    <div id="barChart" style="width:100%; height: 20vh;"></div>
+                                </div>
+                            </div><!-- /.panel-body -->
+
+                            <div class="panel panel-default" style="">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <b>Contribution after login (API vs non-API)</b>
+                                </div>
+                                <div id="panelbody" class="panel-body" style="">
+                                    <div id="pieChart" style="width:100%; height: 20vh;"></div>
+                                </div>
+                            </div><!-- /.panel-body -->
+                        </div>
 
                     </div><!-- /.col-lg-12 -->
+                    <div class="col-lg-12">
+                        <div class="panel panel-default" style="">
+                            <div class="panel-heading bg-info" style="font-weight: bold;">
+                                <b>Login overtime</b>
+                            </div>
+                            <div id="panelbody" class="panel-body" style="">
+                                <div id="lineChart" style="width:100%; height: 20vh;"></div>
+                            </div>
+                        </div><!-- /.panel-body -->
+                    </div><!-- /.col-lg-12 -->
+
                 </div><!-- /.row -->
 
             </div> <!-- /.container-fluid -->
@@ -178,6 +200,40 @@ small {
                 });
             });
 
+            $.getJSON( "{{ url_for('getUserLogins') }}", function( data ) {
+                data = [{label: 'org1', data:[ Math.floor(Math.random() * 100) + 1]},
+                {label: 'org2', data:[ Math.floor(Math.random() * 100) + 1]},
+                {label: 'org3', data:[ Math.floor(Math.random() * 100) + 1]}]
+                $.plot('#barChart', data, {
+                    series: {
+                        pie: {
+                            innerRadius: 0.5,
+                            show: true
+                        }
+                    }
+                });
+            });
+
+            $.getJSON( "{{ url_for('getUserLoginsOvertime') }}", function( data ) {
+                temp = [];
+                var i=0;
+                for (item of data) {
+                    temp.push([new Date(item[0]*1000), item[1]]);
+                }
+                console.log(temp);
+                data = {label: 'Login overtime', data: temp}
+                $.plot('#lineChart', [data], {
+                    lines: {
+                        show: true,
+                        steps: true,
+                        fill: true
+                    },
+                    xaxis: {
+                        mode: "time",
+                        minTickSize: [1, "hour"],
+                    }
+                });
+            });
 
         });
     </script>

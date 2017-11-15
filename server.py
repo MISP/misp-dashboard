@@ -11,6 +11,7 @@ import os
 
 import util
 import contributor_helper
+import users_helper
 
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
@@ -32,6 +33,7 @@ serv_redis_db = redis.StrictRedis(
         db=cfg.getint('RedisDB', 'db'))
 
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
+users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 
 subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)
 subscriber_log.psubscribe(cfg.get('RedisLog', 'channel'))
@@ -206,35 +208,17 @@ def getUserLogins():
     except:
         date = datetime.datetime.now()
 
-    keyname = "USER_LOGIN:{}"
-    prev_days = 6
-    week = {}
-    for curDate in util.getXPrevDaysSpan(date, prev_days):
-        timestamps = serv_redis_db.smembers(keyname.format(util.getDateStrFormat(curDate)))
-        timestamps = [int(timestamp.decode('utf8')) for timestamp in timestamps]
-        day = {}
-        for timestamp in timestamps:
-            date = datetime.datetime.fromtimestamp(float(timestamp))
-            if date.hour not in day:
-                day[date.hour] = 0
-            day[date.hour] += 1
-        week[curDate.weekday()] = day
+    data = users_helper.getUserLoginsForPunchCard(date)
+    return jsonify(data)
 
-    # Format data
-    data = []
-    for d in range(7):
-        try:
-            to_append = []
-            for h in range(24):
-                try:
-                    to_append.append(week[d][h])
-                except KeyError:
-                    to_append.append(0)
-            # swap 24 and 1. (punchcard starts at 1h)
-            temp = to_append[1:]+[to_append[0]]
-            data.append(temp)
-        except KeyError:
-            data.append([0 for x in range(24)])
+@app.route("/_getUserLoginsOvertime")
+def getUserLoginsOvertime():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = users_helper.getUserLoginsOvertime(date)
     return jsonify(data)
 
 ''' INDEX '''

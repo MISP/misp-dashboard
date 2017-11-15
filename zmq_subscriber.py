@@ -16,6 +16,7 @@ import geoip2.database
 
 import util
 import contributor_helper
+import users_helper
 
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
@@ -53,6 +54,7 @@ serv_redis_db = redis.StrictRedis(
         db=cfg.getint('RedisDB', 'db'))
 
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
+users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 
 reader = geoip2.database.Reader(PATH_TO_DB)
 
@@ -194,10 +196,8 @@ def handler_user(zmq_name, jsondata):
         timestamp = json_user['current_login']
     except KeyError:
         return
-    now = datetime.datetime.now()
-    today_str = util.getDateStrFormat(now)
-    keyname = "{}:{}".format('USER_LOGIN', today_str)
-    serv_redis_db.sadd(keyname, timestamp)
+    if timestamp != 0: # "invited_by": "xxxx" ???
+        users_helper.add_user_login(timestamp)
 
 def handler_conversation(zmq_name, jsonevent):
     try: #only consider POST, not THREAD
