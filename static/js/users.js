@@ -44,8 +44,9 @@ function updateDatePieOrg() {
         if (toPlot.length == 0) {
             toPlot = [{ label: 'No data', data: 100 }];
         }
-        if (!pieOrgWidget === undefined) {
+        if (!(pieOrgWidget === undefined)) {
             pieOrgWidget.setData(toPlot);
+            pieOrgWidget.setupGrid();
             pieOrgWidget.draw();
         } else {
             pieOrgWidget = $.plot('#pieOrg', toPlot, {
@@ -70,8 +71,9 @@ function updateDatePieApi() {
             toPlot = [{ label: 'No data', data: 100 }];
         }
 
-        if (!pieApiWidget === undefined) {
+        if (!(pieApiWidget === undefined)) {
             pieApiWidget.setData(toPlot);
+            pieApiWidget.setupGrid();
             pieApiWidget.draw();
         } else {
             pieApiWidget = $.plot('#pieApi', toPlot, {
@@ -100,8 +102,9 @@ function updateDateOvertime() {
             temp.push([new Date(item[0]*1000), item[1]]);
         }
         data = {label: 'Login overtime', data: temp}
-        if (!overtimeWidget === undefined) {
+        if (!(overtimeWidget === undefined)) {
             overtimeWidget.setData(toPlot);
+            overtimeWidget.setupGrid();
             overtimeWidget.draw();
         } else {
             overtimeWidget = $.plot('#lineChart', [data], {
