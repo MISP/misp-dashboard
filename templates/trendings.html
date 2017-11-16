@@ -122,8 +122,9 @@ small {
                                     <b>Most active events</b>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="eventPie" style="width:100%; height: 100%;"></div>
-                                    <div id="eventLine" style="width:100%; height: 100%;"></div>
+                                    <div id="eventPie" style="width:100%; height: 15vh;"></div>
+                                    <div style="height: 10px;"></div>
+                                    <div id="eventLine" style="width:100%; height: 20vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
                         </div>
@@ -134,8 +135,9 @@ small {
                                     <b>Most active categories</b>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="categPie" style="width:100%; height: 100%;"></div>
-                                    <div id="categLine" style="width:100%; height: 100%;"></div>
+                                    <div id="categPie" style="width:100%; height: 15vh;"></div>
+                                    <div style="height: 10px;"></div>
+                                    <div id="categLine" style="width:100%; height: 20vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
                         </div>
@@ -143,11 +145,12 @@ small {
                         <div class="col-lg-4">
                             <div class="panel panel-default" style="">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
-                                    <b>Popular tags</b>
+                                    <b>Most popular tags</b>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="tagsPie" style="width:100%; height: 100%;"></div>
-                                    <div id="tagsLine" style="width:100%; height: 100%;"></div>
+                                    <div id="tagPie" style="width:100%; height: 15vh;"></div>
+                                    <div style="height: 10px;"></div>
+                                    <div id="tagLine" style="width:100%; height: 20vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
                         </div>
@@ -160,8 +163,8 @@ small {
                                     <b>Sightings</b>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="sightingEventPie" style="width:100%; height: 100%;"></div>
-                                    <div id="sightingCategLine" style="width:100%; height: 100%;"></div>
+                                    <div id="sightingEventPie" style="width:100%; height: 10vh;"></div>
+                                    <div id="sightingCategLine" style="width:100%; height: 10vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
                         </div>
@@ -171,7 +174,7 @@ small {
                                     <b>Empty</b>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="" style="width:100%; height: 100%;"></div>
+                                    <div id="" style="width:100%; height: 10vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
                         </div>
@@ -191,6 +194,9 @@ small {
     <script>
         /* URL */
         var urlIconCalendar = "{{ url_for('static', filename='pics/calendar.gif') }}";
+        var url_getTrendingEvent = "{{ url_for('getTrendingEvents') }}";
+        var url_getTrendingCateg = "{{ url_for('getTrendingCategs') }}";
+        var url_getTrendingTag = "{{ url_for('getTrendingTags') }}";
 
         /* DATA FROM CONF */
 

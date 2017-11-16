@@ -12,6 +12,7 @@ import os
 import util
 import contributor_helper
 import users_helper
+import trendings_helper
 
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
@@ -34,6 +35,7 @@ serv_redis_db = redis.StrictRedis(
 
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
 users_helper = users_helper.Users_helper(serv_redis_db, cfg)
+trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
 
 subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)
 subscriber_log.psubscribe(cfg.get('RedisLog', 'channel'))
@@ -483,6 +485,37 @@ def getLoginVSCOntribution():
         date = datetime.datetime.now()
 
     data = users_helper.getLoginVSCOntribution(date)
+    return jsonify(data)
+
+''' TRENDINGS '''
+@app.route("/_getTrendingEvents")
+def getTrendingEvents():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = trendings_helper.getTrendingEvents(date)
+    return jsonify(data)
+
+@app.route("/_getTrendingCategs")
+def getTrendingCategs():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = trendings_helper.getTrendingCategs(date)
+    return jsonify(data)
+
+@app.route("/_getTrendingTags")
+def getTrendingTags():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = trendings_helper.getTrendingTags(date)
     return jsonify(data)
 
 
