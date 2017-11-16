@@ -201,6 +201,11 @@ def users():
             )
 
 
+@app.route("/trendings")
+def trendings():
+    return render_template('trendings.html',
+            )
+
 ''' INDEX '''
 
 @app.route("/_logs")

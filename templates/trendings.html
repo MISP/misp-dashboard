@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>MISP live dashboard</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/sb-admin-2.css') }}" rel="stylesheet">
+    <!-- LeafLet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.css') }}">
+    <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+
+    <!-- jQuery -->
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- jQuery flot -->
+    <script src="{{ url_for('static', filename='js/jquery.flot.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.flot.pie.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.flot.resize.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.flot.time.js') }}"></script>
+    <!-- Bootstrap Core JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <link href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-jvectormap-2.0.3.css') }}" type="text/css" media="screen"/>
+    <script src="{{ url_for('static', filename='js/jquery-jvectormap-2.0.3.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery-jvectormap-world-mill.js') }}"></script>
+    <link href="{{ url_for('static', filename='css/jquery-ui.min.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/punchcard.css') }}">
+    <script src="{{ url_for('static', filename='js/moment.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/punchcard.js') }}"></script>
+
+</head>
+
+<style>
+
+ .highlightDay {
+     background-color: #edc240;
+     box-shadow: black 0px 0px 2px;
+ }
+
+ .panel {
+     margin-bottom: 10px;
+ }
+
+.col-lg-6 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.leftSepa {
+    border-left-color: rgb(221, 221, 221);
+    border-left-style: solid;
+    border-left-width: 2px;
+    padding-left: 8px;
+}
+
+.textTopHeader {
+    height: 50px;
+    text-align: center;
+    margin-left: 8px;
+    float: left;
+    padding-top: 9px;
+}
+
+.center {
+  display:block;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+small {
+    font-size: 100%;
+    font-weight: bold;
+}
+
+</style>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0; padding-left: 15px;">
+            <div class="navbar-header">
+                <img src="{{ url_for('static', filename='pics/MISP.png') }}" alt="MISP" style="float: left; height: 40px; margin-top: 5px;"><a class="navbar-brand dropdown-toggle" data-toggle="dropdown" href="#">MISP Trendings
+                    <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                      <li><a href="{{ url_for('index') }}">MISP Live Dashboard</a></li>
+                      <li><a href="{{ url_for('geo') }}">MISP Geolocalisation</a></li>
+                      <li><a href="{{ url_for('contrib') }}">MISP Contributors</a></li>
+                      <li><a href="{{ url_for('users') }}">MISP Users</a></li>
+                      <li><a href="{{ url_for('trendings') }}">MISP Trendings</a></li>
+                    </ul>
+                <div class='leftSepa textTopHeader'>
+                    <strong>Date: <input type="text" id="datepicker" size="30" style="margin-bottom: 5px;"></strong>
+                </div>
+            </div>
+            <!-- /.navbar-header -->
+
+        </nav>
+
+        <!-- Page Content -->
+        <div id="page-wrapper" style="margin: 0px; padding: 0px;">
+            <div class="container-fluid">
+                <div class="row">
+                    <div style="height: 10px;"></div>
+
+                    <div class="col-lg-12">
+                        <div class="col-lg-4">
+                            <div class="panel panel-default" style="">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <b>Most active events</b>
+                                </div>
+                                <div id="panelbody" class="panel-body" style="">
+                                    <div id="eventPie" style="width:100%; height: 100%;"></div>
+                                    <div id="eventLine" style="width:100%; height: 100%;"></div>
+                                </div>
+                            </div><!-- /.panel-body -->
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="panel panel-default" style="">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <b>Most active categories</b>
+                                </div>
+                                <div id="panelbody" class="panel-body" style="">
+                                    <div id="categPie" style="width:100%; height: 100%;"></div>
+                                    <div id="categLine" style="width:100%; height: 100%;"></div>
+                                </div>
+                            </div><!-- /.panel-body -->
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="panel panel-default" style="">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <b>Popular tags</b>
+                                </div>
+                                <div id="panelbody" class="panel-body" style="">
+                                    <div id="tagsPie" style="width:100%; height: 100%;"></div>
+                                    <div id="tagsLine" style="width:100%; height: 100%;"></div>
+                                </div>
+                            </div><!-- /.panel-body -->
+                        </div>
+
+                    </div><!-- /.col-lg-12 -->
+                    <div class="col-lg-12">
+                        <div class="col-lg-6">
+                            <div class="panel panel-default" style="">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <b>Sightings</b>
+                                </div>
+                                <div id="panelbody" class="panel-body" style="">
+                                    <div id="sightingEventPie" style="width:100%; height: 100%;"></div>
+                                    <div id="sightingCategLine" style="width:100%; height: 100%;"></div>
+                                </div>
+                            </div><!-- /.panel-body -->
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="panel panel-default" style="">
+                                <div class="panel-heading bg-info" style="font-weight: bold;">
+                                    <b>Empty</b>
+                                </div>
+                                <div id="panelbody" class="panel-body" style="">
+                                    <div id="" style="width:100%; height: 100%;"></div>
+                                </div>
+                            </div><!-- /.panel-body -->
+                        </div>
+                    </div><!-- /.col-lg-12 -->
+
+                </div><!-- /.row -->
+
+            </div> <!-- /.container-fluid -->
+
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+<!-- /#wrapper -->
+
+    <!-- Index -->
+    <script>
+        /* URL */
+        var urlIconCalendar = "{{ url_for('static', filename='pics/calendar.gif') }}";
+
+        /* DATA FROM CONF */
+
+    </script>
+
+    <script src="{{ url_for('static', filename='js/trendings.js') }}"></script>
+
+</body>
+
+</html>
