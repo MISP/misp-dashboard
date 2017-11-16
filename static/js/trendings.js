@@ -28,18 +28,58 @@ var lineChartOption = {
     xaxis: {
         mode: "time",
         minTickSize: [1, "day"],
+    },
+    legend: {
+        show: false,
     }
 };
 var pieChartOption = {
     series: {
         pie: {
             innerRadius: 0.5,
-            show: true
+            show: true,
+            label: {
+                show: false,
+            }
         }
+    },
+    legend: {
+        show: true,
+        labelFormatter: legendFormatter
     }
 };
 
 /* FUNCTIONS */
+function getTextColour(rgb) {
+    var r = parseInt('0x'+rgb.substring(0,2));
+    var g = parseInt('0x'+rgb.substring(2,4));
+    var b = parseInt('0x'+rgb.substring(4,6));
+    var avg = ((2 * r) + b + (3 * g))/6;
+    if (avg < 128) {
+        return 'white';
+    } else {
+        return 'black';
+    }
+}
+function legendFormatter(label, series) {
+    try {
+        // transforming true into "true", removing unwanted "
+        var jsonLabel = label.replace(/\"/g, "").replace(/True/g, "\"True\"").replace(/False/g, "\"False\"").replace(/\'/g, "\"")
+        jsonLabel = JSON.parse(jsonLabel);
+        var backgroundColor = jsonLabel.colour;
+        var color = getTextColour(backgroundColor.substring(1,6));;
+        var labelText = jsonLabel.name;
+        return '<div '
+               + 'style="font-size:8pt;text-align:inherit;padding:2px;">'
+                   + '<a class="tagElem" style="background-color: '+ backgroundColor + ';'
+                   + 'color: ' + color + ';"> ' + labelText + '</a>'
+               + '</div>';
+    } catch(err) {
+        return '<div '
+            + '<a class="tagElem"> ' + label
+            + '</a>';
+    }
+}
 
 function updatePie(pie, data) {
     pieID = pie[0];
@@ -48,11 +88,10 @@ function updatePie(pie, data) {
         toPlot = [{ label: 'No data', data: 100 }];
     } else {
         toPlot = [];
-        for (item of data) {
+        for (var item of data) {
             toPlot.push({label: item[0], data: item[1]});
         }
     }
-    console.log(toPlot);
     if (!(pieWidget === undefined)) {
         pieWidget.setData(toPlot);
         pieWidget.setupGrid();
@@ -66,29 +105,50 @@ function updatePie(pie, data) {
 function updateLine(line, data) {
     lineID = line[0];
     lineWidget = line[1];
-    temp = [];
-    var i=0;
-    for (item of data) {
-        temp.push([new Date(item[0]*1000), item[1]]);
+
+    // formating - Generate empty data
+    toPlot_obj = {};
+    allDates = [];
+    for (var arr of data) {
+        var date = new Date(arr[0]*1000);
+        allDates.push(date);
+        var items = arr[1];
+        if (items.length > 0) {
+            for(var item_arr of items) {
+                var count = item_arr[1];
+                var item = item_arr[0]
+                if(toPlot_obj[item] === undefined)
+                    toPlot_obj[item] = {};
+                toPlot_obj[item][date] = count;
+            }
+        }
     }
-    data = {label: 'Overtime', data: temp}
+    toPlot = []
+    for (var item in toPlot_obj) {
+        if (toPlot_obj.hasOwnProperty(item)) {
+            data_toPlot = []
+            for (var curDate of allDates) {
+                if (toPlot_obj[item].hasOwnProperty(curDate)) {
+                    data_toPlot.push([curDate, toPlot_obj[item][curDate]])
+                } else {
+                    data_toPlot.push([curDate, 0])
+                }
+            }
+            toPlot.push({label: item, data: data_toPlot})
+        }
+    }
+    // plot
     if (!(lineWidget === undefined)) {
         lineWidget.setData(toPlot);
+        lineWidget.setupGrid();
         lineWidget.draw();
     } else {
-        lineWidget = $.plot(lineID, [data], lineChartOption);
+        lineWidget = $.plot(lineID, toPlot, lineChartOption);
         line.push(lineWidget);
     }
 }
 
 function updatePieLine(pie, line, url) {
-    // format date
-    // var now = new Date();
-    // if (date.toDateString() == now.toDateString()) {
-    //     date = now;
-    // } else {
-    //     date.setTime(date.getTime() + (24*60*60*1000-1)); // include data of selected date
-    // }
     $.getJSON( url+"?date="+parseInt(date.getTime()/1000), function( data ) {
         updatePie(pie, data[0][1]);
         updateLine(line, data);
