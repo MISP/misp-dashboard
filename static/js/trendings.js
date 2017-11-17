@@ -1,5 +1,6 @@
 /* VARS */
-var date;
+var dateStart;
+var dateEnd;
 var eventPie = ["#eventPie"];
 var eventLine = ["#eventLine"];
 var categPie = ["#categPie"];
@@ -36,10 +37,12 @@ var lineChartOption = {
 var pieChartOption = {
     series: {
         pie: {
-            innerRadius: 0.5,
+            innerRadius: 0.2,
             show: true,
             label: {
-                show: false,
+                show: true,
+                radius: 1,
+                formatter: innerPieLabelFormatter,
             }
         }
     },
@@ -50,6 +53,15 @@ var pieChartOption = {
 };
 
 /* FUNCTIONS */
+function innerPieLabelFormatter(label, series) {
+    var count = series.data[0][1];
+    return '<div '
+           + 'style="font-size:8pt;text-align:inherit;padding:2px;">'
+               + '<a class="tagElem" style="background-color: '+ 'white' + ';'
+               + 'color: ' + 'black' + ';"> ' + count + '</a>'
+           + '</div>';
+}
+
 function getTextColour(rgb) {
     var r = parseInt('0x'+rgb.substring(0,2));
     var g = parseInt('0x'+rgb.substring(2,4));
@@ -87,11 +99,26 @@ function updatePie(pie, data) {
     if (data === undefined || data.length == 0 || (data[0] == 0 && data[1] == 0)) {
         toPlot = [{ label: 'No data', data: 100 }];
     } else {
+        toPlot_obj = {}
+        for (var arr of data) {
+            var date = arr[0];
+            var items = arr[1]
+            for(var item_arr of items) {
+                var item = item_arr[0];
+                var count = item_arr[1];
+                if(toPlot_obj[item] === undefined)
+                    toPlot_obj[item] = 0;
+                toPlot_obj[item] += count;
+            }
+        }
         toPlot = [];
-        for (var item of data) {
-            toPlot.push({label: item[0], data: item[1]});
+        for (var item in toPlot_obj) {
+            if (toPlot_obj.hasOwnProperty(item)) {
+                toPlot.push({label: item, data: toPlot_obj[item]})
+            }
         }
     }
+
     if (!(pieWidget === undefined)) {
         pieWidget.setData(toPlot);
         pieWidget.setupGrid();
@@ -149,14 +176,15 @@ function updateLine(line, data) {
 }
 
 function updatePieLine(pie, line, url) {
-    $.getJSON( url+"?date="+parseInt(date.getTime()/1000), function( data ) {
-        updatePie(pie, data[0][1]);
+    $.getJSON( url+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
+        updatePie(pie, data);
         updateLine(line, data);
     });
 }
 
 function dateChanged() {
-    date = datePickerWidget.datepicker( "getDate" );
+    dateStart = datePickerWidgetStart.datepicker( "getDate" );
+    dateEnd = datePickerWidgetEnd.datepicker( "getDate" );
     updatePieLine(eventPie, eventLine, url_getTrendingEvent)
     updatePieLine(categPie, categLine, url_getTrendingCateg)
     updatePieLine(tagPie, tagLine, url_getTrendingTag)
@@ -164,9 +192,14 @@ function dateChanged() {
 
 $(document).ready(function () {
 
-    datePickerWidget = $( "#datepicker" ).datepicker(datePickerOptions);
-    datePickerWidget.datepicker("setDate", new Date());
-    date = datePickerWidget.datepicker( "getDate" );
+    datePickerWidgetStart = $( "#datepickerStart" ).datepicker(datePickerOptions);
+    var lastWeekDate = new Date();
+    lastWeekDate.setDate(lastWeekDate.getDate()-7);
+    datePickerWidgetStart.datepicker("setDate", lastWeekDate);
+    dateStart = datePickerWidgetStart.datepicker( "getDate" );
+    datePickerWidgetEnd = $( "#datepickerEnd" ).datepicker(datePickerOptions);
+    datePickerWidgetEnd.datepicker("setDate", new Date());
+    dateEnd = datePickerWidgetEnd.datepicker( "getDate" );
 
     updatePieLine(eventPie, eventLine, url_getTrendingEvent)
     updatePieLine(categPie, categLine, url_getTrendingCateg)

@@ -491,31 +491,39 @@ def getLoginVSCOntribution():
 @app.route("/_getTrendingEvents")
 def getTrendingEvents():
     try:
-        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+        dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
+        dateE = datetime.datetime.fromtimestamp(float(request.args.get('dateE')))
     except:
-        date = datetime.datetime.now()
+        dateS = datetime.datetime.now() - datetime.timedelta(days=7)
+        dateE = datetime.datetime.now()
 
-    data = trendings_helper.getTrendingEvents(date)
+    data = trendings_helper.getTrendingEvents(dateS, dateE)
     return jsonify(data)
 
 @app.route("/_getTrendingCategs")
 def getTrendingCategs():
     try:
-        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+        dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
+        dateE = datetime.datetime.fromtimestamp(float(request.args.get('dateE')))
     except:
-        date = datetime.datetime.now()
+        dateS = datetime.datetime.now() - datetime.timedelta(days=7)
+        dateE = datetime.datetime.now()
 
-    data = trendings_helper.getTrendingCategs(date)
+
+    data = trendings_helper.getTrendingCategs(dateS, dateE)
     return jsonify(data)
 
 @app.route("/_getTrendingTags")
 def getTrendingTags():
     try:
-        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+        dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
+        dateE = datetime.datetime.fromtimestamp(float(request.args.get('dateE')))
     except:
-        date = datetime.datetime.now()
+        dateS = datetime.datetime.now() - datetime.timedelta(days=7)
+        dateE = datetime.datetime.now()
 
-    data = trendings_helper.getTrendingTags(date)
+
+    data = trendings_helper.getTrendingTags(dateS, dateE)
     return jsonify(data)
 
 
