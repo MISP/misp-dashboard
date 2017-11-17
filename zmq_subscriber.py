@@ -143,7 +143,7 @@ def handleContribution(zmq_name, org, contribType, categ, action, pntMultiplier=
     pnts_to_add = DEFAULT_PNTS_REWARD
 
     # if there is a contribution, there is a login (even if ti comes from the API)
-    users_helper.add_user_login(timestamp, org)
+    users_helper.add_user_login(nowSec, org)
 
     # is a valid contribution
     if categ is not None:
