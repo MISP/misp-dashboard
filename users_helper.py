@@ -111,9 +111,7 @@ class Users_helper:
                         to_append.append(week[d][h])
                     except KeyError:
                         to_append.append(0)
-                # swap 24 and 1. (punchcard starts at 1h)
-                temp = to_append[1:]+[to_append[0]]
-                data.append(temp)
+                data.append(to_append)
             except KeyError: # no data
                 data.append([0 for x in range(24)])
         # swap: punchcard day starts on monday
