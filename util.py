@@ -38,5 +38,8 @@ def getXPrevHoursSpan(date, hours):
 def getDateStrFormat(date):
     return str(date.year)+str(date.month).zfill(2)+str(date.day).zfill(2)
 
+def getDateHoursStrFormat(date):
+    return getDateStrFormat(date)+str(date.hour)
+
 def getTimestamp(date):
     return int(time.mktime(date.timetuple()))
