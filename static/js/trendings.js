@@ -42,7 +42,7 @@ var pieChartOption = {
             show: true,
             label: {
                 show: true,
-                radius: 1,
+                radius: 4/5,
                 formatter: innerPieLabelFormatter,
             }
         }
