@@ -185,10 +185,10 @@ function updatePie(pie, data) {
                 $("#tooltip").html(legendFormatter(item.series.label))
                     .css({top: pos.pageY+5, left: pos.pageX+5})
                     .fadeIn(200);
-                } else {
-                    $("#tooltip").hide();
-                }
-            });
+            } else {
+                $("#tooltip").hide();
+            }
+        });
     }
 }
 
