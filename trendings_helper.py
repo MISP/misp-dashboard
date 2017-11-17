@@ -28,8 +28,17 @@ class Trendings_helper:
         for tag in tags:
             self.addGenericTrending('TRENDINGS_TAGS', tag, timestamp)
 
-    def addSightings(self, event, categName, timestamp):
-        pass
+    def addSightings(self, timestamp):
+        timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
+        timestampDate_str = util.getDateStrFormat(timestampDate)
+        keyname = "{}:{}".format("TRENDINGS_SIGHT_sightings", timestampDate_str)
+        self.serv_redis_db.incrby(keyname, 1)
+
+    def addFalsePositive(self, timestamp):
+        timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
+        timestampDate_str = util.getDateStrFormat(timestampDate)
+        keyname = "{}:{}".format("TRENDINGS_SIGHT_false_positive", timestampDate_str)
+        self.serv_redis_db.incrby(keyname, 1)
 
     ''' GETTER '''
 

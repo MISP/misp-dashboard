@@ -232,6 +232,9 @@ def handler_sighting(zmq_name, jsondata):
         action = None
     handleContribution(zmq_name, org, 'Sighting', categ, action, pntMultiplier=2)
     handler_attribute(zmq_name, jsonsight, hasAlreadyBeenContributed=True)
+    
+    trendings_helper.addSightings()
+    trendings_helper.addFalsePositive()
 
 def handler_event(zmq_name, jsonobj):
     #fields: threat_level_id, id, info
