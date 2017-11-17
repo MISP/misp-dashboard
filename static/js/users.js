@@ -101,13 +101,13 @@ function updateDateOvertime() {
         for (item of data) {
             temp.push([new Date(item[0]*1000), item[1]]);
         }
-        data = {label: 'Login overtime', data: temp}
+        toPlot = [{label: 'Login overtime', data: temp}];
         if (!(overtimeWidget === undefined)) {
             overtimeWidget.setData(toPlot);
             overtimeWidget.setupGrid();
             overtimeWidget.draw();
         } else {
-            overtimeWidget = $.plot('#lineChart', [data], {
+            overtimeWidget = $.plot('#lineChart', toPlot, {
                 lines: {
                     show: true,
                     steps: true,
