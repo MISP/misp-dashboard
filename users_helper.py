@@ -10,12 +10,30 @@ class Users_helper:
         self.serv_redis_db = serv_redis_db
         self.cfg = cfg
 
+    def addTemporary(self, org, timestamp):
+        timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
+        timestampDate_str = util.getDateHoursStrFormat(timestampDate)
+        keyname_timestamp = "{}:{}".format('LOGIN_TIMESTAMPSET', timestampDate_str)
+        self.serv_redis_db.sadd(keyname_timestamp, org)
+        self.serv_redis_db.expire(keyname_timestamp, 60*60)
+
+    def hasAlreadyBeenAdded(self, org, timestamp):
+        timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
+        timestampDate_str = util.getDateHoursStrFormat(timestampDate)
+        keyname_timestamp = "{}:{}".format('LOGIN_TIMESTAMPSET', timestampDate_str)
+        orgs = [ org.decode('utf8') for org in self.serv_redis_db.smembers(keyname_timestamp) ]
+        if orgs is None:
+            return False
+        return (org in orgs)
+
     def add_user_login(self, timestamp, org):
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
         timestampDate_str = util.getDateStrFormat(timestampDate)
 
-        keyname_timestamp = "{}:{}".format('LOGIN_TIMESTAMP', timestampDate_str)
-        self.serv_redis_db.sadd(keyname_timestamp, timestamp)
+        if not self.hasAlreadyBeenAdded(org, timestamp):
+            keyname_timestamp = "{}:{}".format('LOGIN_TIMESTAMP', timestampDate_str)
+            self.serv_redis_db.sadd(keyname_timestamp, timestamp)
+            self.addTemporary(org, timestamp)
 
         keyname_org = "{}:{}".format('LOGIN_ORG', timestampDate_str)
         self.serv_redis_db.zincrby(keyname_org, org, 1)
