@@ -140,8 +140,8 @@ small {
                                     <b>Most active events</b>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="eventPie" style="width:100%; height: 25vh;"></div>
-                                    <div id="eventLine" style="width:100%; height: 25vh;"></div>
+                                    <div id="eventPie" style="width:100%; height: 34vh;"></div>
+                                    <div id="eventLine" style="width:100%; height: 27vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
                         </div>
@@ -152,8 +152,8 @@ small {
                                     <b>Most active categories</b>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="categPie" style="width:100%; height: 25vh;"></div>
-                                    <div id="categLine" style="width:100%; height: 25vh;"></div>
+                                    <div id="categPie" style="width:100%; height: 34vh;"></div>
+                                    <div id="categLine" style="width:100%; height: 27vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
                         </div>
@@ -164,8 +164,8 @@ small {
                                     <b>Most popular tags</b>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="tagPie" style="width:100%; height: 25vh;"></div>
-                                    <div id="tagLine" style="width:100%; height: 25vh;"></div>
+                                    <div id="tagPie" style="width:100%; height: 34vh;"></div>
+                                    <div id="tagLine" style="width:100%; height: 27vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
                         </div>
@@ -178,8 +178,7 @@ small {
                                     <b>Sightings</b>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="sightingEventPie" style="width:100%; height: 10vh;"></div>
-                                    <div id="sightingCategLine" style="width:100%; height: 10vh;"></div>
+                                    <div id="sightingLine" style="width:100%; height: 20vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
                         </div>
@@ -189,7 +188,7 @@ small {
                                     <b>Empty</b>
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
-                                    <div id="" style="width:100%; height: 10vh;"></div>
+                                    <div id="" style="width:100%; height: 20vh;"></div>
                                 </div>
                             </div><!-- /.panel-body -->
                         </div>
@@ -212,6 +211,7 @@ small {
         var url_getTrendingEvent = "{{ url_for('getTrendingEvents') }}";
         var url_getTrendingCateg = "{{ url_for('getTrendingCategs') }}";
         var url_getTrendingTag = "{{ url_for('getTrendingTags') }}";
+        var url_getTrendingSightings = "{{ url_for('getTrendingSightings') }}";
 
         /* DATA FROM CONF */
 

@@ -232,9 +232,16 @@ def handler_sighting(zmq_name, jsondata):
         action = None
     handleContribution(zmq_name, org, 'Sighting', categ, action, pntMultiplier=2)
     handler_attribute(zmq_name, jsonsight, hasAlreadyBeenContributed=True)
-    
-    trendings_helper.addSightings()
-    trendings_helper.addFalsePositive()
+
+    try:
+        timestamp = jsonsight['date_sighting']
+    except KeyError:
+        pass
+
+    if jsonsight['type'] == "0": # sightings
+        trendings_helper.addSightings(timestamp)
+    elif jsonsight['type'] == "1": # false positive
+        trendings_helper.addFalsePositive(timestamp)
 
 def handler_event(zmq_name, jsonobj):
     #fields: threat_level_id, id, info
@@ -291,7 +298,10 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
 
     #Add trending
     categName = jsonattr['category']
-    timestamp = jsonattr['timestamp']
+    try:
+        timestamp = jsonattr['timestamp']
+    except KeyError:
+        timestamp = int(time.time())
     trendings_helper.addTrendingCateg(categName, timestamp)
     try:
         temp = jsonattr['Tag']

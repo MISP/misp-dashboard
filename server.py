@@ -526,6 +526,18 @@ def getTrendingTags():
     data = trendings_helper.getTrendingTags(dateS, dateE)
     return jsonify(data)
 
+@app.route("/_getTrendingSightings")
+def getTrendingSightings():
+    try:
+        dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
+        dateE = datetime.datetime.fromtimestamp(float(request.args.get('dateE')))
+    except:
+        dateS = datetime.datetime.now() - datetime.timedelta(days=7)
+        dateE = datetime.datetime.now()
+
+    data = trendings_helper.getTrendingSightings(dateS, dateE)
+    return jsonify(data)
+
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)

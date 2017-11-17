@@ -2,6 +2,7 @@ import math, random
 import os
 import json
 import datetime, time
+from collections import OrderedDict
 
 import util
 
@@ -16,7 +17,7 @@ class Trendings_helper:
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
         timestampDate_str = util.getDateStrFormat(timestampDate)
         keyname = "{}:{}".format(trendingType, timestampDate_str)
-        self.serv_redis_db.zincrby(keyname, data, 1)
+        self.serv_redis_db.zincrby(keyname, json.dumps(data), 1)
 
     def addTrendingEvent(self, eventName, timestamp):
         self.addGenericTrending('TRENDINGS_EVENTS', eventName, timestamp)
@@ -26,7 +27,11 @@ class Trendings_helper:
 
     def addTrendingTags(self, tags, timestamp):
         for tag in tags:
-            self.addGenericTrending('TRENDINGS_TAGS', tag, timestamp)
+            ordDic = OrderedDict() #keep fields with the same layout in redis
+            ordDic['id'] = tag['id']
+            ordDic['name'] = tag['name']
+            ordDic['colour'] = tag['colour']
+            self.addGenericTrending('TRENDINGS_TAGS', ordDic, timestamp)
 
     def addSightings(self, timestamp):
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
@@ -59,5 +64,30 @@ class Trendings_helper:
     def getTrendingCategs(self, dateS, dateE):
         return self.getGenericTrending('TRENDINGS_CATEGS', dateS, dateE)
 
-    def getTrendingTags(self, dateS, dateE):
-        return self.getGenericTrending('TRENDINGS_TAGS', dateS, dateE)
+    def getTrendingTags(self, dateS, dateE, topNum=12):
+        to_ret = []
+        prev_days = (dateE - dateS).days
+        for curDate in util.getXPrevDaysSpan(dateE, prev_days):
+            keyname = "{}:{}".format('TRENDINGS_TAGS', util.getDateStrFormat(curDate))
+            data = self.serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
+            data = [ [record[0].decode('utf8'), record[1]] for record in data ]
+            data = data if data is not None else []
+            temp = []
+            for jText, score in data:
+                temp.append([json.loads(jText), score])
+            data = temp
+            to_ret.append([util.getTimestamp(curDate), data])
+        return to_ret
+
+    def getTrendingSightings(self, dateS, dateE):
+        to_ret = []
+        prev_days = (dateE - dateS).days
+        for curDate in util.getXPrevDaysSpan(dateE, prev_days):
+            keyname = "{}:{}".format("TRENDINGS_SIGHT_sightings", util.getDateStrFormat(curDate))
+            sight = self.serv_redis_db.get(keyname)
+            sight = 0 if sight is None else int(sight.decode('utf8'))
+            keyname = "{}:{}".format("TRENDINGS_SIGHT_false_positive", util.getDateStrFormat(curDate))
+            fp = self.serv_redis_db.get(keyname)
+            fp = 0 if fp is None else int(fp.decode('utf8'))
+            to_ret.append([util.getTimestamp(curDate), { 'sightings': sight, 'false_positive': fp}])
+        return to_ret
