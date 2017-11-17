@@ -30,7 +30,10 @@ var lineChartOption = {
         mode: "time",
         minTickSize: [1, "day"],
     },
-    legend: { show: false }
+    legend: { show: false },
+    grid: {
+        hoverable: true
+    }
 };
 var pieChartOption = {
     series: {
@@ -47,6 +50,9 @@ var pieChartOption = {
     legend: {
         show: true,
         labelFormatter: legendFormatter
+    },
+    grid: {
+        hoverable: true
     }
 };
 
@@ -86,7 +92,7 @@ function legendFormatter(label, series) {
                + '</div>';
     } catch(err) {
         return '<div '
-            + '<a class="tagElem"> ' + label
+            + '<a class="tagElem" style="background-color: white; color: black;"> ' + label
             + '</a>';
     }
 }
@@ -124,6 +130,15 @@ function updatePie(pie, data) {
     } else {
         pieWidget = $.plot(pieID, toPlot, pieChartOption);
         pie.push(pieWidget);
+        $(pieID).bind("plothover", function (event, pos, item) {
+            if (item) {
+                $("#tooltip").html(legendFormatter(item.series.label))
+                    .css({top: pos.pageY+5, left: pos.pageX+5})
+                    .fadeIn(200);
+                } else {
+                    $("#tooltip").hide();
+                }
+            });
     }
 }
 
@@ -171,6 +186,15 @@ function updateLine(line, data) {
     } else {
         lineWidget = $.plot(lineID, toPlot, lineChartOption);
         line.push(lineWidget);
+        $(lineID).bind("plothover", function (event, pos, item) {
+            if (item) {
+                $("#tooltip").html(legendFormatter(item.series.label))
+                    .css({top: item.pageY+5, left: item.pageX+5})
+                    .fadeIn(200);
+                } else {
+                    $("#tooltip").hide();
+                }
+        });
     }
 }
 
@@ -204,4 +228,9 @@ $(document).ready(function () {
     updatePieLine(categPie, categLine, url_getTrendingCateg)
     updatePieLine(tagPie, tagLine, url_getTrendingTag)
 
+
+    $("<div id='tooltip'></div>").css({
+        position: "absolute",
+        display: "none",
+    }).appendTo("body");
 });
