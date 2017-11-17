@@ -39,10 +39,10 @@ var pieChartOption = {
         pie: {
             innerRadius: 0.2,
             show: true,
-            // radius: 50,
+            radius: 100,
             label: {
                 show: true,
-                radius: 7/10,
+                radius: 6/10,
                 formatter: innerPieLabelFormatter,
             }
         }
