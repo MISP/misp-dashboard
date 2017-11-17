@@ -17,7 +17,11 @@ class Trendings_helper:
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
         timestampDate_str = util.getDateStrFormat(timestampDate)
         keyname = "{}:{}".format(trendingType, timestampDate_str)
-        self.serv_redis_db.zincrby(keyname, json.dumps(data), 1)
+        if isinstance(data, OrderedDict):
+            to_save = json.dumps(data)
+        else:
+            to_save = data
+        self.serv_redis_db.zincrby(keyname, to_save, 1)
 
     def addTrendingEvent(self, eventName, timestamp):
         self.addGenericTrending('TRENDINGS_EVENTS', eventName, timestamp)
