@@ -92,8 +92,10 @@ function legendFormatter(label, series) {
                + '</div>';
     } catch(err) {
         return '<div '
-            + '<a class="tagElem" style="background-color: white; color: black;"> ' + label
-            + '</a>';
+                + 'style="font-size:8pt;text-align:inherit;padding:2px;">'
+                    + '<a class="tagElem" style="background-color: white; color: black;"> ' + label
+                    + '</a>';
+                + '</div>';
     }
 }
 
