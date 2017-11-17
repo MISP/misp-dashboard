@@ -145,7 +145,7 @@ def handleContribution(zmq_name, org, contribType, categ, action, pntMultiplier=
     pnts_to_add = DEFAULT_PNTS_REWARD
 
     # if there is a contribution, there is a login (even if ti comes from the API)
-    users_helper.add_user_login(timestamp, org)
+    users_helper.add_user_login(nowSec, org)
 
     # is a valid contribution
     if categ is not None:
@@ -214,11 +214,15 @@ def handler_conversation(zmq_name, jsonevent):
     org = jsonpost['org_name']
     categ = None
     action = 'add'
+    eventName = 'no name or id yet...'
     handleContribution(zmq_name, org,
                     'Discussion',
                     None,
                     action,
                     isLabeled=False)
+    # add Discussion
+    nowSec = int(time.time())
+    trendings_helper.addTrendingDisc(eventName, nowSec)
 
 def handler_object(zmq_name, jsondata):
     print('obj')

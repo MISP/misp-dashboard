@@ -8,6 +8,7 @@ var categLine = ["#categLine"];
 var tagPie = ["#tagPie"];
 var tagLine = ["#tagLine"];
 var sightingLineWidget;
+var discLine = ["#discussionLine"];
 
 /* OPTIONS */
 var datePickerOptions = {
@@ -192,7 +193,7 @@ function updatePie(pie, data) {
     }
 }
 
-function updateLine(line, data) {
+function updateLine(line, data, chartOptions) {
     lineID = line[0];
     lineWidget = line[1];
 
@@ -203,7 +204,10 @@ function updateLine(line, data) {
         lineWidget.setupGrid();
         lineWidget.draw();
     } else {
-        lineWidget = $.plot(lineID, toPlot, lineChartOption);
+        if (chartOptions === undefined) {
+            chartOptions = lineChartOption;
+        }
+        lineWidget = $.plot(lineID, toPlot, chartOptions);
         line.push(lineWidget);
         $(lineID).bind("plothover", function (event, pos, item) {
             if (item) {
@@ -258,6 +262,15 @@ function updatePieLine(pie, line, url) {
     });
 }
 
+function updateDisc() {
+    var lineChartOptionDisc = jQuery.extend(true, {}, lineChartOption);
+    lineChartOptionDisc['legend']['show'] = true;
+    lineChartOptionDisc['legend']['position'] = 'nw';
+    $.getJSON( url_getTrendingDisc+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
+        updateLine(discLine, data, lineChartOptionDisc);
+    });
+}
+
 function dateChanged() {
     dateStart = datePickerWidgetStart.datepicker( "getDate" );
     dateEnd = datePickerWidgetEnd.datepicker( "getDate" );
@@ -265,6 +278,7 @@ function dateChanged() {
     updatePieLine(categPie, categLine, url_getTrendingCateg);
     updatePieLine(tagPie, tagLine, url_getTrendingTag);
     updateSignthingsChart();
+    updateDisc();
 }
 
 $(document).ready(function () {
@@ -282,7 +296,7 @@ $(document).ready(function () {
     updatePieLine(categPie, categLine, url_getTrendingCateg)
     updatePieLine(tagPie, tagLine, url_getTrendingTag)
     updateSignthingsChart();
-
+    updateDisc();
 
     $("<div id='tooltip'></div>").css({
         position: "absolute",

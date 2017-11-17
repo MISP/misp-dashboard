@@ -29,6 +29,9 @@ class Trendings_helper:
     def addTrendingCateg(self, categName, timestamp):
         self.addGenericTrending('TRENDINGS_CATEGS', categName, timestamp)
 
+    def addTrendingDisc(self, eventName, timestamp):
+        self.addGenericTrending('TRENDINGS_DISC', eventName, timestamp)
+
     def addTrendingTags(self, tags, timestamp):
         for tag in tags:
             ordDic = OrderedDict() #keep fields with the same layout in redis
@@ -95,3 +98,6 @@ class Trendings_helper:
             fp = 0 if fp is None else int(fp.decode('utf8'))
             to_ret.append([util.getTimestamp(curDate), { 'sightings': sight, 'false_positive': fp}])
         return to_ret
+
+    def getTrendingDisc(self, dateS, dateE):
+        return self.getGenericTrending('TRENDINGS_DISC', dateS, dateE)
