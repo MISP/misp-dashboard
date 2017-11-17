@@ -2,8 +2,24 @@ var punchcardWidget;
 var pieOrgWidget;
 var pieApiWidget;
 var overtimeWidget;
-
 var div_day;
+
+function legendFormatter(label, series) {
+    // removing unwanted "
+    var label = label.replace(/\\"/g, "").replace(/\"/g, "");
+    // limiting size
+    if (label.length >= 50){
+        labelLimited = label.substring(0, 50) + '[...]';
+    }   else {
+        labelLimited = label;
+    }
+    return '<div '
+            + 'style="font-size:8pt;text-align:inherit;padding:2px;">'
+                + '<a class="tagElem" style="background-color: white; color: black;"> ' + labelLimited
+                + '</a>';
+            + '</div>';
+}
+
 function highlight_punchDay() {
     if (!(div_day === undefined)) {
         div_day.removeClass('highlightDay');
@@ -55,6 +71,18 @@ function updateDatePieOrg() {
                         innerRadius: 0.5,
                         show: true
                     }
+                },
+                grid: {
+                    hoverable: true
+                }
+            });
+            $('#pieOrg').bind("plothover", function (event, pos, item) {
+                if (item) {
+                    $("#tooltip").html(legendFormatter(item.series.label))
+                        .css({top: pos.pageY+5, left: pos.pageX+5})
+                        .fadeIn(200);
+                } else {
+                    $("#tooltip").hide();
                 }
             });
         }
@@ -162,5 +190,10 @@ $(document).ready(function () {
     updateDatePieOrg();
     updateDatePieApi();
     updateDateOvertime();
+
+    $("<div id='tooltip'></div>").css({
+        position: "absolute",
+        display: "none",
+    }).appendTo("body");
 
 });
