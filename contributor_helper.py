@@ -23,7 +23,7 @@ class Contributor_helper:
             self.org_honor_badge_title[badgeNum] = self.cfg_org_rank.get('HonorBadge', str(badgeNum))
 
         self.trophyDifficulty = self.cfg_org_rank.getfloat('TrophyDifficulty', 'difficulty')
-        self.trophyNum = len(self.cfg_org_rank.options('HonorTrophyCateg'))
+        self.trophyNum = len(self.cfg_org_rank.options('HonorTrophy'))-1 #0 is not a trophy
         self.categories_in_trophy = json.loads(self.cfg_org_rank.get('HonorTrophyCateg', 'categ'))
         self.trophy_title = {}
         for trophyNum in range(0, len(self.cfg_org_rank.options('HonorTrophy'))): #get Num of trophy
@@ -475,12 +475,12 @@ class Contributor_helper:
         elif points == 1:
             return 1
         else:
-            return float("{:.2f}".format(math.sqrt(points/self.trophyDifficulty)))
+            rank = math.sqrt(points/self.trophyDifficulty)
+            rank = min(self.trophyNum, rank)
+            return float("{:.2f}".format(rank))
 
     def getTrueRankTrophy(self, ptns):
-        to_ret = int(self.getRankTrophy(ptns))
-        to_ret = len(self.trophy_title) if to_ret > len(self.trophy_title) else to_ret
-        return to_ret
+        return int(self.getRankTrophy(ptns))
 
     '''           '''
     ''' TEST DATA '''
