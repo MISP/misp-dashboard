@@ -23,16 +23,14 @@ var datePickerOptions = {
 var lineChartOption = {
     lines: {
         show: true,
-        steps: true,
         fill: true
     },
+    points: { show: true },
     xaxis: {
         mode: "time",
         minTickSize: [1, "day"],
     },
-    legend: {
-        show: false,
-    }
+    legend: { show: false }
 };
 var pieChartOption = {
     series: {
@@ -138,6 +136,7 @@ function updateLine(line, data) {
     allDates = [];
     for (var arr of data) {
         var date = new Date(arr[0]*1000);
+        date = new Date(date.valueOf() - date.getTimezoneOffset() * 60000); // center the data around the day
         allDates.push(date);
         var items = arr[1];
         if (items.length > 0) {
