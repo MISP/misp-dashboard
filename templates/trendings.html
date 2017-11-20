@@ -27,6 +27,7 @@
     <script src="{{ url_for('static', filename='js/jquery.flot.time.js') }}"></script>
     <!-- Bootstrap Core JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap3-typeahead.min.js') }}"></script>
     <link href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-jvectormap-2.0.3.css') }}" type="text/css" media="screen"/>
@@ -138,6 +139,7 @@ small {
                             <div class="panel panel-default" style="">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
                                     <b>Most active events</b>
+                                    <input type="text" id="typeaheadEvent" data-provide="typeahead" size="20" style="margin-bottom: 5px; float:right;" placeholder="Enter an event">
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
                                     <div id="eventPie" style="width:100%; height: 34vh;"></div>
@@ -150,6 +152,7 @@ small {
                             <div class="panel panel-default" style="">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
                                     <b>Most active categories</b>
+                                    <input type="text" id="typeaheadCateg" data-provide="typeahead" size="20" style="margin-bottom: 5px; float:right;" placeholder="Enter a category">
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
                                     <div id="categPie" style="width:100%; height: 34vh;"></div>
@@ -162,6 +165,7 @@ small {
                             <div class="panel panel-default" style="">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
                                     <b>Most popular tags</b>
+                                    <input type="text" id="typeaheadTag" data-provide="typeahead" size="20" style="margin-bottom: 5px; float:right;" placeholder="Enter a tag">
                                 </div>
                                 <div id="panelbody" class="panel-body" style="">
                                     <div id="tagPie" style="width:100%; height: 34vh;"></div>
@@ -213,6 +217,8 @@ small {
         var url_getTrendingTag = "{{ url_for('getTrendingTags') }}";
         var url_getTrendingSightings = "{{ url_for('getTrendingSightings') }}";
         var url_getTrendingDisc = "{{ url_for('getTrendingDisc') }}";
+
+        var url_getTypeaheadData = "{{ url_for('getTypeaheadData') }}";
 
         /* DATA FROM CONF */
 

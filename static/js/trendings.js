@@ -9,6 +9,7 @@ var tagPie = ["#tagPie"];
 var tagLine = ["#tagLine"];
 var sightingLineWidget;
 var discLine = ["#discussionLine"];
+var allData;
 
 /* OPTIONS */
 var datePickerOptions = {
@@ -57,6 +58,51 @@ var pieChartOption = {
         clickable: true
     }
 };
+var typeaheadOption_event = {
+    source: function (query, process) {
+        if (allData === undefined) { // caching
+            return $.getJSON(url_getTypeaheadData, function (data) {
+                    allData = data;
+                    return process(data.TRENDINGS_EVENTS);
+            });
+        } else {
+            return process(allData.TRENDINGS_EVENTS);
+        }
+    },
+    updater: function(theevent) {
+        console.log(theevent);
+    }
+}
+var typeaheadOption_categ = {
+    source: function (query, process) {
+        if (allData  === undefined) { // caching
+            return $.getJSON(url_getTypeaheadData, function (data) {
+                    allData = data;
+                    return process(data.TRENDINGS_CATEGS);
+            });
+        } else {
+            return process(allData.TRENDINGS_CATEGS);
+        }
+    },
+    updater: function(categ) {
+        console.log(categ);
+    }
+}
+var typeaheadOption_tag = {
+    source: function (query, process) {
+        if (allData === undefined) { // caching
+            return $.getJSON(url_getTypeaheadData, function (data) {
+                    allData = data;
+                    return process(data.TRENDINGS_TAGS);
+            });
+        } else {
+            return process(allData.TRENDINGS_TAGS);
+        }
+    },
+    updater: function(tag) {
+        console.log(tag);
+    }
+}
 
 /* FUNCTIONS */
 function innerPieLabelFormatter(label, series) {
@@ -306,7 +352,6 @@ function updateLineForLabel(line, specificLabel, colorMapping, url) {
 function updatePieLine(pie, line, url) {
     $.getJSON( url+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
         var colorMapping = updatePie(pie, line, data, url);
-        console.log(colorMapping);
         updateLine(line, data, undefined, undefined, colorMapping);
     });
 }
@@ -340,6 +385,10 @@ $(document).ready(function () {
     datePickerWidgetEnd = $( "#datepickerEnd" ).datepicker(datePickerOptions);
     datePickerWidgetEnd.datepicker("setDate", new Date());
     dateEnd = datePickerWidgetEnd.datepicker( "getDate" );
+
+    $('#typeaheadEvent').typeahead(typeaheadOption_event);
+    $('#typeaheadCateg').typeahead(typeaheadOption_categ);
+    $('#typeaheadTag').typeahead(typeaheadOption_tag);
 
     updatePieLine(eventPie, eventLine, url_getTrendingEvent)
     updatePieLine(categPie, categLine, url_getTrendingCateg)

@@ -71,6 +71,7 @@ class Trendings_helper:
     def getTrendingCategs(self, dateS, dateE):
         return self.getGenericTrending('TRENDINGS_CATEGS', dateS, dateE)
 
+    # FIXME: Construct this when getting data
     def getTrendingTags(self, dateS, dateE, topNum=12):
         to_ret = []
         prev_days = (dateE - dateS).days
@@ -101,3 +102,24 @@ class Trendings_helper:
 
     def getTrendingDisc(self, dateS, dateE):
         return self.getGenericTrending('TRENDINGS_DISC', dateS, dateE)
+
+    def getTypeaheadData(self, dateS, dateE):
+        to_ret = {}
+        for trendingType in ['TRENDINGS_EVENTS', 'TRENDINGS_CATEGS']:
+            allSet = set()
+            prev_days = (dateE - dateS).days
+            for curDate in util.getXPrevDaysSpan(dateE, prev_days):
+                keyname = "{}:{}".format(trendingType, util.getDateStrFormat(curDate))
+                data = self.serv_redis_db.zrange(keyname, 0, -1, desc=True)
+                for elem in data:
+                    allSet.add(elem.decode('utf8'))
+            to_ret[trendingType] = list(allSet)
+        tags = self.getTrendingTags(dateS, dateE)
+        tagSet = set()
+        for item in tags:
+            theDate, tagList = item
+            for tag in tagList:
+                tag = tag[0]
+                tagSet.add(tag['name'])
+        to_ret['TRENDINGS_TAGS'] = list(tagSet)
+        return to_ret
