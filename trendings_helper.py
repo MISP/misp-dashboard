@@ -54,7 +54,7 @@ class Trendings_helper:
 
     ''' GETTER '''
 
-    def getGenericTrending(self, trendingType, dateS, dateE, topNum=12):
+    def getGenericTrending(self, trendingType, dateS, dateE, topNum=0):
         to_ret = []
         prev_days = (dateE - dateS).days
         for curDate in util.getXPrevDaysSpan(dateE, prev_days):

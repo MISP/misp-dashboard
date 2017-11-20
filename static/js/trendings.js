@@ -144,6 +144,13 @@ function generateEmptyAndFillData(data) {
     return toPlot;
 }
 
+function compareObj(a,b) {
+  if (a.data < b.data)
+    return -1;
+  if (a.data > b.data)
+    return 1;
+  return 0;
+}
 /* UPDATES */
 
 function updatePie(pie, data) {
@@ -166,14 +173,19 @@ function updatePie(pie, data) {
                 toPlot_obj[itemStr] += count;
             }
         }
-        toPlot = [];
-        for (var itemStr in toPlot_obj) {
-            if (toPlot_obj.hasOwnProperty(itemStr)) {
-                toPlot.push({label: itemStr, data: toPlot_obj[itemStr], color: itemMapping[itemStr].colour})
+        if (Object.keys(toPlot_obj).length == 0) { // no data
+            toPlot = [{ label: 'No data', data: 100 }];
+        } else {
+            toPlot = [];
+            for (var itemStr in toPlot_obj) {
+                if (toPlot_obj.hasOwnProperty(itemStr)) {
+                    toPlot.push({label: itemStr, data: toPlot_obj[itemStr], color: itemMapping[itemStr].colour})
+                }
             }
         }
+        toPlot.sort(compareObj).reverse();
+        toPlot = toPlot.slice(0,15); // take at max 12 elements
     }
-
     if (!(pieWidget === undefined)) {
         pieWidget.setData(toPlot);
         pieWidget.setupGrid();
