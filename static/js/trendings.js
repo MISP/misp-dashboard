@@ -53,7 +53,8 @@ var pieChartOption = {
         labelFormatter: legendFormatter
     },
     grid: {
-        hoverable: true
+        hoverable: true,
+        clickable: true
     }
 };
 
@@ -106,7 +107,7 @@ function legendFormatter(label, series) {
     }
 }
 
-function generateEmptyAndFillData(data) {
+function generateEmptyAndFillData(data, specificLabel) {
     // formating - Generate empty data
     var toPlot_obj = {};
     var allDates = [];
@@ -121,9 +122,11 @@ function generateEmptyAndFillData(data) {
                 var count = item_arr[1];
                 var itemStr = JSON.stringify(item_arr[0]);
                 itemMapping[itemStr] = item_arr[0];
-                if(toPlot_obj[itemStr] === undefined)
-                    toPlot_obj[itemStr] = {};
-                toPlot_obj[itemStr][date] = count;
+                if (specificLabel === undefined || specificLabel == itemStr) {
+                    if(toPlot_obj[itemStr] === undefined)
+                        toPlot_obj[itemStr] = {};
+                    toPlot_obj[itemStr][date] = count;
+                }
             }
         }
     }
@@ -153,7 +156,7 @@ function compareObj(a,b) {
 }
 /* UPDATES */
 
-function updatePie(pie, data) {
+function updatePie(pie, line, data) {
     var pieID = pie[0];
     var pieWidget = pie[1];
     var itemMapping = {};
@@ -193,6 +196,7 @@ function updatePie(pie, data) {
     } else {
         pieWidget = $.plot(pieID, toPlot, pieChartOption);
         pie.push(pieWidget);
+        // Hover
         $(pieID).bind("plothover", function (event, pos, item) {
             if (item) {
                 $("#tooltip").html(legendFormatter(item.series.label))
@@ -202,14 +206,19 @@ function updatePie(pie, data) {
                 $("#tooltip").hide();
             }
         });
+        // Click
+        $(pieID).bind("plotclick", function(event, pos, obj) {
+            if (!obj) { return; }
+            updateLine(line, data, undefined, obj.series.label)
+        });
     }
 }
 
-function updateLine(line, data, chartOptions) {
+function updateLine(line, data, chartOptions, specificLabel) {
     lineID = line[0];
     lineWidget = line[1];
 
-    toPlot = generateEmptyAndFillData(data);
+    toPlot = generateEmptyAndFillData(data, specificLabel);
     // plot
     if (!(lineWidget === undefined)) {
         lineWidget.setData(toPlot);
@@ -267,9 +276,15 @@ function updateSignthingsChart() {
         });
 }
 
+function updateLineForLabel(line, specificLabel) {
+    $.getJSON( url+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
+        updateLine(line, data, undefined, specificLabel);
+    });
+}
+
 function updatePieLine(pie, line, url) {
     $.getJSON( url+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
-        updatePie(pie, data);
+        updatePie(pie, line, data);
         updateLine(line, data);
     });
 }
