@@ -361,7 +361,10 @@ def process_log(zmq_name, event):
     topic, eventdata = event.split(' ', maxsplit=1)
     jsonevent = json.loads(eventdata)
     print(event)
-    dico_action[topic](zmq_name, jsonevent)
+    try:
+        dico_action[topic](zmq_name, jsonevent)
+    except KeyError as e:
+        print(e)
 
 
 def main(zmqName):
@@ -386,7 +389,8 @@ dico_action = {
         "misp_json_sighting":       handler_sighting,
         "misp_json_organisation":   handler_log,
         "misp_json_user":           handler_user,
-        "misp_json_conversation":   handler_conversation
+        "misp_json_conversation":   handler_conversation,
+        "misp_json_object_reference": handler_log,
         }
 
 
