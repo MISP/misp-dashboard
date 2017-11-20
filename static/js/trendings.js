@@ -107,11 +107,10 @@ function legendFormatter(label, series) {
     }
 }
 
-function generateEmptyAndFillData(data, specificLabel) {
+function generateEmptyAndFillData(data, specificLabel, colorMapping) {
     // formating - Generate empty data
     var toPlot_obj = {};
     var allDates = [];
-    var itemMapping = {};
     for (var arr of data) {
         var date = new Date(arr[0]*1000);
         date = new Date(date.valueOf() - date.getTimezoneOffset() * 60000); // center the data around the day
@@ -121,7 +120,6 @@ function generateEmptyAndFillData(data, specificLabel) {
             for(var item_arr of items) {
                 var count = item_arr[1];
                 var itemStr = JSON.stringify(item_arr[0]);
-                itemMapping[itemStr] = item_arr[0];
                 if (specificLabel === undefined || specificLabel == itemStr) {
                     if(toPlot_obj[itemStr] === undefined)
                         toPlot_obj[itemStr] = {};
@@ -141,7 +139,16 @@ function generateEmptyAndFillData(data, specificLabel) {
                     data_toPlot.push([curDate, 0])
                 }
             }
-            toPlot.push({label: itemStr, data: data_toPlot, color: itemMapping[itemStr].colour})
+            if (colorMapping === undefined) { // is a discussion
+                toPlot.push({label: itemStr, data: data_toPlot})
+            } else {
+                try {
+                    var color = colorMapping[itemStr].colour;
+                    toPlot.push({label: itemStr, data: data_toPlot, color: color})
+                } catch(err) {
+                    // ignore, only shows data displayed in the pie chart
+                }
+            }
         }
     }
     return toPlot;
@@ -156,10 +163,12 @@ function compareObj(a,b) {
 }
 /* UPDATES */
 
-function updatePie(pie, line, data) {
+// return the color maping: label->color
+function updatePie(pie, line, data, url) {
     var pieID = pie[0];
     var pieWidget = pie[1];
     var itemMapping = {};
+    var colorMapping = {};
     if (data === undefined || data.length == 0 || (data[0] == 0 && data[1] == 0)) {
         toPlot = [{ label: 'No data', data: 100 }];
     } else {
@@ -182,7 +191,9 @@ function updatePie(pie, line, data) {
             toPlot = [];
             for (var itemStr in toPlot_obj) {
                 if (toPlot_obj.hasOwnProperty(itemStr)) {
-                    toPlot.push({label: itemStr, data: toPlot_obj[itemStr], color: itemMapping[itemStr].colour})
+                    var itemColor = itemMapping[itemStr].colour
+                    colorMapping[itemStr] = itemColor;
+                    toPlot.push({label: itemStr, data: toPlot_obj[itemStr], color: itemColor})
                 }
             }
         }
@@ -193,6 +204,10 @@ function updatePie(pie, line, data) {
         pieWidget.setData(toPlot);
         pieWidget.setupGrid();
         pieWidget.draw();
+        // fill colorMapping
+        for (item of pieWidget.getData()) {
+            colorMapping[item.label] = {colour: item.color};
+        }
     } else {
         pieWidget = $.plot(pieID, toPlot, pieChartOption);
         pie.push(pieWidget);
@@ -209,16 +224,22 @@ function updatePie(pie, line, data) {
         // Click
         $(pieID).bind("plotclick", function(event, pos, obj) {
             if (!obj) { return; }
-            updateLine(line, data, undefined, obj.series.label)
+            var specificLabel = obj.series.label;
+            colorMapping[specificLabel] = {};
+            colorMapping[specificLabel] =  { colour: obj.series.color };
+            updateLineForLabel(line, specificLabel, colorMapping, url);
         });
+        for (item of pieWidget.getData()) {
+            colorMapping[item.label] = {colour: item.color};
+        }
     }
+    return colorMapping;
 }
 
-function updateLine(line, data, chartOptions, specificLabel) {
+function updateLine(line, data, chartOptions, specificLabel, colorMapping) {
     lineID = line[0];
     lineWidget = line[1];
-
-    toPlot = generateEmptyAndFillData(data, specificLabel);
+    toPlot = generateEmptyAndFillData(data, specificLabel, colorMapping);
     // plot
     if (!(lineWidget === undefined)) {
         lineWidget.setData(toPlot);
@@ -276,16 +297,17 @@ function updateSignthingsChart() {
         });
 }
 
-function updateLineForLabel(line, specificLabel) {
+function updateLineForLabel(line, specificLabel, colorMapping, url) {
     $.getJSON( url+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
-        updateLine(line, data, undefined, specificLabel);
+        updateLine(line, data, undefined, specificLabel, colorMapping);
     });
 }
 
 function updatePieLine(pie, line, url) {
     $.getJSON( url+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
-        updatePie(pie, line, data);
-        updateLine(line, data);
+        var colorMapping = updatePie(pie, line, data, url);
+        console.log(colorMapping);
+        updateLine(line, data, undefined, undefined, colorMapping);
     });
 }
 
