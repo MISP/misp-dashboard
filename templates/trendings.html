@@ -117,6 +117,18 @@ small {
                       <li><a href="{{ url_for('trendings') }}">MISP Trendings</a></li>
                     </ul>
                 <div class='leftSepa textTopHeader'>
+                    <strong>Max display:
+                        <select id="num_selector">
+                            <option value="1" {% if maxNum == 1 %}selected=""{% endif %}>1</option>
+                            <option value="3" {% if maxNum == 3 %}selected=""{% endif %}>3</option>
+                            <option value="5" {% if maxNum == 5 %}selected=""{% endif %}>5</option>
+                            <option value="10" {% if maxNum == 10 %}selected=""{% endif %}>10</option>
+                            <option value="15" {% if maxNum == 15 %}selected=""{% endif %}>15</option>
+                            <option value="20" {% if maxNum == 20 %}selected=""{% endif %}>20</option>
+                        </select>
+                    </strong>
+                </div>
+                <div class='leftSepa textTopHeader'>
                     <strong>Date:
                         <input type="text" id="datepickerStart" size="30" style="margin-bottom: 5px;">
                         <strong> to </strong>
@@ -212,6 +224,7 @@ small {
     <script>
         /* URL */
         var urlIconCalendar = "{{ url_for('static', filename='pics/calendar.gif') }}";
+        var url_currentPage = "{{ url_for('trendings') }}";
         var url_getTrendingEvent = "{{ url_for('getTrendingEvents') }}";
         var url_getTrendingCateg = "{{ url_for('getTrendingCategs') }}";
         var url_getTrendingTag = "{{ url_for('getTrendingTags') }}";

@@ -205,7 +205,14 @@ def users():
 
 @app.route("/trendings")
 def trendings():
+    maxNum = request.args.get('maxNum')
+    try:
+        maxNum = int(maxNum)
+    except:
+        maxNum = 15
+
     return render_template('trendings.html',
+            maxNum=maxNum
             )
 
 ''' INDEX '''

@@ -268,7 +268,8 @@ function updatePie(pie, line, data, url) {
             }
         }
         toPlot.sort(compareObj).reverse();
-        toPlot = toPlot.slice(0,15); // take at max 12 elements
+        var maxNum = $('#num_selector').val();
+        toPlot = toPlot.slice(0,maxNum); // take at max 12 elements
     }
     if (!(pieWidget === undefined)) {
         pieWidget.setData(toPlot);
@@ -424,6 +425,12 @@ $(document).ready(function () {
     updatePieLine(tagPie, tagLine, url_getTrendingTag)
     updateSignthingsChart();
     updateDisc();
+
+    $( "#num_selector" ).change(function() {
+        var sel = parseInt($( this ).val());
+        var maxNum = sel;
+        window.location.href = url_currentPage+'?maxNum='+maxNum;
+    });
 
     $("<div id='tooltip'></div>").css({
         position: "absolute",
