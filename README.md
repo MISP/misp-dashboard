@@ -1,6 +1,25 @@
 # MISP-Dashboard
 An experimental dashboard showing live data and statistics from the ZMQ of one or more MISP instances.
 
+
+# Installation
+- Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory
+- Update the configuration file ```config.cfg``` so that it matches your system
+  - Fields that you may change:
+    - RedisGlobal -> host
+    - RedisGlobal -> port
+    - RedisGlobal -> zmq_url
+    - RedisGlobal -> misp_web_url
+    - RedisMap    -> pathMaxMindDB
+
+# Starting the System
+- Activate your virtualenv ```. ./DASHENV/bin/activate```
+- Listen to the MISP feed by starting the zmq_subscriber ```./zmq_subscriber.py```
+- Start the Flask server ```./server.py```
+- Access the interface at ```http://localhost:8001/```
+
+# Features
+
 ## Live Dashboard
 - Possibility to subscribe to multiple ZMQ feeds
 - Shows direct contribution made by organisations
@@ -49,22 +68,6 @@ __Includes__:
 
 ![Dashboard users](./screenshots/dashboard-trendings.png)
 
-# Installation
-- Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory
-- Update the configuration file ```config.cfg``` so that it matches your system
-  - Fields that you may change:
-    - RedisGlobal -> host
-    - RedisGlobal -> port
-    - RedisGlobal -> zmq_url
-    - RedisGlobal -> misp_web_url
-    - RedisMap    -> pathMaxMindDB
-
-# Starting the System
-- Activate your virtualenv ```. ./DASHENV/bin/activate```
-- Listen to the MISP feed by starting the zmq_subscriber ```./zmq_subscriber.py```
-- Start the Flask server ```./server.py```
-- Access the interface at ```http://localhost:8001/```
-
 # zmq_subscriber options
 ```usage: zmq_subscriber.py [-h] [-n ZMQNAME] [-u ZMQURL]
 
@@ -78,7 +81,7 @@ optional arguments:
                         The URL to connect to
 ```
 
-## License
+# License
 Images and logos are handmade for:
 - rankingMISPOrg/
 - rankingMISPMonthly/
