@@ -86,7 +86,7 @@ var optionDatatable_Categ = {
     responsive: true,
     searching: true,
     "order": [[ 0, "desc" ]],
-    scrollY:        '38vh',
+    scrollY:        '35vh',
     "scrollX": true,
     scrollCollapse: true,
     paging:         false,
@@ -101,6 +101,7 @@ var optionDatatable_awards = jQuery.extend({}, optionDatatable_light);
 optionDatatable_awards["ordering"] = true;
 optionDatatable_awards["order"] = [[ 0, "dec" ]];
 optionDatatable_awards["scrollX"] = false;
+optionDatatable_awards["scrollY"] = "40vh";
 optionDatatable_awards.columnDefs = [
     { className: "small", "targets": [ 0 ] },
     { className: "centerCellPicOrgLogo", "targets": [ 1 ] },
@@ -358,7 +359,7 @@ function addLastContributor(datatable, data, update) {
                 datatable.row( this ).data( to_add );
                 if(next_effect <= new Date()) {
                     node.effect("slide", 500);
-                    next_effect.setSeconds(next_effect.getSeconds() + 5);
+                    next_effect.setSeconds((new Date()).getSeconds() + 5);
                 }
                 row_added = true;
             }
