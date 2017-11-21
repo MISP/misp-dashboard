@@ -10,6 +10,7 @@ var tagLine = ["#tagLine"];
 var sightingLineWidget;
 var discLine = ["#discussionLine"];
 var allData;
+var globalColorMapping = {};
 
 /* OPTIONS */
 var datePickerOptions = {
@@ -85,7 +86,7 @@ var typeaheadOption_categ = {
         }
     },
     updater: function(categ) {
-        console.log(categ);
+        updateLineForLabel(categLine, categ, undefined, url_getTrendingCateg);
     }
 }
 var typeaheadOption_tag = {
@@ -100,11 +101,20 @@ var typeaheadOption_tag = {
         }
     },
     updater: function(tag) {
-        console.log(tag);
+        updateLineForLabel(tagLine, tag, undefined, url_getTrendingTag);
     }
 }
 
 /* FUNCTIONS */
+function getColor(label) {
+    try {
+        return globalColorMapping[label];
+    } catch(err) {
+        return undefined;
+    }
+
+}
+
 function innerPieLabelFormatter(label, series) {
     var count = series.data[0][1];
     return '<div '
@@ -166,7 +176,15 @@ function generateEmptyAndFillData(data, specificLabel, colorMapping) {
             for(var item_arr of items) {
                 var count = item_arr[1];
                 var itemStr = JSON.stringify(item_arr[0]);
-                if (specificLabel === undefined || specificLabel == item_arr[0]) {
+                if (specificLabel === undefined || specificLabel == item_arr[0]) { // no tag
+                    if(toPlot_obj[itemStr] === undefined)
+                        toPlot_obj[itemStr] = {};
+                    toPlot_obj[itemStr][date] = count;
+                } else if (specificLabel == item_arr[0].name) { // tag
+                    if(toPlot_obj[itemStr] === undefined)
+                        toPlot_obj[itemStr] = {};
+                    toPlot_obj[itemStr][date] = count;
+                } else if (specificLabel == itemStr.substring(1, itemStr.length-1)) { // tag from click (countain { and }, need to supress it)
                     if(toPlot_obj[itemStr] === undefined)
                         toPlot_obj[itemStr] = {};
                     toPlot_obj[itemStr][date] = count;
@@ -185,8 +203,14 @@ function generateEmptyAndFillData(data, specificLabel, colorMapping) {
                     data_toPlot.push([curDate, 0])
                 }
             }
-            if (colorMapping === undefined) { // is a discussion
-                toPlot.push({label: itemStr, data: data_toPlot})
+            if (colorMapping === undefined) {
+                //try to get color, else no color
+                var colorCode = getColor(itemStr);
+                if (!( colorCode === undefined)) {
+                    toPlot.push({label: itemStr, data: data_toPlot, color: colorCode})
+                } else {
+                    toPlot.push({label: itemStr, data: data_toPlot})
+                }
             } else {
                 try {
                     var color = colorMapping[itemStr].colour;
@@ -352,6 +376,11 @@ function updateLineForLabel(line, specificLabel, colorMapping, url) {
 function updatePieLine(pie, line, url) {
     $.getJSON( url+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
         var colorMapping = updatePie(pie, line, data, url);
+        for (var item in colorMapping) {
+            if (colorMapping.hasOwnProperty(item) && colorMapping[item] != undefined) {
+                globalColorMapping[item] = colorMapping[item].colour;
+            }
+        }
         updateLine(line, data, undefined, undefined, colorMapping);
     });
 }
