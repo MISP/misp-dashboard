@@ -25,7 +25,6 @@ var datePickerOptions = {
 var lineChartOption = {
     lines: {
         show: true,
-        fill: true
     },
     points: { show: true },
     xaxis: {
@@ -363,6 +362,7 @@ function updateSignthingsChart() {
                 lineChartOptionSight['legend']['show'] = true;
                 lineChartOptionSight['legend']['position'] = 'nw';
                 lineChartOptionSight['grid'] = {};
+                lineChartOptionSight['lines']['fill'] = true;
                 sightingLineWidget = $.plot("#sightingLine", toPlot, lineChartOptionSight);
             }
         });
@@ -390,6 +390,7 @@ function updateDisc() {
     var lineChartOptionDisc = jQuery.extend(true, {}, lineChartOption);
     lineChartOptionDisc['legend']['show'] = true;
     lineChartOptionDisc['legend']['position'] = 'nw';
+    lineChartOptionDisc['lines']['fill'] = true;
     $.getJSON( url_getTrendingDisc+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
         updateLine(discLine, data, lineChartOptionDisc);
     });
