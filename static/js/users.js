@@ -123,13 +123,25 @@ function updateDateOvertime() {
     } else {
         date.setTime(date.getTime() + (24*60*60*1000-1)); // include data of selected date
     }
-    $.getJSON( url_getUserLoginsOvertime+"?date="+parseInt(date.getTime()/1000), function( data ) {
-        temp = [];
+    $.getJSON( url_getUserLoginsAndContribOvertime+"?date="+parseInt(date.getTime()/1000), function( data ) {
+        console.log(data);
+        data_log = data['login'];
+        data_contrib = data['contrib'];
+        temp_log = [];
         var i=0;
-        for (item of data) {
-            temp.push([new Date(item[0]*1000), item[1]]);
+        for (item of data_log) {
+            var date = new Date(item[0]*1000);
+            date = new Date(date.valueOf() - date.getTimezoneOffset() * 60000); // center the data around the day
+            temp_log.push([date, item[1]]);
         }
-        toPlot = [{label: 'Login overtime', data: temp}];
+        temp_contrib= [];
+        var i=0;
+        for (item of data_contrib) {
+            var date = new Date(item[0]*1000);
+            date = new Date(date.valueOf() - date.getTimezoneOffset() * 60000); // center the data around the day
+            temp_contrib.push([date, item[1]]);
+        }
+        toPlot = [{label: 'Login', data: temp_log}, {label: 'Contribution', data: temp_contrib}];
         if (!(overtimeWidget === undefined)) {
             overtimeWidget.setData(toPlot);
             overtimeWidget.setupGrid();
