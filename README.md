@@ -6,14 +6,14 @@ An experimental dashboard showing live data and statistics from the ZMQ of one o
 - Shows direct contribution made by organisations
 - Shows live resolvable posted locations
 
-![MISP event view](./screenshots/dashboard-live.png)
+![Dashboard live](./screenshots/dashboard-live.png)
 
 ## Geolocalisation Dashboard
 
 - Provides historical geolocalised information to support security teams, CSIRTs or SOC finding threats in their constituency
 - Possibility to get geospatial information from specific regions
 
-![MISP event view](./screenshots/dashboard-geo.png)
+![Dashbaord geo](./screenshots/dashboard-geo.png)
 
 ## Contributors Dashboard
 
@@ -29,10 +29,25 @@ __Includes__:
 - Gamification of the platform:
   - Two different levels of ranking with unique icons
   - Exclusive obtainable badges for source code contributors and donator
-  
-![Dashboard-contributor2](./screenshots/dashboard-contributors2.png)
-![Dashboard-contributor3](./screenshots/dashboard-contributors3.png)
 
+![Dashboard contributor](./screenshots/dashboard-contributors2.png)
+![Dashboard contributor2](./screenshots/dashboard-contributors3.png)
+
+## Users Dashboard
+
+- Shows when and how the platform is used:
+    - Login punchcard and overtime
+    - Contribution vs login
+
+![Dashboard users](./screenshots/dashboard-users.png)
+
+## Trendings Dashboard
+
+- Provides real time information to support security teams, CSIRTs or SOC showing current threats and activity
+    - Shows most active events, categories and tags
+    - Shows sightings and discussion overtime
+
+![Dashboard users](./screenshots/dashboard-trendings.png)
 
 # Installation
 - Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory
@@ -42,7 +57,8 @@ __Includes__:
     - RedisGlobal -> port
     - RedisGlobal -> zmq_url
     - RedisGlobal -> misp_web_url
-    
+    - RedisMap    -> pathMaxMindDB
+
 # Starting the System
 - Activate your virtualenv ```. ./DASHENV/bin/activate```
 - Listen to the MISP feed by starting the zmq_subscriber ```./zmq_subscriber.py```
