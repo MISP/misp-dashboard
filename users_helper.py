@@ -146,7 +146,10 @@ class Users_helper:
             for timestamp in timestamps: # sum occurence during the current hour
                 dateTimestamp = datetime.datetime.fromtimestamp(float(timestamp))
                 dateTimestamp = dateTimestamp.replace(minute=0, second=0, microsecond=0)
-                dico_hours[util.getTimestamp(dateTimestamp)] += 1
+                try:
+                    dico_hours[util.getTimestamp(dateTimestamp)] += 1
+                except KeyError: # timestamp out of bound (greater than 1 week)
+                    pass
 
         # Format data
         data = []
