@@ -145,6 +145,16 @@
     padding-left: 5px;
 }
 
+.col-lg-3 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.col-lg-9 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
 .col-lg-12 {
     padding-right: 5px;
     padding-left: 5px;
