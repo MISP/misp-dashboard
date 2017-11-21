@@ -79,6 +79,7 @@ class Trendings_helper:
         if specificLabel is None:
             return self.getGenericTrending('TRENDINGS_EVENTS', dateS, dateE)
         else:
+            specificLabel = specificLabel.replace('\\n', '\n'); # reset correctly label with their \n (CR) instead of their char value
             return self.getSpecificTrending('TRENDINGS_EVENTS', dateS, dateE, specificLabel)
 
     def getTrendingCategs(self, dateS, dateE):
