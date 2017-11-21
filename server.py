@@ -480,6 +480,16 @@ def getLoginVSCOntribution():
     data = users_helper.getLoginVSCOntribution(date)
     return jsonify(data)
 
+@app.route("/_getUserLoginsAndContribOvertime")
+def getUserLoginsAndContribOvertime():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = users_helper.getUserLoginsAndContribOvertime(date)
+    return jsonify(data)
+
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)

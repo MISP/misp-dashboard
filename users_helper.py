@@ -136,13 +136,22 @@ class Users_helper:
         data = [data[6]]+data[:6]
         return data
 
-    def getUserLoginsOvertime(self, date, prev_days=6):
+    def getUserLoginsAndContribOvertime(self, date, prev_days=6):
+        dico_hours_contrib = {}
         dico_hours = {}
         for curDate in util.getXPrevHoursSpan(date, prev_days*24):
             dico_hours[util.getTimestamp(curDate)] = 0 # populate with empty data
+            dico_hours_contrib[util.getTimestamp(curDate)] = 0 # populate with empty data
 
         for curDate in util.getXPrevDaysSpan(date, prev_days):
             timestamps = self.getUserLogins(curDate)
+            keyname = "CONTRIB_DAY:{}".format(util.getDateStrFormat(curDate))
+
+            orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=False)
+            orgs_contri_num = len(orgs_contri)
+            for curDate in util.getHoursSpanOfDate(curDate, adaptToFitCurrentTime=True): #fill hole day
+                dico_hours_contrib[util.getTimestamp(curDate)] = orgs_contri_num
+
             for timestamp in timestamps: # sum occurence during the current hour
                 dateTimestamp = datetime.datetime.fromtimestamp(float(timestamp))
                 dateTimestamp = dateTimestamp.replace(minute=0, second=0, microsecond=0)
@@ -152,9 +161,18 @@ class Users_helper:
                     pass
 
         # Format data
+        # login
+        to_ret = {}
         data = []
         for curDate, occ in dico_hours.items():
             data.append([curDate, occ])
-
         data.sort(key=lambda x: x[0])
-        return data
+        to_ret['login'] = data
+        # contrib
+        data = []
+        for curDate, occ in dico_hours_contrib.items():
+            data.append([curDate, occ])
+        data.sort(key=lambda x: x[0])
+        to_ret['contrib'] = data
+
+        return to_ret
