@@ -103,7 +103,7 @@ git clone https://github.com/bassjobsen/Bootstrap-3-Typeahead.git temp/Bootstrap
 mv temp/Bootstrap-3-Typeahead/bootstrap3-typeahead.min.js ./static/js
 
 #punchcard
-git clone https://github.com/melenaos/jquery-punchcard.git tmep/jquery-punchcard
+git clone https://github.com/melenaos/jquery-punchcard.git temp/jquery-punchcard
 mv temp/jquery-punchcard/src/punchcard.js ./static/js
 mv temp/jquery-punchcard/src/punchcard.css ./static/css
 wget https://momentjs.com/downloads/moment.js -O ./static/js
