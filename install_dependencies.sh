@@ -102,4 +102,10 @@ wget https://cdn.datatables.net/${DATATABLE_VERSION}/js/dataTables.bootstrap.js 
 git clone https://github.com/bassjobsen/Bootstrap-3-Typeahead.git temp/Bootstrap-3-Typeahead
 mv temp/Bootstrap-3-Typeahead/bootstrap3-typeahead.min.js ./static/js
 
+#punchcard
+git clone https://github.com/melenaos/jquery-punchcard.git tmep/jquery-punchcard
+mv temp/jquery-punchcard/src/punchcard.js ./static/js
+mv temp/jquery-punchcard/src/punchcard.css ./static/css
+wget https://momentjs.com/downloads/moment.js -O ./static/js
+
 rm -rf ./temp
