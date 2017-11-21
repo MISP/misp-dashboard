@@ -497,7 +497,8 @@ def getTrendingEvents():
         dateS = datetime.datetime.now() - datetime.timedelta(days=7)
         dateE = datetime.datetime.now()
 
-    data = trendings_helper.getTrendingEvents(dateS, dateE)
+    specificLabel = request.args.get('specificLabel')
+    data = trendings_helper.getTrendingEvents(dateS, dateE, specificLabel)
     return jsonify(data)
 
 @app.route("/_getTrendingCategs")

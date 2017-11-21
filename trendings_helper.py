@@ -65,8 +65,21 @@ class Trendings_helper:
             to_ret.append([util.getTimestamp(curDate), data])
         return to_ret
 
-    def getTrendingEvents(self, dateS, dateE):
-        return self.getGenericTrending('TRENDINGS_EVENTS', dateS, dateE)
+    def getSpecificTrending(self, trendingType, dateS, dateE, specificLabel=''):
+        to_ret = []
+        prev_days = (dateE - dateS).days
+        for curDate in util.getXPrevDaysSpan(dateE, prev_days):
+            keyname = "{}:{}".format(trendingType, util.getDateStrFormat(curDate))
+            data = self.serv_redis_db.zscore(keyname, specificLabel)
+            data = [[specificLabel, data]] if data is not None else []
+            to_ret.append([util.getTimestamp(curDate), data])
+        return to_ret
+
+    def getTrendingEvents(self, dateS, dateE, specificLabel=None):
+        if specificLabel is None:
+            return self.getGenericTrending('TRENDINGS_EVENTS', dateS, dateE)
+        else:
+            return self.getSpecificTrending('TRENDINGS_EVENTS', dateS, dateE, specificLabel)
 
     def getTrendingCategs(self, dateS, dateE):
         return self.getGenericTrending('TRENDINGS_CATEGS', dateS, dateE)

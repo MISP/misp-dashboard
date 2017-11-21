@@ -70,7 +70,7 @@ var typeaheadOption_event = {
         }
     },
     updater: function(theevent) {
-        console.log(theevent);
+        updateLineForLabel(eventLine, theevent, undefined, url_getTrendingEvent);
     }
 }
 var typeaheadOption_categ = {
@@ -166,7 +166,7 @@ function generateEmptyAndFillData(data, specificLabel, colorMapping) {
             for(var item_arr of items) {
                 var count = item_arr[1];
                 var itemStr = JSON.stringify(item_arr[0]);
-                if (specificLabel === undefined || specificLabel == itemStr) {
+                if (specificLabel === undefined || specificLabel == item_arr[0]) {
                     if(toPlot_obj[itemStr] === undefined)
                         toPlot_obj[itemStr] = {};
                     toPlot_obj[itemStr][date] = count;
@@ -273,7 +273,7 @@ function updatePie(pie, line, data, url) {
             var specificLabel = obj.series.label;
             colorMapping[specificLabel] = {};
             colorMapping[specificLabel] =  { colour: obj.series.color };
-            updateLineForLabel(line, specificLabel, colorMapping, url);
+            updateLineForLabel(line, specificLabel.substring(1, specificLabel.length-1), colorMapping, url);
         });
         for (item of pieWidget.getData()) {
             colorMapping[item.label] = {colour: item.color};
@@ -344,7 +344,7 @@ function updateSignthingsChart() {
 }
 
 function updateLineForLabel(line, specificLabel, colorMapping, url) {
-    $.getJSON( url+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
+    $.getJSON( url+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000)+"&specificLabel="+specificLabel, function( data ) {
         updateLine(line, data, undefined, specificLabel, colorMapping);
     });
 }
