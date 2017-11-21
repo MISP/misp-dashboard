@@ -150,8 +150,8 @@ function legendFormatter(label, series) {
         // removing unwanted "
         var label = label.replace(/\\"/g, "").replace(/\"/g, "");
         // limiting size
-        if (label.length >= 50){
-            labelLimited = label.substring(0, 50) + '[...]';
+        if (label.length >= 40){
+            labelLimited = label.substring(0, 40) + '[...]';
         }   else {
             labelLimited = label;
         }
