@@ -527,17 +527,24 @@ function updateProgressHeader(org) {
             categ = trophy_categ_list[i];
             $('#trophy_'+categ).attr('src', source);
             $('#trophy_'+categ).attr('title', "");
-            $('#trophy_'+categ).popover("destroy")
+            try { // in case popover not created
+                var pop = $('#trophy_'+categ).data('bs.popover');
+                pop.destroy();
+            } catch(err) {
+
+            }
         }
-        for(var i=0; i<data.length; i++) { // add
-            categ = data[i].categ;
-            rank = data[i].trophy_true_rank;
-            trophy_points = data[i].trophy_points
-            source = url_baseTrophyLogo+rank+'.png'
-            $('#trophy_'+categ).attr('src', source);
-            $('#trophy_'+categ).attr('title', trophy_title[rank]);
-            $('#trophy_'+categ).popover({title: trophy_title[rank], content: 'Level: '+rank+' ('+trophy_points+' points)', trigger: "hover", placement: "bottom"});
-        }
+        setTimeout(function() { // avoid race condition with destroy
+            for(var i=0; i<data.length; i++) { // add
+                categ = data[i].categ;
+                rank = data[i].trophy_true_rank;
+                trophy_points = data[i].trophy_points
+                source = url_baseTrophyLogo+rank+'.png'
+                $('#trophy_'+categ).attr('src', source);
+                $('#trophy_'+categ).attr('title', trophy_title[rank]);
+                $('#trophy_'+categ).popover({title: trophy_title[rank], content: 'Level: '+rank+' ('+trophy_points+' points)', trigger: "hover", placement: "bottom"});
+            }
+        }, 300);
     });
 
     //update overtake points
