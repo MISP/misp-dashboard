@@ -3,7 +3,7 @@
 set -e
 set -x
 
-sudo apt-get install python3-virtualenv -y
+sudo apt-get install python3-virtualenv virtualenv screen redis-server -y
 
 if [ -z "$VIRTUAL_ENV" ]; then
     virtualenv -p python3 DASHENV
@@ -106,6 +106,6 @@ mv temp/Bootstrap-3-Typeahead/bootstrap3-typeahead.min.js ./static/js
 git clone https://github.com/melenaos/jquery-punchcard.git temp/jquery-punchcard
 mv temp/jquery-punchcard/src/punchcard.js ./static/js
 mv temp/jquery-punchcard/src/punchcard.css ./static/css
-wget https://momentjs.com/downloads/moment.js -O ./static/js
+wget https://momentjs.com/downloads/moment.js -O ./static/js/moment.js
 
 rm -rf ./temp
