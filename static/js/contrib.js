@@ -103,10 +103,8 @@ optionDatatable_awards["order"] = [[ 0, "dec" ]];
 optionDatatable_awards["scrollX"] = false;
 optionDatatable_awards["scrollY"] = "40vh";
 optionDatatable_awards.columnDefs = [
-    { className: "small", "targets": [ 0 ] },
-    { className: "centerCellPicOrgLogo", "targets": [ 1 ] },
-    { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 2 ] },
-    { className: "centerCellPicOrgLogo", "targets": [ 4 ] },
+    { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 1 ] },
+    { className: "centerCellPicOrgLogo", "targets": [ 3 ] },
 ];
 
 var typeaheadOption = {
@@ -385,7 +383,6 @@ function addAwards(datatableAwards, json, playAnim) {
     date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
     var to_add = [
         date,
-        getOrgRankIcon(json.orgRank, 60),
         createImg(json.logo_path, 32),
         createOrgLink(json.org),
         award,
