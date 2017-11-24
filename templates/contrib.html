@@ -182,6 +182,34 @@
                         </table>
                     </div>
                     <p style="font-size: 18px; display: inline;">Trophies: </p><p style="display: inline;">Shows your skills in information sharing </p><i> (earned via upvotes or sightings from other organisation)</i>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    {% for title in trophy_title_str %}
+                                            <th>{{ title }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody id='bodyTableTrophyModal'>
+                                <tr>
+                                    {% for perc in trophy_mapping %}
+                                            <td>{{ perc }}</td>
+                                    {% endfor %}
+                                </tr>
+                                <tr>
+                                    {% for title in trophy_title_str %}
+                                            <td>
+                                                <input type='image' style="display: block; margin-left: auto; margin-right: auto;" height="64" width="64" src="{{ url_for('static', filename='pics/MISPTrophy/'+loop.index0|string+'.png') }}">
+                                            </td>
+                                    {% endfor %}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p style="font-size: 18px; display: inline;">Acquired trophies: </p>
                     <div class="table-responsive">
                         <table class="table table-striped table-bordered">
                             <thead>
