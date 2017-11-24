@@ -81,7 +81,7 @@ class Users_helper:
             totLog = 1
         return totContrib/totLog
 
-    def getTopOrglogin(self, date, maxNum=12, prev_days=31):
+    def getTopOrglogin(self, date, maxNum=12, prev_days=7):
         all_logged_in_orgs = self.getAllLoggedInOrgs(date, prev_days)
         data = []
         for org in all_logged_in_orgs:
