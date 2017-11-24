@@ -171,6 +171,11 @@ def contrib():
     trophy_categ_list = contributor_helper.categories_in_trophy
     trophy_categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in trophy_categ_list]
     trophy_title = contributor_helper.trophy_title
+    trophy_title_str = []
+    for i in range(contributor_helper.trophyNum+1):
+        trophy_title_str.append(trophy_title[i])
+    trophy_mapping = ["Top 1"] + [ str(x)+"%" for x in contributor_helper.trophyMapping] + [" "]
+    trophy_mapping.reverse()
 
     currOrg = request.args.get('org')
     if currOrg is None:
@@ -192,6 +197,8 @@ def contrib():
             trophy_categ_list_id=trophy_categ_list,
             trophy_categ_list_str=trophy_categ_list_str,
             trophy_title=json.dumps(trophy_title),
+            trophy_title_str=trophy_title_str,
+            trophy_mapping=trophy_mapping,
             min_between_reload=cfg.getint('CONTRIB', 'min_between_reload')
             )
 

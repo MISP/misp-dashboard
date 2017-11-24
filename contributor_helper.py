@@ -22,7 +22,7 @@ class Contributor_helper:
         for badgeNum in range(1, self.honorBadgeNum+1): #get Num of honorBadge
             self.org_honor_badge_title[badgeNum] = self.cfg_org_rank.get('HonorBadge', str(badgeNum))
 
-        self.trophyDifficulty = self.cfg_org_rank.getfloat('TrophyDifficulty', 'difficulty')
+        self.trophyMapping = json.loads(self.cfg_org_rank.get('TrophyDifficulty', 'trophyMapping'))
         self.trophyNum = len(self.cfg_org_rank.options('HonorTrophy'))-1 #0 is not a trophy
         self.categories_in_trophy = json.loads(self.cfg_org_rank.get('HonorTrophyCateg', 'categ'))
         self.trophy_title = {}
@@ -264,25 +264,58 @@ class Contributor_helper:
 
     ''' TROPHIES '''
     def getOrgTrophies(self, org):
-        keyname = 'CONTRIB_TROPHY:{org}:{orgCateg}'
+        self.getAllOrgsTrophyRanking()
+        keyname = 'CONTRIB_TROPHY:{orgCateg}'
         trophy = []
         for categ in self.categories_in_trophy:
-            key = keyname.format(org=org, orgCateg=categ)
-            trophy_Pnts = self.serv_redis_db.get(key)
-            if trophy_Pnts is not None: #existing
-                trophy_Pnts = float(trophy_Pnts.decode('utf8'))
-                trophy_rank = self.getRankTrophy(trophy_Pnts)
-                trophy_true_rank = self.getTrueRankTrophy(trophy_Pnts)
-                trophy.append({ 'categ': categ, 'trophy_points': trophy_Pnts, 'trophy_rank': trophy_rank, 'trophy_true_rank': trophy_true_rank, 'trophy_title': self.trophy_title[trophy_true_rank]})
+            key = keyname.format(orgCateg=categ)
+            totNum = self.serv_redis_db.zcard(key)
+            if totNum == 0:
+                continue
+            pos = self.serv_redis_db.zrank(key, org)
+            if pos is None:
+                continue
+            trophy_rank = self.posToRankMapping(pos, totNum)
+            trophy_Pnts = self.serv_redis_db.zscore(key, org)
+            trophy.append({ 'categ': categ, 'trophy_points': trophy_Pnts, 'trophy_rank': trophy_rank, 'trophy_true_rank': trophy_rank, 'trophy_title': self.trophy_title[trophy_rank]})
         return trophy
 
+    def getOrgsTrophyRanking(self, categ):
+        keyname = 'CONTRIB_TROPHY:{orgCateg}'
+        res = self.serv_redis_db.zrange(keyname.format(orgCateg=categ), 0, -1, withscores=True, desc=True)
+        res = [[org.decode('utf8'), score] for org, score in res]
+        return res
+
+    def getAllOrgsTrophyRanking(self):
+        dico_categ = {}
+        for categ in self.categories_in_trophy:
+            res = self.getOrgsTrophyRanking(categ)
+            dico_categ[categ] = res
+
+    def posToRankMapping(self, pos, totNum):
+        mapping = self.trophyMapping
+        mapping_num = [math.ceil(float(float(totNum*i)/float(100))) for i in mapping]
+        # print(pos, totNum)
+        if pos == 0: #first
+            position = 1
+        else:
+            temp_pos = pos
+            counter = 1
+            for num in mapping_num:
+                if temp_pos < num:
+                    position = counter
+                else:
+                    temp_pos -= num
+                    counter += 1
+        return self.trophyNum+1 - position
+
     def giveTrophyPointsToOrg(self, org, categ, points):
-        keyname = 'CONTRIB_TROPHY:{org}:{orgCateg}'
-        self.serv_redis_db.incrby(keyname.format(org=org, orgCateg=categ), points)
+        keyname = 'CONTRIB_TROPHY:{orgCateg}'
+        self.serv_redis_db.zincrby(keyname.format(orgCateg=categ), org, points)
 
     def removeTrophyPointsFromOrg(self, org, categ, points):
-        keyname = 'CONTRIB_TROPHY:{org}:{orgCateg}'
-        self.serv_redis_db.incrby(keyname.format(org=org, orgCateg=categ), -points)
+        keyname = 'CONTRIB_TROPHY:{orgCateg}'
+        self.serv_redis_db.zincrby(keyname.format(orgCateg=categ), org, -points)
 
     ''' AWARDS HELPER '''
     def getLastAwardsFromRedis(self):
@@ -468,19 +501,6 @@ class Contributor_helper:
                 return { 'remainingPts': i-points, 'stepPts': prev }
             prev = i
         return { 'remainingPts': 0, 'stepPts': self.rankMultiplier**self.levelMax }
-
-    def getRankTrophy(self, points):
-        if points <= 0:
-            return 0
-        elif points == 1:
-            return 1
-        else:
-            rank = math.sqrt(points/self.trophyDifficulty)
-            rank = min(self.trophyNum, rank)
-            return float("{:.2f}".format(rank))
-
-    def getTrueRankTrophy(self, ptns):
-        return int(self.getRankTrophy(ptns))
 
     '''           '''
     ''' TEST DATA '''
