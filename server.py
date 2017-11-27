@@ -112,14 +112,6 @@ class EventMessage():
         to_ret = { 'log': self.feed, 'feedName': self.feedName, 'zmqName': self.zmqName }
         return 'data: {}\n\n'.format(json.dumps(to_ret))
 
-''' GENERAL '''
-def getZrange(keyCateg, date, topNum, endSubkey=""):
-    date_str = util.getDateStrFormat(date)
-    keyname = "{}:{}{}".format(keyCateg, date_str, endSubkey)
-    data = serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
-    data = [ [record[0].decode('utf8'), record[1]] for record in data ]
-    return data
-
 ###########
 ## ROUTE ##
 ###########

@@ -27,7 +27,6 @@ ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')
 CHANNEL_LASTCONTRIB = cfg.get('RedisLog', 'channelLastContributor')
 CHANNEL_LASTAWARDS = cfg.get('RedisLog', 'channelLastAwards')
-CHANNEL_PROC = cfg.get('RedisMap', 'channelProc')
 
 DEFAULT_PNTS_REWARD = cfg.get('CONTRIB', 'default_pnts_per_contribution')
 categories_in_datatable = json.loads(cfg.get('CONTRIB', 'categories_in_datatable'))
@@ -35,7 +34,6 @@ DICO_PNTS_REWARD = {}
 temp = json.loads(cfg.get('CONTRIB', 'pnts_per_contribution'))
 for categ, pnts in temp:
     DICO_PNTS_REWARD[categ] = pnts
-MAX_NUMBER_OF_LAST_CONTRIBUTOR = cfg.getint('CONTRIB', 'max_number_of_last_contributor')
 
 serv_log = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
@@ -320,10 +318,13 @@ def main(zmqName):
     socket.setsockopt_string(zmq.SUBSCRIBE, '')
 
     while True:
-        content = socket.recv()
-        content.replace(b'\n', b'') # remove \n...
-        zmq_name = zmqName
-        process_log(zmq_name, content)
+        try:
+            content = socket.recv()
+            content.replace(b'\n', b'') # remove \n...
+            zmq_name = zmqName
+            process_log(zmq_name, content)
+        except KeyboardInterrupt:
+            return
 
 
 dico_action = {

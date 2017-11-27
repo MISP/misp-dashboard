@@ -51,7 +51,6 @@ channelLastAwards = lastAwards
 
 [RedisMap]
 db=1
-channelProc=CoordToProcess
 channelDisp=PicToDisplay
 pathMaxMindDB=./data/GeoLite2-City_20171003/GeoLite2-City.mmdb
 
