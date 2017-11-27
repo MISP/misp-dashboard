@@ -14,7 +14,7 @@ if [ -z "$VIRTUAL_ENV" ]; then
     . ./DASHENV/bin/activate
 fi
 
-pip3 install -U pip argparse redis zmq geoip2 flask
+pip3 install -U pip argparse redis zmq geoip2 flask phonenumbers pycountry
 
 ## config
 cp -i config/config.cfg.default config/config.cfg
