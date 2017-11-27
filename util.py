@@ -1,5 +1,7 @@
 import datetime, time
 
+ONE_DAY = 60*60*24
+
 def getZrange(serv_redis_db, keyCateg, date, topNum, endSubkey=""):
     date_str = getDateStrFormat(date)
     keyname = "{}:{}{}".format(keyCateg, date_str, endSubkey)
