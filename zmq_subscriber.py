@@ -2,7 +2,6 @@
 
 import time, datetime
 import copy
-from collections import OrderedDict
 from pprint import pprint
 import zmq
 import redis
@@ -12,9 +11,9 @@ import argparse
 import os
 import sys
 import json
-import geoip2.database
 
 import util
+import geo_helper
 import contributor_helper
 import users_helper
 import trendings_helper
@@ -28,10 +27,7 @@ ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')
 CHANNEL_LASTCONTRIB = cfg.get('RedisLog', 'channelLastContributor')
 CHANNEL_LASTAWARDS = cfg.get('RedisLog', 'channelLastAwards')
-CHANNELDISP = cfg.get('RedisMap', 'channelDisp')
 CHANNEL_PROC = cfg.get('RedisMap', 'channelProc')
-PATH_TO_DB = cfg.get('RedisMap', 'pathMaxMindDB')
-
 
 DEFAULT_PNTS_REWARD = cfg.get('CONTRIB', 'default_pnts_per_contribution')
 categories_in_datatable = json.loads(cfg.get('CONTRIB', 'categories_in_datatable'))
@@ -45,20 +41,16 @@ serv_log = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisLog', 'db'))
-serv_coord = redis.StrictRedis(
-        host=cfg.get('RedisGlobal', 'host'),
-        port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisMap', 'db'))
 serv_redis_db = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisDB', 'db'))
 
+geo_helper = geo_helper.Geo_helper(serv_redis_db, cfg)
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
 users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
 
-reader = geoip2.database.Reader(PATH_TO_DB)
 
 def publish_log(zmq_name, name, content, channel=CHANNEL):
     to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
@@ -69,52 +61,6 @@ def push_to_redis_zset(keyCateg, toAdd, endSubkey="", count=1):
     today_str = util.getDateStrFormat(now)
     keyname = "{}:{}{}".format(keyCateg, today_str, endSubkey)
     serv_redis_db.zincrby(keyname, toAdd, count)
-
-def push_to_redis_geo(keyCateg, lon, lat, content):
-    now = datetime.datetime.now()
-    today_str = util.getDateStrFormat(now)
-    keyname = "{}:{}".format(keyCateg, today_str)
-    serv_redis_db.geoadd(keyname, lon, lat, content)
-
-def ip_to_coord(ip):
-    resp = reader.city(ip)
-    lat = float(resp.location.latitude)
-    lon = float(resp.location.longitude)
-    # 0.0001 correspond to ~10m
-    # Cast the float so that it has the correct float format
-    lat_corrected = float("{:.4f}".format(lat))
-    lon_corrected = float("{:.4f}".format(lon))
-    return { 'coord': {'lat': lat_corrected, 'lon': lon_corrected}, 'full_rep': resp }
-
-def getCoordAndPublish(zmq_name, supposed_ip, categ):
-    try:
-        rep = ip_to_coord(supposed_ip)
-        coord = rep['coord']
-        coord_dic = {'lat': coord['lat'], 'lon': coord['lon']}
-        ordDic = OrderedDict() #keep fields with the same layout in redis
-        ordDic['lat'] = coord_dic['lat']
-        ordDic['lon'] = coord_dic['lon']
-        coord_list = [coord['lat'], coord['lon']]
-        push_to_redis_zset('GEO_COORD', json.dumps(ordDic))
-        push_to_redis_zset('GEO_COUNTRY', rep['full_rep'].country.iso_code)
-        ordDic = OrderedDict() #keep fields with the same layout in redis
-        ordDic['categ'] = categ
-        ordDic['value'] = supposed_ip
-        push_to_redis_geo('GEO_RAD', coord['lon'], coord['lat'], json.dumps(ordDic))
-        to_send = {
-                "coord": coord,
-                "categ": categ,
-                "value": supposed_ip,
-                "country": rep['full_rep'].country.name,
-                "specifName": rep['full_rep'].subdivisions.most_specific.name,
-                "cityName": rep['full_rep'].city.name,
-                "regionCode": rep['full_rep'].country.iso_code,
-                }
-        serv_coord.publish(CHANNELDISP, json.dumps(to_send))
-    except ValueError:
-        print("can't resolve ip")
-    except geoip2.errors.AddressNotFoundError:
-        print("Address not in Database")
 
 def getFields(obj, fields):
     jsonWalker = fields.split('.')
@@ -332,7 +278,7 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
 
     #try to get coord from ip
     if jsonattr['category'] == "Network activity":
-        getCoordAndPublish(zmq_name, jsonattr['value'], jsonattr['category'])
+        geo_helper.getCoordAndPublish(jsonattr['value'], jsonattr['category'])
 
     if not hasAlreadyBeenContributed:
         try:
