@@ -1,4 +1,5 @@
 import util
+from util import getZrange
 import math, random
 import os
 import configparser
@@ -11,6 +12,7 @@ class Contributor_helper:
         self.cfg = cfg
         self.cfg_org_rank = configparser.ConfigParser()
         self.cfg_org_rank.read(os.path.join(os.environ['DASH_CONFIG'], 'ranking.cfg'))
+        self.CHANNEL_LASTAWARDS = cfg.get('RedisLog', 'channelLastAwards')
 
         #honorBadge
         self.honorBadgeNum = len(self.cfg_org_rank.options('HonorBadge'))
@@ -45,11 +47,11 @@ class Contributor_helper:
         #WEB STUFF
         self.misp_web_url = cfg.get('RedisGlobal', 'misp_web_url')
         self.MAX_NUMBER_OF_LAST_CONTRIBUTOR = cfg.getint('CONTRIB', 'max_number_of_last_contributor')
-        self.categories_in_datatable = json.loads(cfg.get('CONTRIB', 'categories_in_datatable'))
+        self.categories_in_datatable = json.loads(self.cfg_org_rank.get('monthlyRanking', 'categories_in_datatable'))
 
         #MONTHLY RANKING
-        self.default_pnts_per_contribution = json.loads(cfg.get('CONTRIB', 'default_pnts_per_contribution'))
-        temp = json.loads(cfg.get('CONTRIB', 'pnts_per_contribution'))
+        self.default_pnts_per_contribution = json.loads(self.cfg_org_rank.get('monthlyRanking', 'default_pnts_per_contribution'))
+        temp = json.loads(self.cfg_org_rank.get('monthlyRanking', 'pnts_per_contribution'))
         self.DICO_PNTS_REWARD = {}
         for categ, pnts in temp:
             self.DICO_PNTS_REWARD[categ] = pnts
@@ -60,30 +62,81 @@ class Contributor_helper:
             else:
                 self.DICO_PNTS_REWARD[categ] = self.default_pnts_per_contribution
 
-        self.rankMultiplier = cfg.getfloat('CONTRIB' ,'rankMultiplier')
-        self.levelMax = 16
+        self.rankMultiplier = self.cfg_org_rank.getfloat('monthlyRanking' ,'rankMultiplier')
+        self.levelMax = self.cfg_org_rank.getfloat('monthlyRanking' ,'levelMax')
+
+        # REDIS KEYS
+        self.keyDay         = "CONTRIB_DAY"
+        self.keyCateg       = "CONTRIB_CATEG"
+        self.keyLastContrib = "CONTRIB_LAST"
+        self.keyAllOrg      = "CONTRIB_ALL_ORG"
+        self.keyContribReq  = "CONTRIB_ORG"
+        self.keyTrophy      = "CONTRIB_TROPHY"
+        self.keyLastAward   = "CONTRIB_LAST_AWARDS"
 
 
     ''' HELPER '''
     def getOrgLogoFromMISP(self, org):
         return "{}/img/orgs/{}.png".format(self.misp_web_url, org)
 
-    def getZrange(self, keyCateg, date, topNum, endSubkey=""):
-        date_str = util.getDateStrFormat(date)
-        keyname = "{}:{}{}".format(keyCateg, date_str, endSubkey)
-        data = self.serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
-        data = [ [record[0].decode('utf8'), record[1]] for record in data ]
-        return data
-
     def addContributionToCateg(self, date, categ, org, count=1):
         today_str = util.getDateStrFormat(date)
-        keyname = "CONTRIB_CATEG:{}:{}".format(today_str, categ)
+        keyname = "{}:{}:{}".format(self.keyCateg, today_str, categ)
         self.serv_redis_db.zincrby(keyname, org, count)
+
+    def publish_log(self, zmq_name, name, content, channel=""):
+        to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
+        serv_log.publish(channel, json.dumps(to_send))
+
+    ''' HANDLER '''
+    #pntMultiplier if one contribution rewards more than others. (e.g. shighting may gives more points than editing)
+    def handleContribution(self, zmq_name, org, contribType, categ, action, pntMultiplier=1, eventTime=datetime.datetime.now(), isLabeled=False):
+        if action in ['edit', None]:
+            pass
+            #return #not a contribution?
+    
+        now = datetime.datetime.now()
+        nowSec = int(time.time())
+        pnts_to_add = self.default_pnts_per_contribution
+    
+        # if there is a contribution, there is a login (even if ti comes from the API)
+        users_helper.add_user_login(nowSec, org)
+    
+        # is a valid contribution
+        if categ is not None:
+            try:
+                pnts_to_add = self.DICO_PNTS_REWARD[noSpaceLower(categ)]
+            except KeyError:
+                pnts_to_add = self.default_pnts_per_contribution
+            pnts_to_add *= pntMultiplier
+    
+            util.push_to_redis_zset(self.serv_redis_db, self.keyDay, org, count=pnts_to_add)
+            #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
+            util.push_to_redis_zset(self.serv_redis_db, self.keyCateg, org, count=1, endSubkey=':'+noSpaceLower(categ))
+            self.publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
+        else:
+            categ = ""
+    
+        serv_redis_db.sadd(self.keyAllOrg, org)
+    
+        keyname = "{}:{}".format(self.keyLastContrib, util.getDateStrFormat(now))
+        serv_redis_db.zadd(keyname, nowSec, org)
+        serv_redis_db.expire(keyname, ONE_DAY*7) #expire after 7 day
+    
+        awards_given = self.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled, categ=noSpaceLower(categ))
+    
+        for award in awards_given:
+            # update awards given
+            keyname = "{}:{}".format(self.keyLastAward, util.getDateStrFormat(now))
+            serv_redis_db.zadd(keyname, nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec }))
+            serv_redis_db.expire(keyname, ONE_DAY*7) #expire after 7 day
+            # publish
+            self.publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'award': award, 'epoch': nowSec }, channel=self.CHANNEL_LASTAWARDS)
 
     ''' CONTRIBUTION RANK '''
     def getOrgContributionTotalPoints(self, org):
-        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        pnts = self.serv_redis_db.get(keyname.format(org=org, orgCateg='points'))
+        keyname = '{mainKey}:{org}:{orgCateg}'
+        pnts = self.serv_redis_db.get(keyname.format(mainKey=self.keyContribReq, org=org, orgCateg='points'))
         if pnts is None:
             pnts = 0
         else:
@@ -92,12 +145,12 @@ class Contributor_helper:
 
     # return: [final_rank, requirement_fulfilled, requirement_not_fulfilled]
     def getOrgContributionRank(self, org):
-        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        keyname = '{mainKey}:{org}:{orgCateg}'
         final_rank = 0
         requirement_fulfilled = []
         requirement_not_fulfilled = []
         for i in range(1, self.org_rank_maxLevel+1):
-            key = keyname.format(org=org, orgCateg='CONTRIB_REQ_'+str(i))
+            key = keyname.format(mainKey=self.keyContribReq, org=org, orgCateg='CONTRIB_REQ_'+str(i))
             if self.serv_redis_db.get(key) is None: #non existing
                 requirement_not_fulfilled.append(i)
             else:
@@ -109,12 +162,12 @@ class Contributor_helper:
         return {'final_rank': final_rank, 'req_fulfilled': requirement_fulfilled, 'req_not_fulfilled': requirement_not_fulfilled}
 
     def giveContribRankToOrg(self, org, rankNum):
-        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        self.serv_redis_db.set(keyname.format(org=org, orgCateg='CONTRIB_REQ_'+str(rankNum)), 1)
+        keyname = '{mainKey}:{org}:{orgCateg}'
+        self.serv_redis_db.set(keyname.format(mainKey=self.keyContribReq, org=org, orgCateg='CONTRIB_REQ_'+str(rankNum)), 1)
 
     def removeContribRankFromOrg(self, org, rankNum):
-        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        self.serv_redis_db.delete(keyname.format(org=org, orgCateg='CONTRIB_REQ_'+str(rankNum)))
+        keyname = '{mainKey}:{org}:{orgCateg}'
+        self.serv_redis_db.delete(keyname.format(mainKey=self.keyContribReq, org=org, orgCateg='CONTRIB_REQ_'+str(rankNum)))
 
     # 1 for fulfilled, 0 for not fulfilled, -1 for not relevant
     def getCurrentContributionStatus(self, org):
@@ -138,7 +191,7 @@ class Contributor_helper:
         oldContributionStatus = ContributionStatus['status']
         oldHonorBadges = self.getOrgHonorBadges(orgName)
         oldTrophy = self.getOrgTrophies(orgName)
-        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        keyname = self.keyContribReq+':{org}:{orgCateg}'
         # update total points
         totOrgPnts = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='points'), pnts_to_add)
 
@@ -246,29 +299,29 @@ class Contributor_helper:
 
     ''' HONOR BADGES '''
     def getOrgHonorBadges(self, org):
-        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        keyname = '{mainKey}:{org}:{orgCateg}'
         honorBadge = []
         for i in range(1, self.honorBadgeNum+1):
-            key = keyname.format(org=org, orgCateg='BADGE_'+str(i))
+            key = keyname.format(mainKey=self.keyContribReq, org=org, orgCateg='BADGE_'+str(i))
             if self.serv_redis_db.get(key) is not None: #existing
                 honorBadge.append(i)
         return honorBadge
 
     def giveBadgeToOrg(self, org, badgeNum):
-        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        self.serv_redis_db.set(keyname.format(org=org, orgCateg='BADGE_'+str(badgeNum)), 1)
+        keyname = '{mainKey}:{org}:{orgCateg}'
+        self.serv_redis_db.set(keyname.format(mainKey=self.keyContribReq, org=org, orgCateg='BADGE_'+str(badgeNum)), 1)
 
     def removeBadgeFromOrg(self, org, badgeNum):
-        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        self.serv_redis_db.delete(keyname.format(org=org, orgCateg='BADGE_'+str(badgeNum)))
+        keyname = '{mainKey}:{org}:{orgCateg}'
+        self.serv_redis_db.delete(keyname.format(mainKey=self.keyContribReq, org=org, orgCateg='BADGE_'+str(badgeNum)))
 
     ''' TROPHIES '''
     def getOrgTrophies(self, org):
         self.getAllOrgsTrophyRanking()
-        keyname = 'CONTRIB_TROPHY:{orgCateg}'
+        keyname = '{mainKey}:{orgCateg}'
         trophy = []
         for categ in self.categories_in_trophy:
-            key = keyname.format(orgCateg=categ)
+            key = keyname.format(mainKey=self.keyTrophy, orgCateg=categ)
             totNum = self.serv_redis_db.zcard(key)
             if totNum == 0:
                 continue
@@ -281,8 +334,8 @@ class Contributor_helper:
         return trophy
 
     def getOrgsTrophyRanking(self, categ):
-        keyname = 'CONTRIB_TROPHY:{orgCateg}'
-        res = self.serv_redis_db.zrange(keyname.format(orgCateg=categ), 0, -1, withscores=True, desc=True)
+        keyname = '{mainKey}:{orgCateg}'
+        res = self.serv_redis_db.zrange(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), 0, -1, withscores=True, desc=True)
         res = [[org.decode('utf8'), score] for org, score in res]
         return res
 
@@ -310,23 +363,23 @@ class Contributor_helper:
         return self.trophyNum+1 - position
 
     def giveTrophyPointsToOrg(self, org, categ, points):
-        keyname = 'CONTRIB_TROPHY:{orgCateg}'
-        self.serv_redis_db.zincrby(keyname.format(orgCateg=categ), org, points)
+        keyname = '{mainKey}:{orgCateg}'
+        self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), org, points)
 
     def removeTrophyPointsFromOrg(self, org, categ, points):
-        keyname = 'CONTRIB_TROPHY:{orgCateg}'
-        self.serv_redis_db.zincrby(keyname.format(orgCateg=categ), org, -points)
+        keyname = '{mainKey}:{orgCateg}'
+        self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), org, -points)
 
     ''' AWARDS HELPER '''
     def getLastAwardsFromRedis(self):
         date = datetime.datetime.now()
-        keyname = "CONTRIB_LAST_AWARDS"
+        keyname = self.keyLastAward
         prev_days = 7
         topNum = self.MAX_NUMBER_OF_LAST_CONTRIBUTOR # default Num
         addedOrg = []
         data = []
         for curDate in util.getXPrevDaysSpan(date, prev_days):
-            last_awards = self.getZrange(keyname, curDate, topNum)
+            last_awards = getZrange(self.serv_redis_db, keyname, curDate, topNum)
             for dico_award, sec in last_awards:
                 dico_award = json.loads(dico_award)
                 org = dico_award['org']
@@ -341,11 +394,10 @@ class Contributor_helper:
 
     ''' MONTHLY CONTRIBUTION '''
     def getOrgPntFromRedis(self, org, date):
-        keyCateg = 'CONTRIB_DAY'
         scoreSum = 0
         for curDate in util.getMonthSpan(date):
             date_str = util.getDateStrFormat(curDate)
-            keyname = "{}:{}".format(keyCateg, date_str)
+            keyname = "{}:{}".format(self.keyDay, date_str)
             data = self.serv_redis_db.zscore(keyname, org)
             if data is None:
                 data = 0
@@ -359,13 +411,12 @@ class Contributor_helper:
 
     def getLastContributorsFromRedis(self):
         date = datetime.datetime.now()
-        keyname = "CONTRIB_LAST"
         prev_days = 7
         topNum = self.MAX_NUMBER_OF_LAST_CONTRIBUTOR # default Num
         addedOrg = []
         data = []
         for curDate in util.getXPrevDaysSpan(date, prev_days):
-            last_contrib_org = self.getZrange(keyname, curDate, topNum)
+            last_contrib_org = getZrange(self.serv_redis_db, self.keyLastContrib, curDate, topNum)
             for org, sec in last_contrib_org:
                 if org in addedOrg:
                     continue
@@ -384,7 +435,7 @@ class Contributor_helper:
 
     def getContributorFromRedis(self, org):
         date = datetime.datetime.now()
-        epoch = self.serv_redis_db.zscore("CONTRIB_LAST", org)
+        epoch = self.serv_redis_db.zscore(self.keyLastContrib, org)
         dic = {}
         dic['rank'] = self.getOrgRankFromRedis(org, date)
         dic['orgRank'] = self.getOrgContributionRank(org)['final_rank']
@@ -398,9 +449,8 @@ class Contributor_helper:
     def getTopContributorFromRedis(self, date):
         orgDicoPnts = {}
         for curDate in util.getMonthSpan(date):
-            keyCateg = "CONTRIB_DAY"
             topNum = 0 # all
-            contrib_org = self.getZrange(keyCateg, curDate, topNum)
+            contrib_org = getZrange(self.serv_redis_db, self.keyDay, curDate, topNum)
             for org, pnts in contrib_org:
                 if org not in orgDicoPnts:
                     orgDicoPnts[org] = 0
@@ -437,7 +487,7 @@ class Contributor_helper:
         today = today.replace(hour=0, minute=0, second=0, microsecond=0)
         for curDate in util.getXPrevDaysSpan(today, 7):
             timestamp = util.getTimestamp(curDate)
-            keyname = 'CONTRIB_DAY:'+util.getDateStrFormat(curDate)
+            keyname = "{}:{}".format(self.keyDay, util.getDateStrFormat(curDate))
             org_score =  self.serv_redis_db.zscore(keyname, org)
             if org_score is None:
                 org_score = 0
@@ -446,7 +496,6 @@ class Contributor_helper:
         return to_return
 
     def getCategPerContribFromRedis(self, date):
-        keyCateg = "CONTRIB_DAY"
         topNum = 0 # all
         contrib_org = self.getTopContributorFromRedis(date)
         for dic in contrib_org:
@@ -454,7 +503,7 @@ class Contributor_helper:
             for categ in self.categories_in_datatable:
                     categ_score = 0
                     for curDate in util.getMonthSpan(date):
-                        keyname = 'CONTRIB_CATEG:'+util.getDateStrFormat(curDate)+':'+categ
+                        keyname = "{}:{}:{}".format(self.keyCateg, util.getDateStrFormat(curDate), categ)
                         temp = self.serv_redis_db.zscore(keyname, org)
                         if temp is None:
                             temp = 0
@@ -464,7 +513,7 @@ class Contributor_helper:
 
 
     def getAllOrgFromRedis(self):
-        data = self.serv_redis_db.smembers('CONTRIB_ALL_ORG')
+        data = self.serv_redis_db.smembers(self.keyAllOrg)
         data = [x.decode('utf8') for x in data]
         return data
 
@@ -502,213 +551,3 @@ class Contributor_helper:
             prev = i
         return { 'remainingPts': 0, 'stepPts': self.rankMultiplier**self.levelMax }
 
-    '''           '''
-    ''' TEST DATA '''
-    '''           '''
-
-    def TEST_getCategPerContribFromRedis(self, date):
-        data2 = []
-        for d in range(15):
-            dic = {}
-            dic['rank'] = random.randint(1,self.levelMax)
-            dic['orgRank'] = random.randint(1,self.levelMax),
-            dic['honorBadge'] = [random.randint(1,2)],
-            dic['logo_path'] = 'logo'
-            dic['org'] = 'Org'+str(d)
-            dic['pnts'] = random.randint(1,2**self.levelMax)
-            for f in self.categories_in_datatable:
-                dic[f] = random.randint(0,1600)
-            data2.append(dic)
-        return data2
-
-    def TEST_getTop5OvertimeFromRedis(self):
-        import time
-        now = time.time()
-        data2 = [
-            {'label': 'CIRCL', 'data': [[now, random.randint(1,50)], [now-util.ONE_DAY, random.randint(1,50)], [now-util.ONE_DAY*2, random.randint(1,50)], [now-util.ONE_DAY*3, random.randint(1,50)], [now-util.ONE_DAY*4, random.randint(1,50)]]},
-            {'label': 'CASES', 'data': [[now, random.randint(1,50)], [now-util.ONE_DAY, random.randint(1,50)], [now-util.ONE_DAY*2, random.randint(1,50)], [now-util.ONE_DAY*3, random.randint(1,50)], [now-util.ONE_DAY*4, random.randint(1,50)]]},
-            {'label': 'Org1', 'data': [[now, random.randint(1,50)], [now-util.ONE_DAY, random.randint(1,50)], [now-util.ONE_DAY*2, random.randint(1,50)], [now-util.ONE_DAY*3, random.randint(1,50)], [now-util.ONE_DAY*4, random.randint(1,50)]]},
-            {'label': 'Org2', 'data': [[now, random.randint(1,50)], [now-util.ONE_DAY, random.randint(1,50)], [now-util.ONE_DAY*2, random.randint(1,50)], [now-util.ONE_DAY*3, random.randint(1,50)], [now-util.ONE_DAY*4, random.randint(1,50)]]},
-            {'label': 'SMILE', 'data': [[now, random.randint(1,50)], [now-util.ONE_DAY, random.randint(1,50)], [now-util.ONE_DAY*2, random.randint(1,50)], [now-util.ONE_DAY*3, random.randint(1,50)], [now-util.ONE_DAY*4, random.randint(1,50)]]},
-        ]
-        return data2
-
-    def TEST_getOrgOvertime(self, org):
-        import time
-        now = time.time()
-        data = [
-            {'label': org, 'data': [[now, random.randint(1,30)], [now-util.ONE_DAY, random.randint(1,30)], [now-util.ONE_DAY*2, random.randint(1,30)], [now-util.ONE_DAY*3, random.randint(1,30)], [now-util.ONE_DAY*4, random.randint(1,40)]]}
-        ]
-        return data
-
-    def TEST_getTopContributorFromRedis(self, date):
-        data2 = [
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [1,2],
-                'logo_path': self.getOrgLogoFromMISP('MISP'),
-                'org': 'MISP',
-                'pnts': random.randint(1,2**self.levelMax)
-            },
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [1],
-                'logo_path': 'logo1',
-                'org': 'CIRCL',
-                'pnts': random.randint(1,2**self.levelMax)
-            },
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [2],
-                'logo_path': 'logo2',
-                'org': 'CASES',
-                'pnts': random.randint(1,2**self.levelMax)
-            },
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [],
-                'logo_path': 'logo3',
-                'org': 'SMILE',
-                'pnts': random.randint(1,2**self.levelMax)
-            },
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [],
-                'logo_path': 'logo4',
-                'org': 'ORG4',
-                'pnts': random.randint(1,2**self.levelMax)
-            },
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [],
-                'logo_path': 'logo5',
-                'org': 'ORG5',
-                'pnts': random.randint(1,2**self.levelMax)
-            },
-        ]
-        return data2*2
-
-    def TEST_getLastContributorsFromRedis(self):
-        import time
-        data2 = [
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [1,2],
-                'logo_path': self.getOrgLogoFromMISP('MISP'),
-                'org': 'MISP',
-                'pnts': random.randint(1,2**self.levelMax),
-                'epoch': time.time() - random.randint(0, 10000)
-            },
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [1],
-                'logo_path': 'logo1',
-                'org': 'CIRCL',
-                'pnts': random.randint(1,2**self.levelMax),
-                'epoch': time.time() - random.randint(0, 10000)
-            },
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [2],
-                'logo_path': 'logo2',
-                'org': 'CASES',
-                'pnts': random.randint(1,2**self.levelMax),
-                'epoch': time.time() - random.randint(0, 10000)
-            },
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [],
-                'logo_path': 'logo3',
-                'org': 'SMILE',
-                'pnts': random.randint(1,2**self.levelMax),
-                'epoch': time.time() - random.randint(0, 10000)
-            },
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [],
-                'logo_path': 'logo4',
-                'org': 'ORG4',
-                'pnts': random.randint(1,2**self.levelMax),
-                'epoch': time.time() - random.randint(0, 10000)
-            },
-            {
-                'rank': random.randint(1,self.levelMax),
-                'orgRank': random.randint(1,self.levelMax),
-                'honorBadge': [],
-                'logo_path': 'logo5',
-                'org': 'ORG5',
-                'pnts': random.randint(1,2**self.levelMax),
-                'epoch': time.time() - random.randint(0, 10000)
-            },
-        ]
-        return data2*2
-
-    def TEST_getAllOrgFromRedis(self):
-        data2 = ['CIRCL', 'CASES', 'SMILE' ,'ORG4' ,'ORG5', 'SUPER HYPER LONG ORGINZATION NAME', 'Org3', 'MISP']
-        return data2
-
-    def TEST_getCurrentOrgRankFromRedis(self, org):
-        date = datetime.datetime.now()
-        points = random.randint(1,2**self.levelMax)
-        remainingPts = self.getRemainingPoints(points)
-        data = {
-            'org': org,
-            'points': points,
-            'rank': self.getRankLevel(points),
-            'remainingPts': remainingPts['remainingPts'],
-            'stepPts': remainingPts['stepPts'],
-        }
-        return data
-
-    def TEST_getCurrentContributionStatus(self, org):
-        num = random.randint(1, self.org_rank_maxLevel)
-        requirement_fulfilled = [x for x in range(1,num+1)]
-        requirement_not_fulfilled = [x for x in range(num,self.org_rank_maxLevel+1-num)]
-
-        num2 = random.randint(1, self.org_rank_maxLevel)
-        if num2 < num-1:
-            to_swap = requirement_fulfilled[num2]
-            del requirement_fulfilled[num2]
-            requirement_not_fulfilled = [to_swap] + requirement_not_fulfilled
-
-        final_rank = len(requirement_fulfilled)
-        to_ret = {}
-        for i in range(1, self.org_rank_maxLevel+1):
-            if i in requirement_fulfilled:
-                to_ret[i] = 1
-            elif i in requirement_not_fulfilled and i<=final_rank:
-                to_ret[i] = 0
-            else:
-                to_ret[i] = -1
-        return {'rank': final_rank, 'status': to_ret, 'totPoints': random.randint(2**final_rank, 2**self.org_rank_maxLevel*4)}
-
-    def TEST_getOrgHonorBadges(self, org):
-        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        honorBadge = []
-        for i in range(1, self.honorBadgeNum+1):
-            key = keyname.format(org=org, orgCateg='BADGE_'+str(i))
-            if random.randint(0,1) == 1: #existing
-                honorBadge.append(1)
-            else:
-                honorBadge.append(0)
-        return honorBadge
-
-    def TEST_getOrgTrophies(self, org):
-        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
-        trophy = []
-        for categ in self.categories_in_trophy:
-            key = keyname.format(org=org, orgCateg='TROPHY_'+categ)
-            trophy_Pnts = random.randint(0,10)
-            trophy.append({'categName': categ, 'rank': trophy_Pnts})
-        return trophy

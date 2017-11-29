@@ -25,15 +25,6 @@ cfg.read(configfile)
 ONE_DAY = 60*60*24
 ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')
-CHANNEL_LASTCONTRIB = cfg.get('RedisLog', 'channelLastContributor')
-CHANNEL_LASTAWARDS = cfg.get('RedisLog', 'channelLastAwards')
-
-DEFAULT_PNTS_REWARD = cfg.get('CONTRIB', 'default_pnts_per_contribution')
-categories_in_datatable = json.loads(cfg.get('CONTRIB', 'categories_in_datatable'))
-DICO_PNTS_REWARD = {}
-temp = json.loads(cfg.get('CONTRIB', 'pnts_per_contribution'))
-for categ, pnts in temp:
-    DICO_PNTS_REWARD[categ] = pnts
 
 serv_log = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
@@ -54,12 +45,6 @@ def publish_log(zmq_name, name, content, channel=CHANNEL):
     to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
     serv_log.publish(channel, json.dumps(to_send))
 
-def push_to_redis_zset(keyCateg, toAdd, endSubkey="", count=1):
-    now = datetime.datetime.now()
-    today_str = util.getDateStrFormat(now)
-    keyname = "{}:{}{}".format(keyCateg, today_str, endSubkey)
-    serv_redis_db.zincrby(keyname, toAdd, count)
-
 def getFields(obj, fields):
     jsonWalker = fields.split('.')
     itemToExplore = obj
@@ -77,49 +62,6 @@ def getFields(obj, fields):
 
 def noSpaceLower(text):
     return text.lower().replace(' ', '_')
-
-#pntMultiplier if one contribution rewards more than others. (e.g. shighting may gives more points than editing)
-def handleContribution(zmq_name, org, contribType, categ, action, pntMultiplier=1, eventTime=datetime.datetime.now(), isLabeled=False):
-    if action in ['edit', None]:
-        pass
-        #return #not a contribution?
-
-    now = datetime.datetime.now()
-    nowSec = int(time.time())
-    pnts_to_add = DEFAULT_PNTS_REWARD
-
-    # if there is a contribution, there is a login (even if ti comes from the API)
-    users_helper.add_user_login(nowSec, org)
-
-    # is a valid contribution
-    if categ is not None:
-        try:
-            pnts_to_add = DICO_PNTS_REWARD[noSpaceLower(categ)]
-        except KeyError:
-            pnts_to_add = DEFAULT_PNTS_REWARD
-        pnts_to_add *= pntMultiplier
-
-        push_to_redis_zset('CONTRIB_DAY', org, count=pnts_to_add)
-        #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
-        push_to_redis_zset('CONTRIB_CATEG', org, count=1, endSubkey=':'+noSpaceLower(categ))
-        publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
-    else:
-        categ = ""
-
-    serv_redis_db.sadd('CONTRIB_ALL_ORG', org)
-
-    serv_redis_db.zadd('CONTRIB_LAST:'+util.getDateStrFormat(now), nowSec, org)
-    serv_redis_db.expire('CONTRIB_LAST:'+util.getDateStrFormat(now), ONE_DAY*7) #expire after 7 day
-
-    awards_given = contributor_helper.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled, categ=noSpaceLower(categ))
-
-    for award in awards_given:
-        # update awards given
-        serv_redis_db.zadd('CONTRIB_LAST_AWARDS:'+util.getDateStrFormat(now), nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec }))
-        serv_redis_db.expire('CONTRIB_LAST_AWARDS:'+util.getDateStrFormat(now), ONE_DAY*7) #expire after 7 day
-        # publish
-        publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'award': award, 'epoch': nowSec }, channel=CHANNEL_LASTAWARDS)
-
 
 ##############
 ## HANDLERS ##
@@ -159,7 +101,7 @@ def handler_conversation(zmq_name, jsonevent):
     categ = None
     action = 'add'
     eventName = 'no name or id yet...'
-    handleContribution(zmq_name, org,
+    contributor_helper.handleContribution(zmq_name, org,
                     'Discussion',
                     None,
                     action,
@@ -181,7 +123,7 @@ def handler_sighting(zmq_name, jsondata):
         action = jsondata['action']
     except KeyError:
         action = None
-    handleContribution(zmq_name, org, 'Sighting', categ, action, pntMultiplier=2)
+    contributor_helper.handleContribution(zmq_name, org, 'Sighting', categ, action, pntMultiplier=2)
     handler_attribute(zmq_name, jsonsight, hasAlreadyBeenContributed=True)
 
     try:
@@ -236,7 +178,7 @@ def handler_event(zmq_name, jsonobj):
         org = None
 
     if org is not None:
-        handleContribution(zmq_name, org,
+        contributor_helper.handleContribution(zmq_name, org,
                         'Event',
                         None,
                         action,
@@ -291,7 +233,7 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
             action = jsonobj['action']
         except KeyError:
             action = None
-        handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'],
+        contributor_helper.handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'],
                             'Attribute',
                             jsonattr['category'],
                             action,
