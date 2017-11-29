@@ -6,7 +6,7 @@ The script __zmq_subscriber.py__ tries to subscribe to it. Depending on the rece
 
 Real time data are sent to their respective server's Redis pubsub channel
 
-![Message passing](./doc/message_passing.png "Message passing")
+![Message passing](./message_passing.png "Message passing")
 
 # Redis database
 
