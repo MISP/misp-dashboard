@@ -22,7 +22,6 @@ configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
-ONE_DAY = 60*60*24
 ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')
 
