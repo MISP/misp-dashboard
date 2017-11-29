@@ -119,17 +119,11 @@ def handler_sighting(zmq_name, jsondata):
     jsonsight = jsondata['Sighting']
     org = jsonsight['Event']['Orgc']['name']
     categ = jsonsight['Attribute']['category']
-    try:
-        action = jsondata['action']
-    except KeyError:
-        action = None
+    action = jsondata.get('action', None)
     contributor_helper.handleContribution(zmq_name, org, 'Sighting', categ, action, pntMultiplier=2)
     handler_attribute(zmq_name, jsonsight, hasAlreadyBeenContributed=True)
 
-    try:
-        timestamp = jsonsight['date_sighting']
-    except KeyError:
-        pass
+    timestamp = jsonsight.get('date_sighting', None)
 
     if jsonsight['type'] == "0": # sightings
         trendings_helper.addSightings(timestamp)
@@ -144,13 +138,12 @@ def handler_event(zmq_name, jsonobj):
     eventName = jsonevent['info']
     timestamp = jsonevent['timestamp']
     trendings_helper.addTrendingEvent(eventName, timestamp)
-    try:
-        temp = jsonobj['EventTag']
-        tags = []
-        for tag in temp:
+    tags = []
+    for tag in jsonobj.get('EventTag', []):
+        try:
             tags.append(tag['Tag'])
-    except KeyError:
-        tags = []
+        except KeyError:
+            pass
     trendings_helper.addTrendingTags(tags, timestamp)
 
     #redirect to handler_attribute
@@ -164,18 +157,9 @@ def handler_event(zmq_name, jsonobj):
         else:
             handler_attribute(zmq_name, attributes)
 
-    try:
-        action = jsonobj['action']
-    except KeyError:
-        action = None
-    try:
-        eventLabeled = len(jsonobj['EventTag']) > 0
-    except KeyError:
-        eventLabeled = False
-    try:
-        org = jsonobj['Orgc']['name']
-    except KeyError:
-        org = None
+    action = jsonobj.get('action', None)
+    eventLabeled = len(jsonobj.get('EventTag', [])) > 0
+    org = jsonobj.get('Orgc', {}).get('name', None)
 
     if org is not None:
         contributor_helper.handleContribution(zmq_name, org,
@@ -191,18 +175,14 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
 
     #Add trending
     categName = jsonattr['category']
-    try:
-        timestamp = jsonattr['timestamp']
-    except KeyError:
-        timestamp = int(time.time())
+    timestamp = jsonattr.get('timestamp', int(time.time()))
     trendings_helper.addTrendingCateg(categName, timestamp)
-    try:
-        temp = jsonattr['Tag']
-        tags = []
-        for tag in temp:
+    tags = []
+    for tag in jsonattr.get('Tag', []):
+        try:
             tags.append(tag['Tag'])
-    except KeyError:
-        tags = []
+        except KeyError:
+            pass
     trendings_helper.addTrendingTags(tags, timestamp)
 
     to_push = []
@@ -225,14 +205,8 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
         geo_helper.getCoordFromPhoneAndPublish(jsonattr['value'], jsonattr['category'])
 
     if not hasAlreadyBeenContributed:
-        try:
-            eventLabeled = len(jsonattr['Tag']) > 0
-        except KeyError:
-            eventLabeled = False
-        try:
-            action = jsonobj['action']
-        except KeyError:
-            action = None
+        eventLabeled = len(jsonobj.get('EventTag', [])) > 0
+        action = jsonobj.get('action', None)
         contributor_helper.handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'],
                             'Attribute',
                             jsonattr['category'],
