@@ -25,6 +25,7 @@ ONE_DAY = 60*60*24
 ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')
 CHANNEL_LASTCONTRIB = cfg.get('RedisLog', 'channelLastContributor')
+CHANNEL_LASTAWARDS = cfg.get('RedisLog', 'channelLastAwards')
 CHANNELDISP = cfg.get('RedisMap', 'channelDisp')
 CHANNEL_PROC = cfg.get('RedisMap', 'channelProc')
 PATH_TO_DB = cfg.get('RedisMap', 'pathMaxMindDB')
@@ -151,14 +152,22 @@ def handleContribution(zmq_name, org, contribType, categ, action, pntMultiplier=
         #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
         push_to_redis_zset('CONTRIB_CATEG', org, count=1, endSubkey=':'+noSpaceLower(categ))
         publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
+    else:
+        categ = ""
 
     serv_redis_db.sadd('CONTRIB_ALL_ORG', org)
 
     serv_redis_db.zadd('CONTRIB_LAST:'+util.getDateStrFormat(now), nowSec, org)
-    serv_redis_db.expire('CONTRIB_LAST:'+util.getDateStrFormat(now), ONE_DAY) #expire after 1 day
+    serv_redis_db.expire('CONTRIB_LAST:'+util.getDateStrFormat(now), ONE_DAY*7) #expire after 7 day
 
-    contributor_helper.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled)
+    awards_given = contributor_helper.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled, categ=noSpaceLower(categ))
 
+    for award in awards_given:
+        # update awards given
+        serv_redis_db.zadd('CONTRIB_LAST_AWARDS:'+util.getDateStrFormat(now), nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec }))
+        serv_redis_db.expire('CONTRIB_LAST_AWARDS:'+util.getDateStrFormat(now), ONE_DAY*7) #expire after 7 day
+        # publish
+        publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'award': award, 'epoch': nowSec }, channel=CHANNEL_LASTAWARDS)
 
 
 ##############

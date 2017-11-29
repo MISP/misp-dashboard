@@ -39,6 +39,9 @@ subscriber_map = redis_server_map.pubsub(ignore_subscribe_messages=True)
 subscriber_map.psubscribe(cfg.get('RedisMap', 'channelDisp'))
 subscriber_lastContrib = redis_server_log.pubsub(ignore_subscribe_messages=True)
 subscriber_lastContrib.psubscribe(cfg.get('RedisLog', 'channelLastContributor'))
+subscriber_lastAwards = redis_server_log.pubsub(ignore_subscribe_messages=True)
+subscriber_lastAwards.psubscribe(cfg.get('RedisLog', 'channelLastAwards'))
+
 eventNumber = 0
 
 ##########
@@ -149,7 +152,7 @@ def geo():
 @app.route("/contrib")
 def contrib():
     categ_list = contributor_helper.categories_in_datatable
-    categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in contributor_helper.categories_in_datatable]
+    categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in categ_list]
     categ_list_points = [contributor_helper.DICO_PNTS_REWARD[categ] for categ in categ_list]
 
     org_rank = contributor_helper.org_rank
@@ -162,6 +165,15 @@ def contrib():
     org_honor_badge_title = contributor_helper.org_honor_badge_title
     org_honor_badge_title_list = [ [num, text] for num, text in contributor_helper.org_honor_badge_title.items()]
     org_honor_badge_title_list.sort(key=lambda x: x[0])
+
+    trophy_categ_list = contributor_helper.categories_in_trophy
+    trophy_categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in trophy_categ_list]
+    trophy_title = contributor_helper.trophy_title
+    trophy_title_str = []
+    for i in range(contributor_helper.trophyNum+1):
+        trophy_title_str.append(trophy_title[i])
+    trophy_mapping = ["Top 1"] + [ str(x)+"%" for x in contributor_helper.trophyMapping] + [" "]
+    trophy_mapping.reverse()
 
     currOrg = request.args.get('org')
     if currOrg is None:
@@ -179,7 +191,18 @@ def contrib():
             org_rank_additional_text=org_rank_additional_text,
             org_honor_badge_title=json.dumps(org_honor_badge_title),
             org_honor_badge_title_list=org_honor_badge_title_list,
+            trophy_categ_list=json.dumps(trophy_categ_list),
+            trophy_categ_list_id=trophy_categ_list,
+            trophy_categ_list_str=trophy_categ_list_str,
+            trophy_title=json.dumps(trophy_title),
+            trophy_title_str=trophy_title_str,
+            trophy_mapping=trophy_mapping,
             min_between_reload=cfg.getint('CONTRIB', 'min_between_reload')
+            )
+
+@app.route("/users")
+def users():
+    return render_template('users.html',
             )
 
 ''' INDEX '''
@@ -292,6 +315,10 @@ def getLastContributors():
 def getLastContributor():
     return Response(eventStreamLastContributor(), mimetype="text/event-stream")
 
+@app.route("/_eventStreamAwards")
+def getLastStreamAwards():
+    return Response(eventStreamAwards(), mimetype="text/event-stream")
+
 def eventStreamLastContributor():
     for msg in subscriber_lastContrib.listen():
         content = msg['data'].decode('utf8')
@@ -301,6 +328,18 @@ def eventStreamLastContributor():
         to_return = contributor_helper.getContributorFromRedis(org)
         epoch = lastContribJson['epoch']
         to_return['epoch'] = epoch
+        yield 'data: {}\n\n'.format(json.dumps(to_return))
+
+def eventStreamAwards():
+    for msg in subscriber_lastAwards.listen():
+        content = msg['data'].decode('utf8')
+        contentJson = json.loads(content)
+        lastAwardJson = json.loads(contentJson['log'])
+        org = lastAwardJson['org']
+        to_return = contributor_helper.getContributorFromRedis(org)
+        epoch = lastAwardJson['epoch']
+        to_return['epoch'] = epoch
+        to_return['award'] = lastAwardJson['award']
         yield 'data: {}\n\n'.format(json.dumps(to_return))
 
 @app.route("/_getTopContributor")
@@ -326,6 +365,15 @@ def getFameContributor():
         date = (datetime.datetime(today.year, today.month, 1) - datetime.timedelta(days=1))
     return getTopContributor(suppliedDate=date)
 
+@app.route("/_getFameQualContributor")
+def getFameQualContributor():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        today = datetime.datetime.now()
+        # get previous month
+        date = (datetime.datetime(today.year, today.month, 1) - datetime.timedelta(days=1))
+    return getTopContributor(suppliedDate=date)
 
 @app.route("/_getTop5Overtime")
 def getTop5Overtime():
@@ -347,6 +395,15 @@ def getCategPerContrib():
         date = datetime.datetime.now()
 
     return jsonify(contributor_helper.getCategPerContribFromRedis(date))
+
+@app.route("/_getLatestAwards")
+def getLatestAwards():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    return jsonify(contributor_helper.getLastAwardsFromRedis())
 
 @app.route("/_getAllOrg")
 def getAllOrg():
@@ -375,6 +432,14 @@ def getHonorBadges():
     except:
         org = ''
     return jsonify(contributor_helper.getOrgHonorBadges(org))
+
+@app.route("/_getTrophies")
+def getTrophies():
+    try:
+        org = request.args.get('org')
+    except:
+        org = ''
+    return jsonify(contributor_helper.getOrgTrophies(org))
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)

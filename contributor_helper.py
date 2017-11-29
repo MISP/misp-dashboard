@@ -22,6 +22,13 @@ class Contributor_helper:
         for badgeNum in range(1, self.honorBadgeNum+1): #get Num of honorBadge
             self.org_honor_badge_title[badgeNum] = self.cfg_org_rank.get('HonorBadge', str(badgeNum))
 
+        self.trophyMapping = json.loads(self.cfg_org_rank.get('TrophyDifficulty', 'trophyMapping'))
+        self.trophyNum = len(self.cfg_org_rank.options('HonorTrophy'))-1 #0 is not a trophy
+        self.categories_in_trophy = json.loads(self.cfg_org_rank.get('HonorTrophyCateg', 'categ'))
+        self.trophy_title = {}
+        for trophyNum in range(0, len(self.cfg_org_rank.options('HonorTrophy'))): #get Num of trophy
+            self.trophy_title[trophyNum] = self.cfg_org_rank.get('HonorTrophy', str(trophyNum))
+
         #GLOBAL RANKING
         self.org_rank_maxLevel = self.cfg_org_rank.getint('rankTitle', 'maxLevel')
         self.org_rank = {}
@@ -125,10 +132,18 @@ class Contributor_helper:
                 to_ret[i] = -1
         return {'rank': final_rank, 'status': to_ret, 'totPoints': self.getOrgContributionTotalPoints(org)}
 
-    def updateOrgContributionRank(self, orgName, pnts_to_add, action, contribType, eventTime, isLabeled):
+    # return the awards given to the organisation
+    def updateOrgContributionRank(self, orgName, pnts_to_add, action, contribType, eventTime, isLabeled, categ=""):
+        ContributionStatus = self.getCurrentContributionStatus(orgName)
+        oldContributionStatus = ContributionStatus['status']
+        oldHonorBadges = self.getOrgHonorBadges(orgName)
+        oldTrophy = self.getOrgTrophies(orgName)
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
         # update total points
         totOrgPnts = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='points'), pnts_to_add)
+
+        #FIXME TEMPORARY, JUST TO TEST IF IT WORKS CORRECLTY
+        self.giveTrophyPointsToOrg(orgName, categ, 1)
 
         # update date variables
         if contribType == 'Attribute':
@@ -161,8 +176,6 @@ class Contributor_helper:
         regularlyDays = self.regularlyDays
         isRecent = (datetime.datetime.now() - eventTime).days > recentDays
 
-        print("contribType: {}, action: {}".format(contribType, action))
-        print("isLabeled: {}, isRecent: {}, totOrgPnts".format(isLabeled, isRecent, totOrgPnts))
         #update contribution Requirement
         contrib = [] #[[contrib_level, contrib_ttl], [], ...]
         if totOrgPnts >= self.org_rank_requirement_pnts[1] and contribType == 'Sighting':
@@ -195,10 +208,41 @@ class Contributor_helper:
         if totOrgPnts >= self.org_rank_requirement_pnts[14] and contribType == 'Event' and eventWeekCount>heavilyCount  and isLabeled:
             contrib.append([14, util.ONE_DAY*regularlyDays])
 
-        print([r for r, ttl in contrib])
         for rankReq, ttl in contrib:
             self.serv_redis_db.set(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq)), 1)
             self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq)), ttl)
+
+        ContributionStatus = self.getCurrentContributionStatus(orgName)
+        newContributionStatus = ContributionStatus['status']
+        newHonorBadges = self.getOrgHonorBadges(orgName)
+        newTrophy = self.getOrgTrophies(orgName)
+
+        # awards to publish
+        awards_given = []
+        for i in newContributionStatus.keys():
+            if oldContributionStatus[i] < newContributionStatus[i] and i != ContributionStatus['rank']:
+                awards_given.append(['contribution_status', i])
+
+        for badgeNum in newHonorBadges:
+            if badgeNum not in  oldHonorBadges:
+                awards_given.append(['badge', badgeNum])
+
+        temp = {}
+        for item in oldTrophy:
+            categ = item['categ']
+            rank = item['trophy_true_rank']
+            temp[categ] = rank
+        for item in newTrophy:
+            categ = item['categ']
+            rank = item['trophy_true_rank']
+            try:
+                oldCategRank = temp[categ]
+            except KeyError:
+                oldCategRank = 0
+            if rank > oldCategRank:
+                awards_given.append(['trophy', [categ, rank]])
+
+        return awards_given
 
     ''' HONOR BADGES '''
     def getOrgHonorBadges(self, org):
@@ -217,6 +261,83 @@ class Contributor_helper:
     def removeBadgeFromOrg(self, org, badgeNum):
         keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
         self.serv_redis_db.delete(keyname.format(org=org, orgCateg='BADGE_'+str(badgeNum)))
+
+    ''' TROPHIES '''
+    def getOrgTrophies(self, org):
+        self.getAllOrgsTrophyRanking()
+        keyname = 'CONTRIB_TROPHY:{orgCateg}'
+        trophy = []
+        for categ in self.categories_in_trophy:
+            key = keyname.format(orgCateg=categ)
+            totNum = self.serv_redis_db.zcard(key)
+            if totNum == 0:
+                continue
+            pos = self.serv_redis_db.zrank(key, org)
+            if pos is None:
+                continue
+            trophy_rank = self.posToRankMapping(pos, totNum)
+            trophy_Pnts = self.serv_redis_db.zscore(key, org)
+            trophy.append({ 'categ': categ, 'trophy_points': trophy_Pnts, 'trophy_rank': trophy_rank, 'trophy_true_rank': trophy_rank, 'trophy_title': self.trophy_title[trophy_rank]})
+        return trophy
+
+    def getOrgsTrophyRanking(self, categ):
+        keyname = 'CONTRIB_TROPHY:{orgCateg}'
+        res = self.serv_redis_db.zrange(keyname.format(orgCateg=categ), 0, -1, withscores=True, desc=True)
+        res = [[org.decode('utf8'), score] for org, score in res]
+        return res
+
+    def getAllOrgsTrophyRanking(self):
+        dico_categ = {}
+        for categ in self.categories_in_trophy:
+            res = self.getOrgsTrophyRanking(categ)
+            dico_categ[categ] = res
+
+    def posToRankMapping(self, pos, totNum):
+        mapping = self.trophyMapping
+        mapping_num = [math.ceil(float(float(totNum*i)/float(100))) for i in mapping]
+        # print(pos, totNum)
+        if pos == 0: #first
+            position = 1
+        else:
+            temp_pos = pos
+            counter = 1
+            for num in mapping_num:
+                if temp_pos < num:
+                    position = counter
+                else:
+                    temp_pos -= num
+                    counter += 1
+        return self.trophyNum+1 - position
+
+    def giveTrophyPointsToOrg(self, org, categ, points):
+        keyname = 'CONTRIB_TROPHY:{orgCateg}'
+        self.serv_redis_db.zincrby(keyname.format(orgCateg=categ), org, points)
+
+    def removeTrophyPointsFromOrg(self, org, categ, points):
+        keyname = 'CONTRIB_TROPHY:{orgCateg}'
+        self.serv_redis_db.zincrby(keyname.format(orgCateg=categ), org, -points)
+
+    ''' AWARDS HELPER '''
+    def getLastAwardsFromRedis(self):
+        date = datetime.datetime.now()
+        keyname = "CONTRIB_LAST_AWARDS"
+        prev_days = 7
+        topNum = self.MAX_NUMBER_OF_LAST_CONTRIBUTOR # default Num
+        addedOrg = []
+        data = []
+        for curDate in util.getXPrevDaysSpan(date, prev_days):
+            last_awards = self.getZrange(keyname, curDate, topNum)
+            for dico_award, sec in last_awards:
+                dico_award = json.loads(dico_award)
+                org = dico_award['org']
+                dic = {}
+                dic['orgRank'] = self.getOrgContributionRank(org)['final_rank']
+                dic['logo_path'] = self.getOrgLogoFromMISP(org)
+                dic['org'] = org
+                dic['epoch'] = sec
+                dic['award'] = dico_award['award']
+                data.append(dic)
+        return data
 
     ''' MONTHLY CONTRIBUTION '''
     def getOrgPntFromRedis(self, org, date):
@@ -380,7 +501,6 @@ class Contributor_helper:
                 return { 'remainingPts': i-points, 'stepPts': prev }
             prev = i
         return { 'remainingPts': 0, 'stepPts': self.rankMultiplier**self.levelMax }
-
 
     '''           '''
     ''' TEST DATA '''
@@ -583,3 +703,12 @@ class Contributor_helper:
             else:
                 honorBadge.append(0)
         return honorBadge
+
+    def TEST_getOrgTrophies(self, org):
+        keyname = 'CONTRIB_ORG:{org}:{orgCateg}'
+        trophy = []
+        for categ in self.categories_in_trophy:
+            key = keyname.format(org=org, orgCateg='TROPHY_'+categ)
+            trophy_Pnts = random.randint(0,10)
+            trophy.append({'categName': categ, 'rank': trophy_Pnts})
+        return trophy

@@ -1,12 +1,14 @@
 /* GLOB VAR */
 var allOrg = [];
 var datatableTop;
-var datatableFame;
+var datatableFameQuant;
 var refresh_speed = min_between_reload*60;
+var next_effect = new Date();
 var will_reload = $("#reloadCheckbox").is(':checked');
 var sec_before_reload = refresh_speed;
-var dataTop5Overtime;
-var plotLineChart
+var plotLineChart;
+var source_awards;
+var source_lastContrib;
 
 /* CONFIG */
 var maxRank = 16;
@@ -14,7 +16,8 @@ var popOverOption = {
     trigger: "hover",
     html: true,
     placement: 'bottom',
-    content: generateRankingSheet()
+    content: generateRankingSheet(),
+    template: '<div class="popover" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content popoverNoPadding"></div></div>'
 }
 var optionsLineChart = {
     series: {
@@ -65,6 +68,8 @@ var optionDatatable_light = {
 };
 var optionDatatable_top = jQuery.extend({}, optionDatatable_light)
 var optionDatatable_last = jQuery.extend({}, optionDatatable_light)
+optionDatatable_last["ordering"] = true;
+optionDatatable_last["order"] = [[ 0, "dec" ]];
 optionDatatable_last.columnDefs = [
     { className: "small", "targets": [ 0 ] },
     { className: "verticalAlign", "targets": [ 1 ] },
@@ -72,12 +77,7 @@ optionDatatable_last.columnDefs = [
     { className: "centerCellPicOrgLogo", "targets": [ 3 ] },
     { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 4 ] },
     { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 5 ] },
-    { className: "verticalAlign", "targets": [ 6 ] },
-    { 'orderData':[6], 'targets': [0] },
-    {
-        'targets': [6],
-        'searchable': false
-    },
+    { className: "verticalAlign", "targets": [ 6 ] }
 ]
 var optionDatatable_fame = jQuery.extend({}, optionDatatable_light)
 optionDatatable_fame.scrollY = '45vh';
@@ -86,7 +86,7 @@ var optionDatatable_Categ = {
     responsive: true,
     searching: true,
     "order": [[ 0, "desc" ]],
-    scrollY:        '38vh',
+    scrollY:        '35vh',
     "scrollX": true,
     scrollCollapse: true,
     paging:         false,
@@ -97,6 +97,15 @@ var optionDatatable_Categ = {
         { className: "centerCellPicOrgLogo", "targets": [ 4 ]}
     ]
 };
+var optionDatatable_awards = jQuery.extend({}, optionDatatable_light);
+optionDatatable_awards["ordering"] = true;
+optionDatatable_awards["order"] = [[ 0, "dec" ]];
+optionDatatable_awards["scrollX"] = false;
+optionDatatable_awards["scrollY"] = "40vh";
+optionDatatable_awards.columnDefs = [
+    { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 1 ] },
+    { className: "centerCellPicOrgLogo", "targets": [ 3 ] },
+];
 
 var typeaheadOption = {
     source: function (query, process) {
@@ -170,11 +179,25 @@ function createImg(source, size) {
     return obj.outerHTML;
 }
 
+function createTrophyImg(rank, size, categ) {
+    var obj = document.createElement('img');
+    obj.height = size;
+    obj.width = size;
+    obj.style.margin = 'auto';
+    obj.src = url_baseTrophyLogo+rank+'.png';;
+    obj.title = trophy_title[rank] + " in " + categ;
+    obj.type = "image/png"
+    obj.alt = ""
+    return obj.outerHTML;
+}
+
 function createHonorImg(array, size) {
     size = 32;
     var div = document.createElement('div');
     div.style.boxShadow = '0px 0px 5px #00000099';
     div.style.backgroundColor = '#e1e1e1';
+    if (!Array.isArray(array))
+        array = [array];
     for (badgeNum of array) {
         var obj = document.createElement('img');
         obj.height = size;
@@ -313,8 +336,9 @@ function addLastFromJson(datatable, url) {
 
 function addLastContributor(datatable, data, update) {
     var date = new Date(data.epoch*1000);
+    date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
     var to_add = [
-        date.toTimeString().slice(0,-15) +' '+ date.toLocaleDateString(),
+        date,
         data.pnts,
         getMonthlyRankIcon(data.rank),
         getOrgRankIcon(data.orgRank, 60),
@@ -324,13 +348,48 @@ function addLastContributor(datatable, data, update) {
     ];
     if (update == undefined || update == false) {
         datatable.row.add(to_add);
+        datatable.draw();
     } else if(update == true) {
+        var row_added = false;
         datatable.rows().every( function() {
-            if(this.data()[3] == data.org) {
+            if($(this.data()[6])[0].text == data.org) {
+                var node = $(datatable.row( this ).node());
                 datatable.row( this ).data( to_add );
+                if(next_effect <= new Date()) {
+                    node.effect("slide", 500);
+                    next_effect.setSeconds((new Date()).getSeconds() + 5);
+                }
+                row_added = true;
             }
+            datatable.draw();
         });
+        if (!row_added) {
+            var node = $(datatable.row.add(to_add).draw().node());
+            node.effect("slide", 700);
+        }
     }
+}
+
+function addAwards(datatableAwards, json, playAnim) {
+    if(json.award[0] == 'contribution_status') {
+        var award = getOrgRankIcon(json.award[1], 60);
+    } else if (json.award[0] == 'badge') {
+        var award = createHonorImg(json.award[1], 20);
+    } else if (json.award[0] == 'trophy') {
+        var categ = json.award[1][0];
+        var award = createTrophyImg(json.award[1][1], 40, categ);
+    }
+    var date = new Date(json.epoch*1000);
+    date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
+    var to_add = [
+        date,
+        createImg(json.logo_path, 32),
+        createOrgLink(json.org),
+        award,
+    ];
+    var node = $(datatableAwards.row.add(to_add).draw().node());
+    if(playAnim)
+        node.effect("slide", 700);
 }
 
 function updateProgressBar(org) {
@@ -394,19 +453,23 @@ function updateProgressHeader(org) {
         // update color in other dataTables
         datatableTop.rows().every( function() {
             var row = this.node();
-            if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
+            var orgRowName = $(this.data()[5])[0].text;
+            if(orgRowName == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
-        datatableFame.rows().every( function() {
+        datatableFameQuant.rows().every( function() {
             var row = this.node();
-            if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
+            var orgRowName = $(this.data()[5])[0].text;
+            if(orgRowName == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
         datatableCateg.rows().every( function() {
             var row = this.node();
-            if(this.data()[5] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
+            var orgRowName = $(this.data()[5])[0].text;
+            if(orgRowName == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
         datatableLast.rows().every( function() {
             var row = this.node();
-            if(this.data()[6] == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
+            var orgRowName = $(this.data()[6])[0].text;
+            if(orgRowName == data.org) { row.classList.add('selectedOrgInTable'); } else { row.classList.remove('selectedOrgInTable'); }
         });
     });
 
@@ -446,39 +509,43 @@ function updateProgressHeader(org) {
     $.getJSON( url_getHonorBadges+'?org='+org, function( data ) {
         for(var i=0; i<numberOfBadges; i++) { // remove
             $('#divBadge_'+(i+1)).removeClass('circlBadgeAcquired');
+            $('#divBadge_'+(i+1)).addClass('circlBadgeNotAcquired');
         }
         for(var i=0; i<data.length; i++) { // add
+            $('#divBadge_'+(i+1)).removeClass('circlBadgeNotAcquired');
             $('#divBadge_'+(data[i])).addClass('circlBadgeAcquired');
         }
     });
 
+    // set trophies if acquired
+    $.getJSON( url_getTrophies+'?org='+org, function( data ) {
+        var source = url_baseTrophyLogo+0+'.png'
+        for(var i=0; i<trophy_categ_list.length; i++) { // remove
+            categ = trophy_categ_list[i];
+            $('#trophy_'+categ).attr('src', source);
+            $('#trophy_'+categ).attr('title', "");
+            try { // in case popover not created
+                var pop = $('#trophy_'+categ).data('bs.popover');
+                pop.destroy();
+            } catch(err) {
+
+            }
+        }
+        setTimeout(function() { // avoid race condition with destroy
+            for(var i=0; i<data.length; i++) { // add
+                categ = data[i].categ;
+                rank = data[i].trophy_true_rank;
+                trophy_points = data[i].trophy_points
+                source = url_baseTrophyLogo+rank+'.png'
+                $('#trophy_'+categ).attr('src', source);
+                $('#trophy_'+categ).attr('title', trophy_title[rank]);
+                $('#trophy_'+categ).popover({title: trophy_title[rank], content: 'Level: '+rank+' ('+trophy_points+' points)', trigger: "hover", placement: "bottom"});
+            }
+        }, 300);
+    });
+
     //update overtake points
     updateOvertakePnts();
-
-    //Add new data to linechart
-    var flag_already_displayed = false;
-    for(obj of dataTop5Overtime) { //check if already displayed
-        if (obj.label == currOrg) {
-            flag_already_displayed = true;
-            break;
-        }
-    }
-    if (!flag_already_displayed) {
-        $.getJSON( url_getOrgOvertime+'?org='+org, function( data ) {
-            var toPlot = dataTop5Overtime.slice(0); //cloning data
-            // transform secs into date
-            var new_data = [];
-            for(list of data['data']) {
-                new_data.push([list[0]*1000, list[1]]);
-            }
-            data['data'] = new_data;
-            toPlot.push(data);
-
-            plotLineChart.setData(toPlot);
-            plotLineChart.setupGrid();
-            plotLineChart.draw();
-        });
-    }
 }
 
 function showOnlyOrg() {
@@ -497,7 +564,6 @@ function updateTimer() {
     if ($("#reloadCheckbox").is(':checked')) {
         sec_before_reload--;
         if (sec_before_reload < 1) {
-            source_lastContrib.close();
             location.reload();
         } else {
             $('#labelRemainingTime').text(timeToString(sec_before_reload));
@@ -517,14 +583,23 @@ $(document).ready(function() {
     updateTimer();
     $('#orgName').typeahead(typeaheadOption);
     $('#btnCurrRank').popover(popOverOption);
+
+    $(window).on("beforeunload", function() {
+        source_lastContrib.close();
+        source_awards.close();
+    });
+
     datatableTop = $('#topContribTable').DataTable(optionDatatable_top);
-    datatableFame = $('#fameTable').DataTable(optionDatatable_fame);
+    datatableFameQuant = $('#fameTableQuantity').DataTable(optionDatatable_fame);
+    datatableFameQual = $('#fameTableQuality').DataTable(optionDatatable_fame);
     datatableCateg = $('#categTable').DataTable(optionDatatable_Categ);
     datatableLast = $('#lastTable').DataTable(optionDatatable_last);
+    datatableAwards = $('#awardTable').DataTable(optionDatatable_awards);
     // top contributors
     addToTableFromJson(datatableTop, url_getTopContributor);
     // hall of fame
-    addToTableFromJson(datatableFame, url_getFameContributor);
+    addToTableFromJson(datatableFameQuant, url_getFameContributor);
+    addToTableFromJson(datatableFameQual, url_getFameQualContributor);
     // last contributors
     addLastFromJson(datatableLast, url_getLastContributor);
     // category per contributors
@@ -548,30 +623,30 @@ $(document).ready(function() {
         }
         datatableCateg.draw();
     });
-    // top 5 contrib overtime
-    $.getJSON( url_getTop5Overtime, function( data ) {
-        // transform secs into date
-        for(i in data){
-            var new_data = [];
-            for(list of data[i]['data']) {
-                new_data.push([list[0]*1000, list[1]]);
-            }
-            data[i]['data'] = new_data;
+    // latest awards
+    $.getJSON( url_getLatestAwards, function( data ) {
+        for (i in data) {
+            addAwards(datatableAwards, data[i], false);
         }
-        dataTop5Overtime = data;
-        plotLineChart = $.plot("#divTop5Overtime", data, optionsLineChart);
     });
+
     if(currOrg != "") // currOrg selected
         //FIXME: timeout used to wait that all datatables are draw.
-        setTimeout( function() { updateProgressHeader(currOrg); }, 500);
+        setTimeout( function() { updateProgressHeader(currOrg); }, 700);
 
     source_lastContrib = new EventSource(url_eventStreamLastContributor);
     source_lastContrib.onmessage = function(event) {
         var json = jQuery.parseJSON( event.data );
         addLastContributor(datatableLast, json, true);
-        datatableLast.draw();
         updateProgressBar(json.org);
         updateOvertakePnts();
         sec_before_reload = refresh_speed; //reset timer at each contribution
+    };
+
+    source_awards = new EventSource(url_eventStreamAwards);
+    source_awards.onmessage = function(event) {
+        var json = jQuery.parseJSON( event.data );
+        addAwards(datatableAwards, json, true);
+        updateProgressHeader(currOrg);
     };
 });

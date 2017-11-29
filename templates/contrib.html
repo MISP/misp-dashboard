@@ -46,8 +46,8 @@
 </head>
 
 <body>
-    <!-- Modal -->
-    <div id="myModal" class="modal fade" role="dialog">
+    <!-- Modal Rank -->
+    <div id="myModalRank" class="modal fade" role="dialog">
       <div class="modal-dialog modal-lg" style="width: 1500px;">
 
         <!-- Modal content-->
@@ -136,22 +136,6 @@
                                 {% endfor %}
                             </ul>
                         </div>
-                        <div class="col-lg-6">
-                            <table>
-                                <tbody>
-                                    {% for item in org_honor_badge_title_list %}
-                                        <tr style="height: 85px">
-                                            <td>
-                                                <div id="divBadge_{{ loop.index }}" class="circleBadge">
-                                                    <img height='64px' width='64px' style="margin-top: 5px;" src="{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img>
-                                                </div>
-                                            </td>
-                                            <td style="padding-left: 15px;">{{ item[1] }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
                   </div>
               </div>
           </div>
@@ -159,9 +143,100 @@
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
           </div>
         </div>
-
       </div>
     </div>
+
+    <!-- Modal trophy -->
+    <div id="myModalTrophy" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg" style="width: 1500px;">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" style="float: left;">Trophies and badges</h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h4>Badges:</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Badge</th>
+                                    <th>Requirement</th>
+                                </tr>
+                            </thead>
+                            <tbody id='bodyTableBadgeModal'>
+                                {% for item in org_honor_badge_title_list %}
+                                    <tr>
+                                        <td>
+                                            <div id="divBadge_{{ loop.index }}" class="circleBadgeSmall circlBadgeNotAcquired">
+                                                <img height='64px' width='64px' class="" style="margin-top: 3px;" src="{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img>
+                                            </div>
+                                        </td>
+                                        <td style="padding-left: 15px;">{{ item[1] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style="font-size: 18px; display: inline;">Trophies: </p><p style="display: inline;">Shows your skills in information sharing </p><i> (earned via upvotes or sightings from other organisation)</i>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    {% for title in trophy_title_str %}
+                                            <th>{{ title }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody id='bodyTableTrophyModal'>
+                                <tr>
+                                    {% for perc in trophy_mapping %}
+                                            <td>{{ perc }}</td>
+                                    {% endfor %}
+                                </tr>
+                                <tr>
+                                    {% for title in trophy_title_str %}
+                                            <td>
+                                                <input type='image' style="display: block; margin-left: auto; margin-right: auto;" height="64" width="64" src="{{ url_for('static', filename='pics/MISPTrophy/'+loop.index0|string+'.png') }}">
+                                            </td>
+                                    {% endfor %}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p style="font-size: 18px; display: inline;">Acquired trophies: </p>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    {% for categ in trophy_categ_list_str %}
+                                            <th>{{ categ }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody id='bodyTableTrophyModal'>
+                                <tr>
+                                    {% for categ in trophy_categ_list_id %}
+                                            <td>
+                                                <input type='image' id='trophy_{{categ}}' style="display: block; margin-left: auto; margin-right: auto;" height="64" width="64" src="{{ url_for('static', filename='pics/MISPTrophy/0.png') }}">
+                                            </td>
+                                    {% endfor %}
+                                    </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 
     <div id="wrapper">
 
@@ -190,7 +265,8 @@
                     <div class='textTopHeader' style="padding-top: 9px;">
                         <input type="text" id="orgName" data-provide="typeahead" size="20" style="margin-bottom: 5px;">
                     </div>
-                    <button type="button" class="questionBadgeDiv fa fa-question-circle" data-toggle="modal" data-target="#myModal"></button>
+                    <button type="button" class="questionBadgeDiv fa fa-question-circle" title="Ranking information" data-toggle="modal" data-target="#myModalRank"></button>
+                    <button type="button" class="questionBadgeDiv fa fa-trophy" title="Trophies and badges" data-toggle="modal" data-target="#myModalTrophy"></button>
                     <button id="btnCurrRank" class='btn btn-default popOverBtn' data-container='body' data-toggle='popover' style="display: none; margin-left: 20px;" onclick="showOnlyOrg()">
                         <object id='orgContributionRank' height=32 width=64 class="centerInBtn"></object>
                         <strong id="orgText" class="centerInBtn"></strong>
@@ -204,7 +280,7 @@
                         <div id="orgNextRankDiv" class='textTopHeader' style="padding-top: 0px; position: relative; width: 40px; height: 40px;"></div>
                     </button>
                     <div class='leftSepa textTopHeader'>
-                        <span class="label label-primary">
+                        <span class="label label-primary" style="padding: .5em;">
                         <strong style="">Points to overtake</strong>
                         <strong style="font-size: medium;" id='orgToOverTake'></strong>
                         <strong style="">: </strong>
@@ -222,14 +298,14 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <div style="height: 10px;"></div>
-                        <div class="col-lg-8">
+                        <div class="col-lg-9">
 
                             <div class="col-lg-6">
                                 <div class="panel panel-default" style="height: 100%;">
                                     <div class="panel-heading bg-info" style="font-weight: bold;">
                                         <i class="fa fa-asterisk " style="margin-right: 5px; color: #f0ad4e;"></i><b>Contributor ranking (monthly)</b>
                                     </div>
-                                    <div id="panelRanking" class="panel-body" style="height: 100%;">
+                                    <div class="panel-body" style="height: 100%;">
 
                                         <div class="table-responsive">
                                             <table id="topContribTable" class="table table-hover table-striped">
@@ -283,11 +359,12 @@
                             </div>
 
                             <div class="col-lg-12">
+                            <div class="col-lg-6">
                                 <div class="panel panel-default" style="height: 100%;">
                                     <div class="panel-heading bg-info" style="font-weight: bold;">
                                         <i class="fa fa-th-list " style="margin-right: 5px; color: #f0ad4e;"></i><b>Contributors and categories (total)</b>
                                     </div>
-                                    <div id="panelRanking" class="panel-body" style="height: 100%;">
+                                    <div class="panel-body" style="height: 100%;">
 
                                         <div class="table-responsive">
                                             <table id="categTable" class="table table-hover table-striped">
@@ -314,20 +391,47 @@
                                 </div><!-- /.panel -->
                             </div>
 
+                            <div class="col-lg-6">
+                                <div class="panel panel-default" style="height: 100%;">
+                                    <div class="panel-heading bg-info" style="font-weight: bold;">
+                                        <i class="fa fa-trophy" style="margin-right: 5px; color: #d9534f;"></i><b>Latest awards</b>
+                                    </div>
+                                    <div id="panelawards" class="panel-body" style="height: 100%;">
+
+                                        <div class="table-responsive">
+                                            <table id="awardTable" class="table table-hover table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th></th>
+                                                        <th>Org.</th>
+                                                        <th>Awards</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <!-- /.panel-body -->
+                                </div><!-- /.panel -->
+                            </div>
+                            </div>
+
 
                         </div><!-- /.col-lg-8 -->
 
 
-                        <div class="col-lg-4">
+                        <div class="col-lg-3">
 
                             <div class="panel panel-default" style="height: 100%;">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
                                     <i class="fa fa-star" style="margin-right: 5px; color: #f0ad4e;"></i><b>Hall Of Fame (previous month)</b>
                                 </div>
-                                <div id="panelRanking" class="panel-body" style="height: 100%;">
+                                <div class="panel-body" style="height: 100%;">
 
                                     <div class="table-responsive">
-                                        <table id="fameTable" class="table table-hover table-striped" style="margin-bottom: 0px;">
+                                        <table id="fameTableQuantity" class="table table-hover table-striped" style="margin-bottom: 0px;">
                                             <thead>
                                                 <tr>
                                                     <th>Points</th>
@@ -338,7 +442,7 @@
                                                     <th>Organisation</th>
                                                 </tr>
                                             </thead>
-                                            <tbody id=fameTableBody>
+                                            <tbody id=fameTableQuantityBody>
                                             </tbody>
                                         </table>
                                     </div>
@@ -349,13 +453,29 @@
 
                             <div class="panel panel-default" style="height: 100%;">
                                 <div class="panel-heading bg-info" style="font-weight: bold;">
-                                    <i class="fa fa-line-chart" style="margin-right: 5px; color: #f0ad4e;"></i><b>Top 5 Contributor overtime</b>
+                                    <i class="fa fa-star" style="margin-right: 5px; color: #f0ad4e;"></i><b>Hall Of Fame - Quality (previous month)</b>
                                 </div>
-                                <div id="panelRanking" class="panel-body" style="height: 100%;">
-                                    <div id="divTop5Overtime" style="height: 32vh"></div>
+                                <div class="panel-body" style="height: 100%;">
+
+                                    <div class="table-responsive">
+                                        <table id="fameTableQuality" class="table table-hover table-striped" style="margin-bottom: 0px;">
+                                            <thead>
+                                                <tr>
+                                                    <th>Points</th>
+                                                    <th>Prev. rank</th>
+                                                    <th>Org. rank</th>
+                                                    <th></th>
+                                                    <th></th>
+                                                    <th>Organisation</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id=fameTableQualityBody>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
                                 </div>
                                 <!-- /.panel-body -->
-
                             </div><!-- /.panel -->
 
                         </div><!-- /.col-lg-4 -->
@@ -375,21 +495,28 @@
         /* URL */
         var url_getTopContributor = "{{ url_for('getTopContributor') }}";
         var url_getFameContributor = "{{ url_for('getFameContributor') }}";
+        var url_getFameQualContributor = "{{ url_for('getFameQualContributor') }}";
         var url_getCategPerContrib = "{{ url_for('getCategPerContrib') }}";
         var url_getTop5Overtime = "{{ url_for('getTop5Overtime') }}";
         var url_getOrgOvertime = "{{ url_for('getOrgOvertime') }}";
         var url_getLastContributor = "{{ url_for('getLastContributors') }}";
+        var url_getLatestAwards = "{{ url_for('getLatestAwards') }}";
         var url_eventStreamLastContributor = "{{ url_for('getLastContributor') }}";
+        var url_eventStreamAwards = "{{ url_for('getLastStreamAwards') }}";
         var url_getAllOrg = "{{ url_for('getAllOrg') }}";
         var url_getOrgRank = "{{ url_for('getOrgRank') }}";
         var url_getContributionOrgStatus = "{{ url_for('getContributionOrgStatus') }}";
         var url_getHonorBadges = "{{ url_for('getHonorBadges') }}";
+        var url_getTrophies = "{{ url_for('getTrophies')}}"
+
         var url_baseRankMonthlyLogo =     "{{ url_for('static', filename='pics/rankingMISPMonthly/1.svg') }}";
         url_baseRankMonthlyLogo = url_baseRankMonthlyLogo.substring(0, url_baseRankMonthlyLogo.length-5);
         var url_baseOrgRankLogo =     "{{ url_for('static', filename='pics/rankingMISPOrg/1.svg') }}";
         url_baseOrgRankLogo = url_baseOrgRankLogo.substring(0, url_baseOrgRankLogo.length-5);
         var url_baseHonorLogo =     "{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg') }}";
         url_baseHonorLogo = url_baseHonorLogo.substring(0, url_baseHonorLogo.length-5);
+        var url_baseTrophyLogo =     "{{ url_for('static', filename='pics/MISPTrophy/1.png') }}";
+        url_baseTrophyLogo = url_baseTrophyLogo.substring(0, url_baseTrophyLogo.length-5);
 
         /* DATA FROM CONF */
         var currOrg = "{{ currOrg }}";
@@ -399,6 +526,8 @@
         var org_rank_obj = JSON.parse('{{ org_rank_json|safe }}');
         var org_honor_badge_title = JSON.parse('{{ org_honor_badge_title|safe }}');
         var numberOfBadges = {{ org_honor_badge_title_list|length }};
+        var trophy_categ_list = JSON.parse('{{ trophy_categ_list|safe }}');
+        var trophy_title = JSON.parse('{{ trophy_title|safe }}');
 
     </script>
     <script src="{{ url_for('static', filename='js/contrib.js') }}"></script>

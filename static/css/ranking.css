@@ -16,8 +16,24 @@
     border: 1px solid #caccce;
 }
 
+.circleBadgeSmall {
+    width: 73px;
+    height: 73px;
+    text-align: center;
+    border-radius: 38px;
+    background-color: #e1e1e1;
+    border: 1px solid #caccce;
+    vertical-align: middle;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+.circlBadgeNotAcquired { filter: grayscale(100%); }
+
 .circlBadgeAcquired {
-    box-shadow: 0px 0px 15px #0000ff
+    /*box-shadow: 0px 0px 15px #0000ff*/
+    box-shadow: 0px 0px 3px #1b6a92, 0px 0px 10px #2fa1db;
 }
 
 .questionBadgeText {
@@ -59,7 +75,7 @@
     font-size: x-large;
 }
 
-.popover-content {
+.popoverNoPadding {
     padding: 3px
 }
 
@@ -77,6 +93,12 @@
 .table > tbody > tr > td.centerCell {
     text-align: center;
     min-width: 45px;
+}
+
+
+#panelawards .dataTables_scrollBody {
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
 }
 
 .dataTables_filter > label {
@@ -119,6 +141,16 @@
 }
 
 .col-lg-4 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.col-lg-3 {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.col-lg-9 {
     padding-right: 5px;
     padding-left: 5px;
 }
