@@ -4,23 +4,28 @@ import json
 import datetime, time
 
 import util
+from users_helper import keyDay as keyContribDay
 
 class Users_helper:
     def __init__(self, serv_redis_db, cfg):
         self.serv_redis_db = serv_redis_db
         self.cfg = cfg
+        # REDIS keys
+        self.keyTimestamp    = "LOGIN_TIMESTAMP"
+        self.keyTimestampSet = "LOGIN_TIMESTAMPSET"
+        self.keyOrgLog       = "LOGIN_ORG"
 
     def addTemporary(self, org, timestamp):
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
         timestampDate_str = util.getDateHoursStrFormat(timestampDate)
-        keyname_timestamp = "{}:{}".format('LOGIN_TIMESTAMPSET', timestampDate_str)
+        keyname_timestamp = "{}:{}".format(self.keyTimestampSet, timestampDate_str)
         self.serv_redis_db.sadd(keyname_timestamp, org)
         self.serv_redis_db.expire(keyname_timestamp, 60*60)
 
     def hasAlreadyBeenAdded(self, org, timestamp):
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
         timestampDate_str = util.getDateHoursStrFormat(timestampDate)
-        keyname_timestamp = "{}:{}".format('LOGIN_TIMESTAMPSET', timestampDate_str)
+        keyname_timestamp = "{}:{}".format(self.keyTimestampSet, timestampDate_str)
         orgs = [ org.decode('utf8') for org in self.serv_redis_db.smembers(keyname_timestamp) ]
         if orgs is None:
             return False
@@ -31,21 +36,21 @@ class Users_helper:
         timestampDate_str = util.getDateStrFormat(timestampDate)
 
         if not self.hasAlreadyBeenAdded(org, timestamp):
-            keyname_timestamp = "{}:{}".format('LOGIN_TIMESTAMP', timestampDate_str)
+            keyname_timestamp = "{}:{}".format(self.keyTimestamp, timestampDate_str)
             self.serv_redis_db.sadd(keyname_timestamp, timestamp)
             self.addTemporary(org, timestamp)
 
-        keyname_org = "{}:{}".format('LOGIN_ORG', timestampDate_str)
+        keyname_org = "{}:{}".format(self.keyOrgLog, timestampDate_str)
         self.serv_redis_db.zincrby(keyname_org, org, 1)
 
     def getUserLogins(self, date):
-        keyname = "LOGIN_TIMESTAMP:{}".format(util.getDateStrFormat(date))
+        keyname = "{}:{}".format(self.keyTimestamp, util.getDateStrFormat(date))
         timestamps = self.serv_redis_db.smembers(keyname)
         timestamps = [int(timestamp.decode('utf8')) for timestamp in timestamps]
         return timestamps
 
     def getOrgslogin(self, date, topNum=12):
-        keyname = "LOGIN_ORG:{}".format(util.getDateStrFormat(date))
+        keyname = "{}:{}".format(self.keyOrgLog, util.getDateStrFormat(date))
         data = self.serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
         data = [ [record[0].decode('utf8'), record[1]] for record in data ]
         return data
@@ -53,20 +58,20 @@ class Users_helper:
     def getAllLoggedInOrgs(self, date, prev_days=31):
         orgs = set()
         for curDate in util.getXPrevDaysSpan(date, prev_days):
-            keyname = "LOGIN_ORG:{}".format(util.getDateStrFormat(curDate))
+            keyname = "{}:{}".format(self.keyOrgLog, util.getDateStrFormat(curDate))
             data = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=True)
             for org in data:
                 orgs.add(org[0].decode('utf8'))
         return list(orgs)
 
     def getOrgContribAndLogin(self, date, org, prev_days=31):
-        keyname_log = "LOGIN_ORG:{}"
-        keyname_contrib = "CONTRIB_DAY:{}"
+        keyname_log = "{}:{}"
+        keyname_contrib = "{}:{}"
         data = []
         for curDate in util.getXPrevDaysSpan(date, prev_days):
-            log = self.serv_redis_db.zscore(keyname_log.format(util.getDateStrFormat(curDate)), org)
+            log = self.serv_redis_db.zscore(keyname_log.format(self.keyOrgLog, util.getDateStrFormat(curDate)), org)
             log = 0 if log is None else 1
-            contrib = self.serv_redis_db.zscore(keyname_contrib.format(util.getDateStrFormat(curDate)), org)
+            contrib = self.serv_redis_db.zscore(keyname_contrib.format(keyContribDay, util.getDateStrFormat(curDate)), org)
             contrib = 0 if contrib is None else 1
             data.append([log, contrib])
         return data
@@ -93,7 +98,7 @@ class Users_helper:
 
 
     def getLoginVSCOntribution(self, date):
-        keyname = "CONTRIB_DAY:{}".format(util.getDateStrFormat(date))
+        keyname = "{}:{}".format(keyContribDay, util.getDateStrFormat(date))
         orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=False)
         orgs_contri = [ org.decode('utf8') for org in orgs_contri ]
         orgs_login = [ org[0] for org in self.getOrgslogin(date, topNum=0) ]
@@ -145,7 +150,7 @@ class Users_helper:
 
         for curDate in util.getXPrevDaysSpan(date, prev_days):
             timestamps = self.getUserLogins(curDate)
-            keyname = "CONTRIB_DAY:{}".format(util.getDateStrFormat(curDate))
+            keyname = "{}:{}".format(keyContribDay, util.getDateStrFormat(curDate))
 
             orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=False)
             orgs_contri_num = len(orgs_contri)
