@@ -4,7 +4,7 @@ import json
 import datetime, time
 
 import util
-from users_helper import keyDay as keyContribDay
+import contributor_helper
 
 class Users_helper:
     def __init__(self, serv_redis_db, cfg):
@@ -14,6 +14,8 @@ class Users_helper:
         self.keyTimestamp    = "LOGIN_TIMESTAMP"
         self.keyTimestampSet = "LOGIN_TIMESTAMPSET"
         self.keyOrgLog       = "LOGIN_ORG"
+        contrib_helper   = contributor_helper.Contributor_helper(serv_redis_db, cfg)
+        self.keyContribDay   = contrib_helper.keyDay # Key to get monthly contribution
 
     def addTemporary(self, org, timestamp):
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
