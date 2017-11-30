@@ -53,6 +53,7 @@ channelLastAwards = lastAwards
 db=1
 channelDisp=PicToDisplay
 pathMaxMindDB=./data/GeoLite2-City_20171003/GeoLite2-City.mmdb
+path_countrycode_to_coord_JSON=./data/country_code_lat_long.json
 
 [RedisDB]
 db=2

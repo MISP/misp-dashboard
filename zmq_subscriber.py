@@ -276,7 +276,11 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
 
     #try to get coord from ip
     if jsonattr['category'] == "Network activity":
-        geo_helper.getCoordAndPublish(jsonattr['value'], jsonattr['category'])
+        geo_helper.getCoordFromIpAndPublish(jsonattr['value'], jsonattr['category'])
+
+    #try to get coord from ip
+    if jsonattr['type'] == "phone-number":
+        geo_helper.getCoordFromPhoneAndPublish(jsonattr['value'], jsonattr['category'])
 
     if not hasAlreadyBeenContributed:
         try:
@@ -349,4 +353,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(args.zmqname)
-    reader.close()

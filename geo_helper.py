@@ -2,9 +2,13 @@ import math, random
 import os
 import json
 import datetime, time
+import json
 import redis
 from collections import OrderedDict
+
 import geoip2.database
+import phonenumbers, pycountry
+from phonenumbers import geocoder
 
 import util
 
@@ -21,9 +25,13 @@ class Geo_helper:
         self.keyCategCountry = "GEO_COUNTRY"
         self.keyCategRad = "GEO_RAD"
         self.PATH_TO_DB = cfg.get('RedisMap', 'pathMaxMindDB')
+        self.PATH_TO_JSON = cfg.get('RedisMap', 'path_countrycode_to_coord_JSON')
         self.CHANNELDISP = cfg.get('RedisMap', 'channelDisp')
 
         self.reader = geoip2.database.Reader(self.PATH_TO_DB)
+        self.country_to_iso = { country.name: country.alpha_2 for country in pycountry.countries}
+        with open(self.PATH_TO_JSON) as f:
+            self.country_code_to_coord = json.load(f)
 
     ''' GET '''
     def getTopCoord(self, date):
@@ -69,7 +77,7 @@ class Geo_helper:
         return to_return
 
     ''' ADD '''
-    def getCoordAndPublish(self, supposed_ip, categ):
+    def getCoordFromIpAndPublish(self, supposed_ip, categ):
         try:
             rep = self.ip_to_coord(supposed_ip)
             coord = rep['coord']
@@ -98,6 +106,43 @@ class Geo_helper:
             print("can't resolve ip")
         except geoip2.errors.AddressNotFoundError:
             print("Address not in Database")
+
+    def getCoordFromPhoneAndPublish(self, phoneNumber, categ):
+        try:
+            print('function accessed')
+            rep = phonenumbers.parse(phoneNumber, None)
+            if not (phonenumbers.is_valid_number(rep) or phonenumbers.is_possible_number(rep)):
+                print("Phone number not valid")
+            country_name = geocoder.country_name_for_number(rep, "en")
+            country_code = self.country_to_iso[country_name]
+            if country_code is None:
+                print("Non matching ISO_CODE")
+            coord = self.country_code_to_coord[country_code.lower()]  # countrycode is in upper case
+            coord_dic = {'lat': coord['lat'], 'lon': coord['long']}
+
+            ordDic = OrderedDict() #keep fields with the same layout in redis
+            ordDic['lat'] = coord_dic['lat']
+            ordDic['lon'] = coord_dic['lon']
+            coord_list = [coord['lat'], coord['long']]
+            self.push_to_redis_zset(self.keyCategCoord, json.dumps(ordDic))
+            self.push_to_redis_zset(self.keyCategCountry, country_code)
+            ordDic = OrderedDict() #keep fields with the same layout in redis
+            ordDic['categ'] = categ
+            ordDic['value'] = phoneNumber
+            self.push_to_redis_geo(self.keyCategRad, coord['long'], coord['lat'], json.dumps(ordDic))
+            to_send = {
+                    "coord": coord_dic,
+                    "categ": categ,
+                    "value": phoneNumber,
+                    "country": country_name,
+                    "specifName": "",
+                    "cityName": "",
+                    "regionCode": country_code,
+                    }
+            print(to_send)
+            self.serv_coord.publish(self.CHANNELDISP, json.dumps(to_send))
+        except phonenumbers.NumberParseException:
+            print("Can't resolve phone number country")
 
     ''' UTIL '''
     def push_to_redis_geo(self, keyCateg, lon, lat, content):
