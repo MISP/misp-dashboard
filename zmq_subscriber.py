@@ -16,6 +16,7 @@ import geoip2.database
 
 import util
 import contributor_helper
+import users_helper
 
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
@@ -53,6 +54,7 @@ serv_redis_db = redis.StrictRedis(
         db=cfg.getint('RedisDB', 'db'))
 
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
+users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 
 reader = geoip2.database.Reader(PATH_TO_DB)
 
@@ -140,6 +142,9 @@ def handleContribution(zmq_name, org, contribType, categ, action, pntMultiplier=
     nowSec = int(time.time())
     pnts_to_add = DEFAULT_PNTS_REWARD
 
+    # if there is a contribution, there is a login (even if ti comes from the API)
+    users_helper.add_user_login(nowSec, org)
+
     # is a valid contribution
     if categ is not None:
         try:
@@ -186,6 +191,17 @@ def handler_keepalive(zmq_name, jsonevent):
     print('sending', 'keepalive')
     to_push = [ jsonevent['uptime'] ]
     publish_log(zmq_name, 'Keepalive', to_push)
+
+def handler_user(zmq_name, jsondata):
+    json_user = jsondata['User']
+    userID = json_user['id']
+    org = userID
+    try: #only consider user login
+        timestamp = json_user['current_login']
+    except KeyError:
+        return
+    if timestamp != 0: # "invited_by": "xxxx" ???
+        users_helper.add_user_login(timestamp, org)
 
 def handler_conversation(zmq_name, jsonevent):
     try: #only consider POST, not THREAD
@@ -323,7 +339,7 @@ dico_action = {
         "misp_json_object":         handler_object,
         "misp_json_sighting":       handler_sighting,
         "misp_json_organisation":   handler_log,
-        "misp_json_user":           handler_log,
+        "misp_json_user":           handler_user,
         "misp_json_conversation":   handler_conversation
         }
 

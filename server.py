@@ -11,6 +11,7 @@ import os
 
 import util
 import contributor_helper
+import users_helper
 
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
@@ -32,6 +33,7 @@ serv_redis_db = redis.StrictRedis(
         db=cfg.getint('RedisDB', 'db'))
 
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
+users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 
 subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)
 subscriber_log.psubscribe(cfg.get('RedisLog', 'channel'))
@@ -204,6 +206,7 @@ def contrib():
 def users():
     return render_template('users.html',
             )
+
 
 ''' INDEX '''
 
@@ -440,6 +443,60 @@ def getTrophies():
     except:
         org = ''
     return jsonify(contributor_helper.getOrgTrophies(org))
+
+
+''' USERS '''
+
+@app.route("/_getUserLogins")
+def getUserLogins():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = users_helper.getUserLoginsForPunchCard(date)
+    return jsonify(data)
+
+@app.route("/_getUserLoginsOvertime")
+def getUserLoginsOvertime():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = users_helper.getUserLoginsOvertime(date)
+    return jsonify(data)
+
+@app.route("/_getTopOrglogin")
+def getTopOrglogin():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = users_helper.getTopOrglogin(date, maxNum=12)
+    return jsonify(data)
+
+@app.route("/_getLoginVSCOntribution")
+def getLoginVSCOntribution():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = users_helper.getLoginVSCOntribution(date)
+    return jsonify(data)
+
+@app.route("/_getUserLoginsAndContribOvertime")
+def getUserLoginsAndContribOvertime():
+    try:
+        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
+    except:
+        date = datetime.datetime.now()
+
+    data = users_helper.getUserLoginsAndContribOvertime(date)
+    return jsonify(data)
+
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)
