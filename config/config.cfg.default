@@ -47,6 +47,7 @@ zmq_url=tcp://localhost:50000
 db=0
 channel=1
 channelLastContributor = lastContributor
+channelLastAwards = lastAwards
 
 [RedisMap]
 db=1
