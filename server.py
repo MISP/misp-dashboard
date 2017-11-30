@@ -12,6 +12,7 @@ import os
 import util
 import contributor_helper
 import users_helper
+import trendings_helper
 
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
@@ -34,6 +35,7 @@ serv_redis_db = redis.StrictRedis(
 
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
 users_helper = users_helper.Users_helper(serv_redis_db, cfg)
+trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
 
 subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)
 subscriber_log.psubscribe(cfg.get('RedisLog', 'channel'))
@@ -207,6 +209,18 @@ def users():
     return render_template('users.html',
             )
 
+
+@app.route("/trendings")
+def trendings():
+    maxNum = request.args.get('maxNum')
+    try:
+        maxNum = int(maxNum)
+    except:
+        maxNum = 15
+
+    return render_template('trendings.html',
+            maxNum=maxNum
+            )
 
 ''' INDEX '''
 
@@ -497,6 +511,82 @@ def getUserLoginsAndContribOvertime():
     data = users_helper.getUserLoginsAndContribOvertime(date)
     return jsonify(data)
 
+''' TRENDINGS '''
+@app.route("/_getTrendingEvents")
+def getTrendingEvents():
+    try:
+        dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
+        dateE = datetime.datetime.fromtimestamp(float(request.args.get('dateE')))
+    except:
+        dateS = datetime.datetime.now() - datetime.timedelta(days=7)
+        dateE = datetime.datetime.now()
+
+    specificLabel = request.args.get('specificLabel')
+    data = trendings_helper.getTrendingEvents(dateS, dateE, specificLabel)
+    return jsonify(data)
+
+@app.route("/_getTrendingCategs")
+def getTrendingCategs():
+    try:
+        dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
+        dateE = datetime.datetime.fromtimestamp(float(request.args.get('dateE')))
+    except:
+        dateS = datetime.datetime.now() - datetime.timedelta(days=7)
+        dateE = datetime.datetime.now()
+
+
+    data = trendings_helper.getTrendingCategs(dateS, dateE)
+    return jsonify(data)
+
+@app.route("/_getTrendingTags")
+def getTrendingTags():
+    try:
+        dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
+        dateE = datetime.datetime.fromtimestamp(float(request.args.get('dateE')))
+    except:
+        dateS = datetime.datetime.now() - datetime.timedelta(days=7)
+        dateE = datetime.datetime.now()
+
+
+    data = trendings_helper.getTrendingTags(dateS, dateE)
+    return jsonify(data)
+
+@app.route("/_getTrendingSightings")
+def getTrendingSightings():
+    try:
+        dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
+        dateE = datetime.datetime.fromtimestamp(float(request.args.get('dateE')))
+    except:
+        dateS = datetime.datetime.now() - datetime.timedelta(days=7)
+        dateE = datetime.datetime.now()
+
+    data = trendings_helper.getTrendingSightings(dateS, dateE)
+    return jsonify(data)
+
+@app.route("/_getTrendingDisc")
+def getTrendingDisc():
+    try:
+        dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
+        dateE = datetime.datetime.fromtimestamp(float(request.args.get('dateE')))
+    except:
+        dateS = datetime.datetime.now() - datetime.timedelta(days=7)
+        dateE = datetime.datetime.now()
+
+
+    data = trendings_helper.getTrendingDisc(dateS, dateE)
+    return jsonify(data)
+
+@app.route("/_getTypeaheadData")
+def getTypeaheadData():
+    try:
+        dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
+        dateE = datetime.datetime.fromtimestamp(float(request.args.get('dateE')))
+    except:
+        dateS = datetime.datetime.now() - datetime.timedelta(days=7)
+        dateE = datetime.datetime.now()
+
+    data = trendings_helper.getTypeaheadData(dateS, dateE)
+    return jsonify(data)
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8001, threaded=True)

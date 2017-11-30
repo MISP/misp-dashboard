@@ -90,6 +90,11 @@
     display: none;
 }
 
+.table > thead > tr > th.centerCell {
+    text-align: center;
+    min-width: 45px;
+}
+
 .table > tbody > tr > td.centerCell {
     text-align: center;
     min-width: 45px;

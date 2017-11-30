@@ -8,7 +8,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>MISP live dashboard</title>
+    <title>MISP Geolocalisation</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
@@ -91,6 +91,8 @@ small {
                       <li><a href="{{ url_for('index') }}">MISP Live Dashboard</a></li>
                       <li><a href="{{ url_for('geo') }}">MISP Geolocalisation</a></li>
                       <li><a href="{{ url_for('contrib') }}">MISP Contributors</a></li>
+                      <li><a href="{{ url_for('users') }}">MISP Users</a></li>
+                      <li><a href="{{ url_for('trendings') }}">MISP Trendings</a></li>
                     </ul>
 
                 <div id="ledsHolder" style="float: right; height: 50px;">

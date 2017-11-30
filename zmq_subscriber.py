@@ -17,6 +17,7 @@ import geoip2.database
 import util
 import contributor_helper
 import users_helper
+import trendings_helper
 
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
@@ -55,6 +56,7 @@ serv_redis_db = redis.StrictRedis(
 
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
 users_helper = users_helper.Users_helper(serv_redis_db, cfg)
+trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
 
 reader = geoip2.database.Reader(PATH_TO_DB)
 
@@ -193,15 +195,15 @@ def handler_keepalive(zmq_name, jsonevent):
     publish_log(zmq_name, 'Keepalive', to_push)
 
 def handler_user(zmq_name, jsondata):
+    action = jsondata['action']
     json_user = jsondata['User']
-    userID = json_user['id']
-    org = userID
-    try: #only consider user login
-        timestamp = json_user['current_login']
-    except KeyError:
-        return
-    if timestamp != 0: # "invited_by": "xxxx" ???
+    json_org = jsondata['Organisation']
+    org = json_org['name']
+    if action == 'login': #only consider user login
+        timestamp = int(time.time())
         users_helper.add_user_login(timestamp, org)
+    else:
+        pass
 
 def handler_conversation(zmq_name, jsonevent):
     try: #only consider POST, not THREAD
@@ -212,11 +214,15 @@ def handler_conversation(zmq_name, jsonevent):
     org = jsonpost['org_name']
     categ = None
     action = 'add'
+    eventName = 'no name or id yet...'
     handleContribution(zmq_name, org,
                     'Discussion',
                     None,
                     action,
                     isLabeled=False)
+    # add Discussion
+    nowSec = int(time.time())
+    trendings_helper.addTrendingDisc(eventName, nowSec)
 
 def handler_object(zmq_name, jsondata):
     print('obj')
@@ -234,9 +240,33 @@ def handler_sighting(zmq_name, jsondata):
     handleContribution(zmq_name, org, 'Sighting', categ, action, pntMultiplier=2)
     handler_attribute(zmq_name, jsonsight, hasAlreadyBeenContributed=True)
 
+    try:
+        timestamp = jsonsight['date_sighting']
+    except KeyError:
+        pass
+
+    if jsonsight['type'] == "0": # sightings
+        trendings_helper.addSightings(timestamp)
+    elif jsonsight['type'] == "1": # false positive
+        trendings_helper.addFalsePositive(timestamp)
+
 def handler_event(zmq_name, jsonobj):
     #fields: threat_level_id, id, info
     jsonevent = jsonobj['Event']
+
+    #Add trending
+    eventName = jsonevent['info']
+    timestamp = jsonevent['timestamp']
+    trendings_helper.addTrendingEvent(eventName, timestamp)
+    try:
+        temp = jsonobj['EventTag']
+        tags = []
+        for tag in temp:
+            tags.append(tag['Tag'])
+    except KeyError:
+        tags = []
+    trendings_helper.addTrendingTags(tags, timestamp)
+
     #redirect to handler_attribute
     if 'Attribute' in jsonevent:
         attributes = jsonevent['Attribute']
@@ -272,6 +302,22 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
     # check if jsonattr is an attribute object
     if 'Attribute' in jsonobj:
         jsonattr = jsonobj['Attribute']
+
+    #Add trending
+    categName = jsonattr['category']
+    try:
+        timestamp = jsonattr['timestamp']
+    except KeyError:
+        timestamp = int(time.time())
+    trendings_helper.addTrendingCateg(categName, timestamp)
+    try:
+        temp = jsonattr['Tag']
+        tags = []
+        for tag in temp:
+            tags.append(tag['Tag'])
+    except KeyError:
+        tags = []
+    trendings_helper.addTrendingTags(tags, timestamp)
 
     to_push = []
     for field in json.loads(cfg.get('Log', 'fieldname_order')):
@@ -315,7 +361,10 @@ def process_log(zmq_name, event):
     topic, eventdata = event.split(' ', maxsplit=1)
     jsonevent = json.loads(eventdata)
     print(event)
-    dico_action[topic](zmq_name, jsonevent)
+    try:
+        dico_action[topic](zmq_name, jsonevent)
+    except KeyError as e:
+        print(e)
 
 
 def main(zmqName):
@@ -340,7 +389,8 @@ dico_action = {
         "misp_json_sighting":       handler_sighting,
         "misp_json_organisation":   handler_log,
         "misp_json_user":           handler_user,
-        "misp_json_conversation":   handler_conversation
+        "misp_json_conversation":   handler_conversation,
+        "misp_json_object_reference": handler_log,
         }
 
 
