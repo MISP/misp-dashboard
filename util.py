@@ -9,6 +9,12 @@ def getZrange(serv_redis_db, keyCateg, date, topNum, endSubkey=""):
     data = [ [record[0].decode('utf8'), record[1]] for record in data ]
     return data
 
+def push_to_redis_zset(serv_redis_db, mainKey, toAdd, endSubkey="", count=1):
+    now = datetime.datetime.now()
+    today_str = util.getDateStrFormat(now)
+    keyname = "{}:{}{}".format(mainKey, today_str, endSubkey)
+    serv_redis_db.zincrby(keyname, toAdd, count)
+
 def getMonthSpan(date):
     ds = datetime.datetime(date.year, date.month, 1)
     dyear = 1 if ds.month+1 > 12 else 0
