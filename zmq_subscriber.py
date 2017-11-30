@@ -29,8 +29,9 @@ serv_list = redis.StrictRedis(
 ###############
 
 def put_in_redis_list(zmq_name, content):
+    content = content.decode('utf8')
     to_add = {'zmq_name': zmq_name, 'content': content}
-    serv_list.lpush(LISTNAME, json.dumps(content))
+    serv_list.lpush(LISTNAME, json.dumps(to_add))
 
 def main(zmqName):
     context = zmq.Context()

@@ -85,6 +85,7 @@ def handler_keepalive(zmq_name, jsonevent):
     publish_log(zmq_name, 'Keepalive', to_push)
 
 def handler_user(zmq_name, jsondata):
+    print('sending', 'user')
     action = jsondata['action']
     json_user = jsondata['User']
     json_org = jsondata['Organisation']
@@ -225,31 +226,34 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
 ###############
 
 def process_log(zmq_name, event):
-    event = event.decode('utf8')
     topic, eventdata = event.split(' ', maxsplit=1)
     jsonevent = json.loads(eventdata)
-    print(event)
     try:
         dico_action[topic](zmq_name, jsonevent)
     except KeyError as e:
         print(e)
 
 
-def main(zmqName):
+def main(zmqName, zmqurl, sleeptime):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
-    socket.connect(ZMQ_URL)
+    socket.connect(zmqurl)
     socket.setsockopt_string(zmq.SUBSCRIBE, '')
 
+    numMsg = 0
     while True:
-        try:
-            content = serv_list.rpop(LISTNAME)
-            the_json = json.loads(content)
-            zmqName - the_json['zmq_name']
-            content = the_json['content']
-            process_log(zmqName, content)
-        except KeyboardInterrupt:
-            return
+        content = serv_list.rpop(LISTNAME)
+        if content is None:
+            print('Processed', numMsg, 'message(s) since last sleep.')
+            numMsg = 0
+            time.sleep(sleeptime)
+            continue
+        content = content.decode('utf8')
+        the_json = json.loads(content)
+        zmqName = the_json['zmq_name']
+        content = the_json['content']
+        process_log(zmqName, content)
+        numMsg += 1
 
 
 dico_action = {
@@ -271,6 +275,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='A zmq subscriber. It subscribe to a ZNQ then redispatch it to the misp-dashboard')
     parser.add_argument('-n', '--name', required=False, dest='zmqname', help='The ZMQ feed name', default="MISP Standard ZMQ")
     parser.add_argument('-u', '--url', required=False, dest='zmqurl', help='The URL to connect to', default=ZMQ_URL)
+    parser.add_argument('-s', '--sleep', required=False, dest='sleeptime', type=int, help='The number of second to wait before checking redis list size', default=5)
     args = parser.parse_args()
 
-    main(args.zmqname)
+    main(args.zmqname, args.zmqurl, args.sleeptime)
