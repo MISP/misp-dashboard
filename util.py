@@ -2,6 +2,13 @@ import datetime, time
 
 ONE_DAY = 60*60*24
 
+def getZrange(serv_redis_db, keyCateg, date, topNum, endSubkey=""):
+    date_str = getDateStrFormat(date)
+    keyname = "{}:{}{}".format(keyCateg, date_str, endSubkey)
+    data = serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
+    data = [ [record[0].decode('utf8'), record[1]] for record in data ]
+    return data
+
 def getMonthSpan(date):
     ds = datetime.datetime(date.year, date.month, 1)
     dyear = 1 if ds.month+1 > 12 else 0

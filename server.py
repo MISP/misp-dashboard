@@ -10,6 +10,7 @@ import datetime
 import os
 
 import util
+import geo_helper
 import contributor_helper
 import users_helper
 import trendings_helper
@@ -33,6 +34,7 @@ serv_redis_db = redis.StrictRedis(
         port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisDB', 'db'))
 
+geo_helper = geo_helper.Geo_helper(serv_redis_db, cfg)
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
 users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
@@ -109,14 +111,6 @@ class EventMessage():
     def to_json(self):
         to_ret = { 'log': self.feed, 'feedName': self.feedName, 'zmqName': self.zmqName }
         return 'data: {}\n\n'.format(json.dumps(to_ret))
-
-''' GENERAL '''
-def getZrange(keyCateg, date, topNum, endSubkey=""):
-    date_str = util.getDateStrFormat(date)
-    keyname = "{}:{}{}".format(keyCateg, date_str, endSubkey)
-    data = serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
-    data = [ [record[0].decode('utf8'), record[1]] for record in data ]
-    return data
 
 ###########
 ## ROUTE ##
@@ -254,9 +248,7 @@ def getTopCoord():
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
     except:
         date = datetime.datetime.now()
-    keyCateg = "GEO_COORD"
-    topNum = 6 # default Num
-    data = getZrange(keyCateg, date, topNum)
+    data = geo_helper.getTopCoord(date)
     return jsonify(data)
 
 @app.route("/_getHitMap")
@@ -265,23 +257,11 @@ def getHitMap():
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
     except:
         date = datetime.datetime.now()
-    keyCateg = "GEO_COUNTRY"
-    topNum = 0 # all
-    data = getZrange(keyCateg, date, topNum)
+    data = geo_helper.getHitMap(date)
     return jsonify(data)
-
-def isCloseTo(coord1, coord2):
-    clusterMeter = cfg.getfloat('GEO' ,'clusteringDistance')
-    clusterThres = math.pow(10, len(str(abs(clusterMeter)))-7) #map meter to coord threshold (~ big approx)
-    if abs(float(coord1[0]) - float(coord2[0])) <= clusterThres:
-        if abs(float(coord1[1]) - float(coord2[1])) <= clusterThres:
-            return True
-    return False
 
 @app.route("/_getCoordsByRadius")
 def getCoordsByRadius():
-    dico_coord = {}
-    to_return = []
     try:
         dateStart = datetime.datetime.fromtimestamp(float(request.args.get('dateStart')))
         dateEnd = datetime.datetime.fromtimestamp(float(request.args.get('dateEnd')))
@@ -289,38 +269,10 @@ def getCoordsByRadius():
         centerLon = request.args.get('centerLon')
         radius = int(math.ceil(float(request.args.get('radius'))))
     except:
-        return jsonify(to_return)
+        return jsonify([])
 
-    delta = dateEnd - dateStart
-    for i in range(delta.days+1):
-        correctDatetime = dateStart + datetime.timedelta(days=i)
-        date_str = util.getDateStrFormat(correctDatetime)
-        keyCateg = 'GEO_RAD'
-        keyname = "{}:{}".format(keyCateg, date_str)
-        res = serv_redis_db.georadius(keyname, centerLon, centerLat, radius, unit='km', withcoord=True)
-
-        #sum up really close coord
-        for data, coord in res:
-            flag_added = False
-            coord = [coord[0], coord[1]]
-            #list all coord
-            for dicoCoordStr in dico_coord.keys():
-                dicoCoord = json.loads(dicoCoordStr)
-                #if curCoord close to coord
-                if isCloseTo(dicoCoord, coord):
-                    #add data to dico coord
-                    dico_coord[dicoCoordStr].append(data)
-                    flag_added = True
-                    break
-            # coord not in dic
-            if not flag_added:
-                dico_coord[str(coord)] = [data]
-
-        for dicoCoord, array in dico_coord.items():
-            dicoCoord = json.loads(dicoCoord)
-            to_return.append([array, dicoCoord])
-
-    return jsonify(to_return)
+    data = geo_helper.getCoordsByRadius(dateStart, dateEnd, centerLat, centerLon, radius)
+    return jsonify(data)
 
 ''' CONTRIB '''
 
