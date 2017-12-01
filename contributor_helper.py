@@ -458,7 +458,7 @@ class Contributor_helper:
         dic['epoch'] = epoch
         return dic
 
-    def getTopContributorFromRedis(self, date):
+    def getTopContributorFromRedis(self, date, maxNum=100):
         orgDicoPnts = {}
         for curDate in util.getMonthSpan(date):
             topNum = 0 # all
@@ -480,7 +480,7 @@ class Contributor_helper:
             data.append(dic)
         data.sort(key=lambda x: x['pnts'], reverse=True)
 
-        return data
+        return data[:maxNum]
 
     def getTop5OvertimeFromRedis(self):
         data = []
