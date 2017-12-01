@@ -64,9 +64,6 @@ def getFields(obj, fields):
     except KeyError as e:
         return ""
 
-def noSpaceLower(text):
-    return text.lower().replace(' ', '_')
-
 ##############
 ## HANDLERS ##
 ##############

@@ -14,8 +14,7 @@ class Users_helper:
         self.keyTimestamp    = "LOGIN_TIMESTAMP"
         self.keyTimestampSet = "LOGIN_TIMESTAMPSET"
         self.keyOrgLog       = "LOGIN_ORG"
-        contrib_helper   = contributor_helper.Contributor_helper(serv_redis_db, cfg)
-        self.keyContribDay   = contrib_helper.keyDay # Key to get monthly contribution
+        self.keyContribDay   = contributor_helper.KEYDAY # Key to get monthly contribution
 
     def addTemporary(self, org, timestamp):
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
