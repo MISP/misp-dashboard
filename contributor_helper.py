@@ -75,7 +75,7 @@ class Contributor_helper:
                 self.DICO_PNTS_REWARD[categ] = self.default_pnts_per_contribution
 
         self.rankMultiplier = self.cfg_org_rank.getfloat('monthlyRanking' ,'rankMultiplier')
-        self.levelMax = self.cfg_org_rank.getfloat('monthlyRanking' ,'levelMax')
+        self.levelMax = self.cfg_org_rank.getint('monthlyRanking' ,'levelMax')
 
         # REDIS KEYS
         self.keyDay         = KEYDAY
