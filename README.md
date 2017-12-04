@@ -12,9 +12,16 @@ An experimental dashboard showing live data and statistics from the ZMQ of one o
     - RedisGlobal -> misp_web_url
     - RedisMap    -> pathMaxMindDB
 
+# Updating by pulling
+- Re-launch ```./install_dependencies.sh``` to fetch new required dependencies
+- Re-update your configuration file ```config.cfg```
+
 # Starting the System
+- Be sure to have a running redis server
+    - e.g. ```redis-server -p 6250```
 - Activate your virtualenv ```. ./DASHENV/bin/activate```
 - Listen to the MISP feed by starting the zmq_subscriber ```./zmq_subscriber.py```
+- Start the dispatcher to process received messages ```./zmq_dispatcher.py```
 - Start the Flask server ```./server.py```
 - Access the interface at ```http://localhost:8001/```
 
