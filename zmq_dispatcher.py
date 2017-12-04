@@ -22,7 +22,6 @@ configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
-ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')
 LISTNAME = cfg.get('RedisLIST', 'listName')
 
@@ -231,12 +230,7 @@ def process_log(zmq_name, event):
         print(e)
 
 
-def main(zmqName, zmqurl, sleeptime):
-    context = zmq.Context()
-    socket = context.socket(zmq.SUB)
-    socket.connect(zmqurl)
-    socket.setsockopt_string(zmq.SUBSCRIBE, '')
-
+def main(sleeptime):
     numMsg = 0
     while True:
         content = serv_list.rpop(LISTNAME)
@@ -269,10 +263,8 @@ dico_action = {
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='A zmq subscriber. It subscribe to a ZNQ then redispatch it to the misp-dashboard')
-    parser.add_argument('-n', '--name', required=False, dest='zmqname', help='The ZMQ feed name', default="MISP Standard ZMQ")
-    parser.add_argument('-u', '--url', required=False, dest='zmqurl', help='The URL to connect to', default=ZMQ_URL)
+    parser = argparse.ArgumentParser(description='The ZMQ dispatcher. It pops from the redis buffer then redispatch it to the correct handlers')
     parser.add_argument('-s', '--sleep', required=False, dest='sleeptime', type=int, help='The number of second to wait before checking redis list size', default=5)
     args = parser.parse_args()
 
-    main(args.zmqname, args.zmqurl, args.sleeptime)
+    main(args.sleeptime)
