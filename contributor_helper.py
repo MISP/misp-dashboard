@@ -1,18 +1,30 @@
 import util
 from util import getZrange
 import math, random
+import time
 import os
 import configparser
 import json
 import datetime
+import redis
+
+import util
+import users_helper
+KEYDAY = "CONTRIB_DAY" # To be used by other module
 
 class Contributor_helper:
     def __init__(self, serv_redis_db, cfg):
         self.serv_redis_db = serv_redis_db
+        self.serv_log = redis.StrictRedis(
+            host=cfg.get('RedisGlobal', 'host'),
+            port=cfg.getint('RedisGlobal', 'port'),
+            db=cfg.getint('RedisLog', 'db'))
         self.cfg = cfg
         self.cfg_org_rank = configparser.ConfigParser()
         self.cfg_org_rank.read(os.path.join(os.environ['DASH_CONFIG'], 'ranking.cfg'))
         self.CHANNEL_LASTAWARDS = cfg.get('RedisLog', 'channelLastAwards')
+        self.CHANNEL_LASTCONTRIB = cfg.get('RedisLog', 'channelLastContributor')
+        self.users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 
         #honorBadge
         self.honorBadgeNum = len(self.cfg_org_rank.options('HonorBadge'))
@@ -63,10 +75,10 @@ class Contributor_helper:
                 self.DICO_PNTS_REWARD[categ] = self.default_pnts_per_contribution
 
         self.rankMultiplier = self.cfg_org_rank.getfloat('monthlyRanking' ,'rankMultiplier')
-        self.levelMax = self.cfg_org_rank.getfloat('monthlyRanking' ,'levelMax')
+        self.levelMax = self.cfg_org_rank.getint('monthlyRanking' ,'levelMax')
 
         # REDIS KEYS
-        self.keyDay         = "CONTRIB_DAY"
+        self.keyDay         = KEYDAY
         self.keyCateg       = "CONTRIB_CATEG"
         self.keyLastContrib = "CONTRIB_LAST"
         self.keyAllOrg      = "CONTRIB_ALL_ORG"
@@ -86,7 +98,7 @@ class Contributor_helper:
 
     def publish_log(self, zmq_name, name, content, channel=""):
         to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
-        serv_log.publish(channel, json.dumps(to_send))
+        self.serv_log.publish(channel, json.dumps(to_send))
 
     ''' HANDLER '''
     #pntMultiplier if one contribution rewards more than others. (e.g. shighting may gives more points than editing)
@@ -100,36 +112,36 @@ class Contributor_helper:
         pnts_to_add = self.default_pnts_per_contribution
     
         # if there is a contribution, there is a login (even if ti comes from the API)
-        users_helper.add_user_login(nowSec, org)
+        self.users_helper.add_user_login(nowSec, org)
     
         # is a valid contribution
         if categ is not None:
             try:
-                pnts_to_add = self.DICO_PNTS_REWARD[noSpaceLower(categ)]
+                pnts_to_add = self.DICO_PNTS_REWARD[util.noSpaceLower(categ)]
             except KeyError:
                 pnts_to_add = self.default_pnts_per_contribution
             pnts_to_add *= pntMultiplier
     
             util.push_to_redis_zset(self.serv_redis_db, self.keyDay, org, count=pnts_to_add)
             #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
-            util.push_to_redis_zset(self.serv_redis_db, self.keyCateg, org, count=1, endSubkey=':'+noSpaceLower(categ))
-            self.publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=CHANNEL_LASTCONTRIB)
+            util.push_to_redis_zset(self.serv_redis_db, self.keyCateg, org, count=1, endSubkey=':'+util.noSpaceLower(categ))
+            self.publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=self.CHANNEL_LASTCONTRIB)
         else:
             categ = ""
     
-        serv_redis_db.sadd(self.keyAllOrg, org)
+        self.serv_redis_db.sadd(self.keyAllOrg, org)
     
         keyname = "{}:{}".format(self.keyLastContrib, util.getDateStrFormat(now))
-        serv_redis_db.zadd(keyname, nowSec, org)
-        serv_redis_db.expire(keyname, ONE_DAY*7) #expire after 7 day
+        self.serv_redis_db.zadd(keyname, nowSec, org)
+        self.serv_redis_db.expire(keyname, util.ONE_DAY*7) #expire after 7 day
     
-        awards_given = self.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled, categ=noSpaceLower(categ))
+        awards_given = self.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled, categ=util.noSpaceLower(categ))
     
         for award in awards_given:
             # update awards given
             keyname = "{}:{}".format(self.keyLastAward, util.getDateStrFormat(now))
-            serv_redis_db.zadd(keyname, nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec }))
-            serv_redis_db.expire(keyname, ONE_DAY*7) #expire after 7 day
+            self.serv_redis_db.zadd(keyname, nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec }))
+            self.serv_redis_db.expire(keyname, util.ONE_DAY*7) #expire after 7 day
             # publish
             self.publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'award': award, 'epoch': nowSec }, channel=self.CHANNEL_LASTAWARDS)
 
@@ -446,7 +458,7 @@ class Contributor_helper:
         dic['epoch'] = epoch
         return dic
 
-    def getTopContributorFromRedis(self, date):
+    def getTopContributorFromRedis(self, date, maxNum=100):
         orgDicoPnts = {}
         for curDate in util.getMonthSpan(date):
             topNum = 0 # all
@@ -468,7 +480,7 @@ class Contributor_helper:
             data.append(dic)
         data.sort(key=lambda x: x['pnts'], reverse=True)
 
-        return data
+        return data[:maxNum]
 
     def getTop5OvertimeFromRedis(self):
         data = []

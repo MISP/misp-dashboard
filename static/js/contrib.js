@@ -79,8 +79,9 @@ optionDatatable_last.columnDefs = [
     { className: "centerCellPicOrgLogo verticalAlign", "targets": [ 5 ] },
     { className: "verticalAlign", "targets": [ 6 ] }
 ]
-var optionDatatable_fame = jQuery.extend({}, optionDatatable_light)
-optionDatatable_fame.scrollY = '45vh';
+var optionDatatable_fameQuant = jQuery.extend({}, optionDatatable_light)
+var optionDatatable_fameQual = jQuery.extend({}, optionDatatable_light)
+optionDatatable_fameQual.scrollY = '39vh';
 
 var optionDatatable_Categ = {
     responsive: true,
@@ -590,8 +591,8 @@ $(document).ready(function() {
     });
 
     datatableTop = $('#topContribTable').DataTable(optionDatatable_top);
-    datatableFameQuant = $('#fameTableQuantity').DataTable(optionDatatable_fame);
-    datatableFameQual = $('#fameTableQuality').DataTable(optionDatatable_fame);
+    datatableFameQuant = $('#fameTableQuantity').DataTable(optionDatatable_fameQuant);
+    datatableFameQual = $('#fameTableQuality').DataTable(optionDatatable_fameQual);
     datatableCateg = $('#categTable').DataTable(optionDatatable_Categ);
     datatableLast = $('#lastTable').DataTable(optionDatatable_last);
     datatableAwards = $('#awardTable').DataTable(optionDatatable_awards);

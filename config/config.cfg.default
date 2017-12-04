@@ -37,6 +37,10 @@ misp_web_url = http://localhost
 #zmq_url=tcp://192.168.56.50:50000
 zmq_url=tcp://localhost:50000
 
+[RedisLIST]
+db=3
+listName=bufferList
+
 [RedisLog]
 db=0
 channel=1

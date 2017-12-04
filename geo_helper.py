@@ -109,14 +109,15 @@ class Geo_helper:
 
     def getCoordFromPhoneAndPublish(self, phoneNumber, categ):
         try:
-            print('function accessed')
             rep = phonenumbers.parse(phoneNumber, None)
             if not (phonenumbers.is_valid_number(rep) or phonenumbers.is_possible_number(rep)):
                 print("Phone number not valid")
+                return
             country_name = geocoder.country_name_for_number(rep, "en")
             country_code = self.country_to_iso[country_name]
             if country_code is None:
                 print("Non matching ISO_CODE")
+                return
             coord = self.country_code_to_coord[country_code.lower()]  # countrycode is in upper case
             coord_dic = {'lat': coord['lat'], 'lon': coord['long']}
 
@@ -139,7 +140,6 @@ class Geo_helper:
                     "cityName": "",
                     "regionCode": country_code,
                     }
-            print(to_send)
             self.serv_coord.publish(self.CHANNELDISP, json.dumps(to_send))
         except phonenumbers.NumberParseException:
             print("Can't resolve phone number country")

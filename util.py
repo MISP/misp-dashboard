@@ -9,9 +9,12 @@ def getZrange(serv_redis_db, keyCateg, date, topNum, endSubkey=""):
     data = [ [record[0].decode('utf8'), record[1]] for record in data ]
     return data
 
+def noSpaceLower(text):
+    return text.lower().replace(' ', '_')
+
 def push_to_redis_zset(serv_redis_db, mainKey, toAdd, endSubkey="", count=1):
     now = datetime.datetime.now()
-    today_str = util.getDateStrFormat(now)
+    today_str = getDateStrFormat(now)
     keyname = "{}:{}{}".format(mainKey, today_str, endSubkey)
     serv_redis_db.zincrby(keyname, toAdd, count)
 

@@ -312,7 +312,7 @@ def eventStreamAwards():
         yield 'data: {}\n\n'.format(json.dumps(to_return))
 
 @app.route("/_getTopContributor")
-def getTopContributor(suppliedDate=None):
+def getTopContributor(suppliedDate=None, maxNum=100):
     if suppliedDate is None:
         try:
             date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -321,7 +321,7 @@ def getTopContributor(suppliedDate=None):
     else:
         date = suppliedDate
 
-    data = contributor_helper.getTopContributorFromRedis(date)
+    data = contributor_helper.getTopContributorFromRedis(date, maxNum=maxNum)
     return jsonify(data)
 
 @app.route("/_getFameContributor")
@@ -332,7 +332,7 @@ def getFameContributor():
         today = datetime.datetime.now()
         # get previous month
         date = (datetime.datetime(today.year, today.month, 1) - datetime.timedelta(days=1))
-    return getTopContributor(suppliedDate=date)
+    return getTopContributor(suppliedDate=date, maxNum=10)
 
 @app.route("/_getFameQualContributor")
 def getFameQualContributor():
@@ -342,7 +342,7 @@ def getFameQualContributor():
         today = datetime.datetime.now()
         # get previous month
         date = (datetime.datetime(today.year, today.month, 1) - datetime.timedelta(days=1))
-    return getTopContributor(suppliedDate=date)
+    return getTopContributor(suppliedDate=date, maxNum=10)
 
 @app.route("/_getTop5Overtime")
 def getTop5Overtime():

@@ -14,8 +14,7 @@ class Users_helper:
         self.keyTimestamp    = "LOGIN_TIMESTAMP"
         self.keyTimestampSet = "LOGIN_TIMESTAMPSET"
         self.keyOrgLog       = "LOGIN_ORG"
-        contrib_helper   = contributor_helper.Contributor_helper(serv_redis_db, cfg)
-        self.keyContribDay   = contrib_helper.keyDay # Key to get monthly contribution
+        self.keyContribDay   = contributor_helper.KEYDAY # Key to get monthly contribution
 
     def addTemporary(self, org, timestamp):
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
@@ -73,7 +72,7 @@ class Users_helper:
         for curDate in util.getXPrevDaysSpan(date, prev_days):
             log = self.serv_redis_db.zscore(keyname_log.format(self.keyOrgLog, util.getDateStrFormat(curDate)), org)
             log = 0 if log is None else 1
-            contrib = self.serv_redis_db.zscore(keyname_contrib.format(keyContribDay, util.getDateStrFormat(curDate)), org)
+            contrib = self.serv_redis_db.zscore(keyname_contrib.format(self.keyContribDay, util.getDateStrFormat(curDate)), org)
             contrib = 0 if contrib is None else 1
             data.append([log, contrib])
         return data
@@ -100,7 +99,7 @@ class Users_helper:
 
 
     def getLoginVSCOntribution(self, date):
-        keyname = "{}:{}".format(keyContribDay, util.getDateStrFormat(date))
+        keyname = "{}:{}".format(self.keyContribDay, util.getDateStrFormat(date))
         orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=False)
         orgs_contri = [ org.decode('utf8') for org in orgs_contri ]
         orgs_login = [ org[0] for org in self.getOrgslogin(date, topNum=0) ]
@@ -152,7 +151,7 @@ class Users_helper:
 
         for curDate in util.getXPrevDaysSpan(date, prev_days):
             timestamps = self.getUserLogins(curDate)
-            keyname = "{}:{}".format(keyContribDay, util.getDateStrFormat(curDate))
+            keyname = "{}:{}".format(self.keyContribDay, util.getDateStrFormat(curDate))
 
             orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=False)
             orgs_contri_num = len(orgs_contri)
