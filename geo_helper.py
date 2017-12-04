@@ -2,6 +2,7 @@ import math, random
 import os
 import json
 import datetime, time
+import logging
 import json
 import redis
 from collections import OrderedDict
@@ -11,6 +12,9 @@ import phonenumbers, pycountry
 from phonenumbers import geocoder
 
 import util
+
+logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class Geo_helper:
     def __init__(self, serv_redis_db, cfg):
@@ -102,21 +106,22 @@ class Geo_helper:
                     "regionCode": rep['full_rep'].country.iso_code,
                     }
             self.serv_coord.publish(self.CHANNELDISP, json.dumps(to_send))
+            logger.info('Published: {}'.format(json.dumps(to_send)))
         except ValueError:
-            print("can't resolve ip")
+            logger.warning("can't resolve ip")
         except geoip2.errors.AddressNotFoundError:
-            print("Address not in Database")
+            logger.warning("Address not in Database")
 
     def getCoordFromPhoneAndPublish(self, phoneNumber, categ):
         try:
             rep = phonenumbers.parse(phoneNumber, None)
             if not (phonenumbers.is_valid_number(rep) or phonenumbers.is_possible_number(rep)):
-                print("Phone number not valid")
+                logger.warning("Phone number not valid")
                 return
             country_name = geocoder.country_name_for_number(rep, "en")
             country_code = self.country_to_iso[country_name]
             if country_code is None:
-                print("Non matching ISO_CODE")
+                logger.warning("Non matching ISO_CODE")
                 return
             coord = self.country_code_to_coord[country_code.lower()]  # countrycode is in upper case
             coord_dic = {'lat': coord['lat'], 'lon': coord['long']}
@@ -141,8 +146,9 @@ class Geo_helper:
                     "regionCode": country_code,
                     }
             self.serv_coord.publish(self.CHANNELDISP, json.dumps(to_send))
+            logger.info('Published: {}'.format(json.dumps(to_send)))
         except phonenumbers.NumberParseException:
-            print("Can't resolve phone number country")
+            logger.warning("Can't resolve phone number country")
 
     ''' UTIL '''
     def push_to_redis_geo(self, keyCateg, lon, lat, content):
@@ -150,12 +156,13 @@ class Geo_helper:
         today_str = util.getDateStrFormat(now)
         keyname = "{}:{}".format(keyCateg, today_str)
         self.serv_redis_db.geoadd(keyname, lon, lat, content)
+        logger.debug('Added to redis: keyname={}, lon={}, lat={}, content={}'.format(keyname, lon, lat, content))
     def push_to_redis_zset(self, keyCateg, toAdd, endSubkey="", count=1):
         now = datetime.datetime.now()
         today_str = util.getDateStrFormat(now)
         keyname = "{}:{}{}".format(keyCateg, today_str, endSubkey)
         self.serv_redis_db.zincrby(keyname, toAdd, count)
-
+        logger.debug('Added to redis: keyname={}, toAdd={}, count={}'.format(keyname, toAdd, count))
 
     def ip_to_coord(self, ip):
         resp = self.reader.city(ip)

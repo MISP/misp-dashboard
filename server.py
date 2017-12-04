@@ -8,6 +8,7 @@ from time import gmtime as now
 from time import sleep, strftime
 import datetime
 import os
+import logging
 
 import util
 import geo_helper
@@ -18,6 +19,9 @@ import trendings_helper
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
+
+logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -99,8 +103,8 @@ class EventMessage():
         msg = msg.decode('utf8')
         try:
             jsonMsg = json.loads(msg)
-        except json.JSONDecodeError:
-            print('json decode error')
+        except json.JSONDecodeError as e:
+            logger.error(e)
             jsonMsg = { 'name': "undefined" ,'log': json.loads(msg) }
 
         self.feedName = jsonMsg['name']
