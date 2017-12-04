@@ -81,7 +81,7 @@ optionDatatable_last.columnDefs = [
 ]
 var optionDatatable_fameQuant = jQuery.extend({}, optionDatatable_light)
 var optionDatatable_fameQual = jQuery.extend({}, optionDatatable_light)
-optionDatatable_fameQual.scrollY = '40vh';
+optionDatatable_fameQual.scrollY = '39vh';
 
 var optionDatatable_Categ = {
     responsive: true,

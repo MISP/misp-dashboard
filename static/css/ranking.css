@@ -17,10 +17,10 @@
 }
 
 .circleBadgeSmall {
-    width: 73px;
-    height: 73px;
+    width: 57px;
+    height: 57px;
     text-align: center;
-    border-radius: 38px;
+    border-radius: 28px;
     background-color: #e1e1e1;
     border: 1px solid #caccce;
     vertical-align: middle;
