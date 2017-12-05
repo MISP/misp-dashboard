@@ -11,6 +11,9 @@ item_to_plot = Attribute.category
 size_dashboard_left_width = 5
 size_openStreet_pannel_perc = 55
 size_world_pannel_perc = 35
+field_to_plot = Attribute.category
+fieldname_order=["Event.id", "Attribute.Tag", "Attribute.category", "Attribute.type", ["Attribute.value", "Attribute.comment"]]
+char_separator=||
 
 [GEO]
 #min
@@ -25,9 +28,8 @@ min_between_reload = 5
 additional_help_text = ["Sightings multiplies earned points by 2", "Editing an attribute earns you the same as creating one"]
 
 [Log]
-field_to_plot = Attribute.category
-fieldname_order=["Event.id", "Attribute.Tag", "Attribute.category", "Attribute.type", ["Attribute.value", "Attribute.comment"]]
-char_separator=||
+directory=logs
+filename=logs.log
 
 [RedisGlobal]
 host=localhost

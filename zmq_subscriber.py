@@ -13,8 +13,12 @@ import json
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
-
-logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
+logDir = cfg.get('Log', 'directory')
+logfilename = cfg.get('Log', 'filename')
+logPath = os.path.join(logDir, logfilename)
+if not os.path.exists(logDir):
+    os.makedirs(logDir)
+logging.basicConfig(filename=logPath, filemode='w', level=logging.INFO)
 logger = logging.getLogger('zmq_subscriber')
 
 ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')

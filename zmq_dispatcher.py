@@ -22,7 +22,12 @@ configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
-logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
+logDir = cfg.get('Log', 'directory')
+logfilename = cfg.get('Log', 'filename')
+logPath = os.path.join(logDir, logfilename)
+if not os.path.exists(logDir):
+    os.makedirs(logDir)
+logging.basicConfig(filename=logPath, filemode='w', level=logging.INFO)
 logger = logging.getLogger('zmq_dispatcher')
 
 CHANNEL = cfg.get('RedisLog', 'channel')
@@ -193,7 +198,7 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
     trendings_helper.addTrendingTags(tags, timestamp)
 
     to_push = []
-    for field in json.loads(cfg.get('Log', 'fieldname_order')):
+    for field in json.loads(cfg.get('Dashboard', 'fieldname_order')):
         if type(field) is list:
             to_join = []
             for subField in field:

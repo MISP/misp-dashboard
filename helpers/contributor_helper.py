@@ -12,8 +12,6 @@ import redis
 import util
 from . import users_helper
 KEYDAY = "CONTRIB_DAY" # To be used by other module
-logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class Contributor_helper:
     def __init__(self, serv_redis_db, cfg):
@@ -28,6 +26,15 @@ class Contributor_helper:
         self.CHANNEL_LASTAWARDS = cfg.get('RedisLog', 'channelLastAwards')
         self.CHANNEL_LASTCONTRIB = cfg.get('RedisLog', 'channelLastContributor')
         self.users_helper = users_helper.Users_helper(serv_redis_db, cfg)
+
+        #logger
+        logDir = cfg.get('Log', 'directory')
+        logfilename = cfg.get('Log', 'filename')
+        logPath = os.path.join(logDir, logfilename)
+        if not os.path.exists(logDir):
+            os.makedirs(logDir)
+        logging.basicConfig(filename=logPath, filemode='w', level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
 
         #honorBadge
         self.honorBadgeNum = len(self.cfg_org_rank.options('HonorBadge'))
@@ -98,12 +105,12 @@ class Contributor_helper:
         today_str = util.getDateStrFormat(date)
         keyname = "{}:{}:{}".format(self.keyCateg, today_str, categ)
         self.serv_redis_db.zincrby(keyname, org, count)
-        logger.debug('Added to redis: keyname={}, org={}, count={}'.format(keyname, org, count))
+        self.logger.debug('Added to redis: keyname={}, org={}, count={}'.format(keyname, org, count))
 
     def publish_log(self, zmq_name, name, content, channel=""):
         to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
         self.serv_log.publish(channel, json.dumps(to_send))
-        logger.debug('Published: {}'.format(json.dumps(to_send)))
+        self.logger.debug('Published: {}'.format(json.dumps(to_send)))
 
     ''' HANDLER '''
     #pntMultiplier if one contribution rewards more than others. (e.g. shighting may gives more points than editing)
@@ -138,7 +145,7 @@ class Contributor_helper:
     
         keyname = "{}:{}".format(self.keyLastContrib, util.getDateStrFormat(now))
         self.serv_redis_db.zadd(keyname, nowSec, org)
-        logger.debug('Added to redis: keyname={}, nowSec={}, org={}'.format(keyname, nowSec, org))
+        self.logger.debug('Added to redis: keyname={}, nowSec={}, org={}'.format(keyname, nowSec, org))
         self.serv_redis_db.expire(keyname, util.ONE_DAY*7) #expire after 7 day
     
         awards_given = self.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled, categ=util.noSpaceLower(categ))
@@ -147,7 +154,7 @@ class Contributor_helper:
             # update awards given
             keyname = "{}:{}".format(self.keyLastAward, util.getDateStrFormat(now))
             self.serv_redis_db.zadd(keyname, nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec }))
-            logger.debug('Added to redis: keyname={}, nowSec={}, content={}'.format(keyname, nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec })))
+            self.logger.debug('Added to redis: keyname={}, nowSec={}, content={}'.format(keyname, nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec })))
             self.serv_redis_db.expire(keyname, util.ONE_DAY*7) #expire after 7 day
             # publish
             self.publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'award': award, 'epoch': nowSec }, channel=self.CHANNEL_LASTAWARDS)
@@ -221,17 +228,17 @@ class Contributor_helper:
         if contribType == 'Attribute':
             attributeWeekCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='ATTR_WEEK_COUNT'), 1)
             self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='ATTR_WEEK_COUNT'), util.ONE_DAY*7)
-            logger.debug('Incrby: keyname={}'.format(keyname.format(org=orgName, orgCateg='ATTR_WEEK_COUNT')))
+            self.logger.debug('Incrby: keyname={}'.format(keyname.format(org=orgName, orgCateg='ATTR_WEEK_COUNT')))
 
         if contribType == 'Proposal':
             proposalWeekCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='PROP_WEEK_COUNT'), 1)
-            logger.debug('Incrby: keyname={}'.format(keyname.format(org=orgName, orgCateg='PROP_WEEK_COUNT')))
+            self.logger.debug('Incrby: keyname={}'.format(keyname.format(org=orgName, orgCateg='PROP_WEEK_COUNT')))
             self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='PROP_WEEK_COUNT'), util.ONE_DAY*7)
             addContributionToCateg(datetime.datetime.now(), 'proposal')
 
         if contribType == 'Sighting':
             sightingWeekCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='SIGHT_WEEK_COUNT'), 1)
-            logger.debug('Incrby: keyname={}'.format(keyname.format(org=orgName, orgCateg='SIGHT_WEEK_COUNT')))
+            self.logger.debug('Incrby: keyname={}'.format(keyname.format(org=orgName, orgCateg='SIGHT_WEEK_COUNT')))
             self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='SIGHT_WEEK_COUNT'), util.ONE_DAY*7)
             self.addContributionToCateg(datetime.datetime.now(), 'sighting', orgName)
 
@@ -240,11 +247,11 @@ class Contributor_helper:
 
         if contribType == 'Event':
             eventWeekCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='EVENT_WEEK_COUNT'), 1)
-            logger.debug('Incrby: keyname={}'.format(keyname.format(org=orgName, orgCateg='EVENT_WEEK_COUNT')))
+            self.logger.debug('Incrby: keyname={}'.format(keyname.format(org=orgName, orgCateg='EVENT_WEEK_COUNT')))
             self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='EVENT_WEEK_COUNT'), util.ONE_DAY*7)
 
             eventMonthCount = self.serv_redis_db.incrby(keyname.format(org=orgName, orgCateg='EVENT_MONTH_COUNT'), 1)
-            logger.debug('Incrby: keyname={}'.format(keyname.format(org=orgName, orgCateg='EVENT_MONTH_COUNT')))
+            self.logger.debug('Incrby: keyname={}'.format(keyname.format(org=orgName, orgCateg='EVENT_MONTH_COUNT')))
             self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='EVENT_MONTH_COUNT'), util.ONE_DAY*7)
 
         # getRequirement parameters
@@ -287,7 +294,7 @@ class Contributor_helper:
 
         for rankReq, ttl in contrib:
             self.serv_redis_db.set(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq)), 1)
-            logger.debug('Set: keyname={}'.format(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq))))
+            self.logger.debug('Set: keyname={}'.format(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq))))
             self.serv_redis_db.expire(keyname.format(org=orgName, orgCateg='CONTRIB_REQ_'+str(rankReq)), ttl)
 
         ContributionStatus = self.getCurrentContributionStatus(orgName)
@@ -335,12 +342,12 @@ class Contributor_helper:
     def giveBadgeToOrg(self, org, badgeNum):
         keyname = '{mainKey}:{org}:{orgCateg}'
         self.serv_redis_db.set(keyname.format(mainKey=self.keyContribReq, org=org, orgCateg='BADGE_'+str(badgeNum)), 1)
-        logger.debug('Giving badge {} to org {}'.format(org, badgeNum))
+        self.logger.debug('Giving badge {} to org {}'.format(org, badgeNum))
 
     def removeBadgeFromOrg(self, org, badgeNum):
         keyname = '{mainKey}:{org}:{orgCateg}'
         self.serv_redis_db.delete(keyname.format(mainKey=self.keyContribReq, org=org, orgCateg='BADGE_'+str(badgeNum)))
-        logger.debug('Removing badge {} from org {}'.format(org, badgeNum))
+        self.logger.debug('Removing badge {} from org {}'.format(org, badgeNum))
 
     ''' TROPHIES '''
     def getOrgTrophies(self, org):
@@ -391,12 +398,12 @@ class Contributor_helper:
     def giveTrophyPointsToOrg(self, org, categ, points):
         keyname = '{mainKey}:{orgCateg}'
         self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), org, points)
-        logger.debug('Giving {} trophy points to {} in {}'.format(points, org, categ))
+        self.logger.debug('Giving {} trophy points to {} in {}'.format(points, org, categ))
 
     def removeTrophyPointsFromOrg(self, org, categ, points):
         keyname = '{mainKey}:{orgCateg}'
         self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), org, -points)
-        logger.debug('Removing {} trophy points from {} in {}'.format(points, org, categ))
+        self.logger.debug('Removing {} trophy points from {} in {}'.format(points, org, categ))
 
     ''' AWARDS HELPER '''
     def getLastAwardsFromRedis(self):

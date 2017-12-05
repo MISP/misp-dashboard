@@ -7,8 +7,6 @@ import logging
 import util
 from . import contributor_helper
 
-logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class Users_helper:
     def __init__(self, serv_redis_db, cfg):
@@ -20,12 +18,21 @@ class Users_helper:
         self.keyOrgLog       = "LOGIN_ORG"
         self.keyContribDay   = contributor_helper.KEYDAY # Key to get monthly contribution
 
+        #logger
+        logDir = cfg.get('Log', 'directory')
+        logfilename = cfg.get('Log', 'filename')
+        logPath = os.path.join(logDir, logfilename)
+        if not os.path.exists(logDir):
+            os.makedirs(logDir)
+        logging.basicConfig(filename=logPath, filemode='w', level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
+
     def addTemporary(self, org, timestamp):
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
         timestampDate_str = util.getDateHoursStrFormat(timestampDate)
         keyname_timestamp = "{}:{}".format(self.keyTimestampSet, timestampDate_str)
         self.serv_redis_db.sadd(keyname_timestamp, org)
-        logger.debug('Added to redis: keyname={}, org={}'.format(keyname_timestamp, org))
+        self.logger.debug('Added to redis: keyname={}, org={}'.format(keyname_timestamp, org))
         self.serv_redis_db.expire(keyname_timestamp, 60*60)
 
     def hasAlreadyBeenAdded(self, org, timestamp):
@@ -44,12 +51,12 @@ class Users_helper:
         if not self.hasAlreadyBeenAdded(org, timestamp):
             keyname_timestamp = "{}:{}".format(self.keyTimestamp, timestampDate_str)
             self.serv_redis_db.sadd(keyname_timestamp, timestamp)
-            logger.debug('Added to redis: keyname={}, org={}'.format(keyname_timestamp, timestamp))
+            self.logger.debug('Added to redis: keyname={}, org={}'.format(keyname_timestamp, timestamp))
             self.addTemporary(org, timestamp)
 
         keyname_org = "{}:{}".format(self.keyOrgLog, timestampDate_str)
         self.serv_redis_db.zincrby(keyname_org, org, 1)
-        logger.debug('Added to redis: keyname={}, org={}'.format(keyname_org, org))
+        self.logger.debug('Added to redis: keyname={}, org={}'.format(keyname_org, org))
 
     def getUserLogins(self, date):
         keyname = "{}:{}".format(self.keyTimestamp, util.getDateStrFormat(date))

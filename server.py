@@ -65,7 +65,7 @@ class LogItem():
     FIELDNAME_ORDER_HEADER = []
     FIELDNAME_ORDER.append("Time")
     FIELDNAME_ORDER_HEADER.append("Time")
-    for item in json.loads(cfg.get('Log', 'fieldname_order')):
+    for item in json.loads(cfg.get('Dashboard', 'fieldname_order')):
         if type(item) is list:
             FIELDNAME_ORDER_HEADER.append(" | ".join(item))
         else:

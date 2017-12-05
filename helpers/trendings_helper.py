@@ -7,9 +7,6 @@ from collections import OrderedDict
 
 import util
 
-logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 class Trendings_helper:
     def __init__(self, serv_redis_db, cfg):
         self.serv_redis_db = serv_redis_db
@@ -23,6 +20,15 @@ class Trendings_helper:
         self.keySigh    = "TRENDINGS_SIGHT_sightings"
         self.keyFalse   = "TRENDINGS_SIGHT_false_positive"
 
+        #logger
+        logDir = cfg.get('Log', 'directory')
+        logfilename = cfg.get('Log', 'filename')
+        logPath = os.path.join(logDir, logfilename)
+        if not os.path.exists(logDir):
+            os.makedirs(logDir)
+        logging.basicConfig(filename=logPath, filemode='w', level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
+
     ''' SETTER '''
 
     def addGenericTrending(self, trendingType, data, timestamp):
@@ -34,7 +40,7 @@ class Trendings_helper:
         else:
             to_save = data
         self.serv_redis_db.zincrby(keyname, to_save, 1)
-        logger.debug('Added to redis: keyname={}, content={}'.format(keyname, to_save))
+        self.logger.debug('Added to redis: keyname={}, content={}'.format(keyname, to_save))
 
     def addTrendingEvent(self, eventName, timestamp):
         self.addGenericTrending(self.keyEvent, eventName, timestamp)
@@ -58,14 +64,14 @@ class Trendings_helper:
         timestampDate_str = util.getDateStrFormat(timestampDate)
         keyname = "{}:{}".format(self.keySigh, timestampDate_str)
         self.serv_redis_db.incrby(keyname, 1)
-        logger.debug('Incrby: keyname={}'.format(keyname))
+        self.logger.debug('Incrby: keyname={}'.format(keyname))
 
     def addFalsePositive(self, timestamp):
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
         timestampDate_str = util.getDateStrFormat(timestampDate)
         keyname = "{}:{}".format(self.keyFalse, timestampDate_str)
         self.serv_redis_db.incrby(keyname, 1)
-        logger.debug('Incrby: keyname={}'.format(keyname))
+        self.logger.debug('Incrby: keyname={}'.format(keyname))
 
     ''' GETTER '''
 
