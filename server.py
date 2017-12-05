@@ -136,7 +136,7 @@ def index():
             size_dashboard_width=[cfg.getint('Dashboard' ,'size_dashboard_left_width'), 12-cfg.getint('Dashboard', 'size_dashboard_left_width')],
             itemToPlot=cfg.get('Dashboard', 'item_to_plot'),
             graph_log_refresh_rate=cfg.getint('Dashboard' ,'graph_log_refresh_rate'),
-            char_separator=cfg.get('Log', 'char_separator'),
+            char_separator=cfg.get('Dashboard', 'char_separator'),
             rotation_wait_time=cfg.getint('Dashboard' ,'rotation_wait_time'),
             max_img_rotation=cfg.getint('Dashboard' ,'max_img_rotation'),
             hours_spanned=cfg.getint('Dashboard' ,'hours_spanned'),

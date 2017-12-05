@@ -203,7 +203,7 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
             to_join = []
             for subField in field:
                 to_join.append(getFields(jsonobj, subField))
-            to_add = cfg.get('Log', 'char_separator').join(to_join)
+            to_add = cfg.get('Dashboard', 'char_separator').join(to_join)
         else:
             to_add = getFields(jsonobj, field)
         to_push.append(to_add)
