@@ -241,7 +241,7 @@ def main(sleeptime):
     while True:
         content = serv_list.rpop(LISTNAME)
         if content is None:
-            logger.info('Processed {} message(s) since last sleep.'.format(numMsg))
+            logger.debug('Processed {} message(s) since last sleep.'.format(numMsg))
             numMsg = 0
             time.sleep(sleeptime)
             continue

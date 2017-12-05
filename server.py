@@ -20,8 +20,8 @@ configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
-logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('werkzeug')
+logger.setLevel(logging.ERROR)
 
 app = Flask(__name__)
 
