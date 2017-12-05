@@ -12,6 +12,7 @@ import redis
 import util
 from . import users_helper
 KEYDAY = "CONTRIB_DAY" # To be used by other module
+KEYALLORG = "CONTRIB_ALL_ORG" # To be used by other module
 
 class Contributor_helper:
     def __init__(self, serv_redis_db, cfg):
@@ -91,7 +92,7 @@ class Contributor_helper:
         self.keyDay         = KEYDAY
         self.keyCateg       = "CONTRIB_CATEG"
         self.keyLastContrib = "CONTRIB_LAST"
-        self.keyAllOrg      = "CONTRIB_ALL_ORG"
+        self.keyAllOrg      = KEYALLORG
         self.keyContribReq  = "CONTRIB_ORG"
         self.keyTrophy      = "CONTRIB_TROPHY"
         self.keyLastAward   = "CONTRIB_LAST_AWARDS"
