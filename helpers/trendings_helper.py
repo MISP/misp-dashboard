@@ -26,7 +26,7 @@ class Trendings_helper:
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='w', level=logging.INFO)
+        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
         self.logger = logging.getLogger(__name__)
 
     ''' SETTER '''

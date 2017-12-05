@@ -18,7 +18,7 @@ logfilename = cfg.get('Log', 'filename')
 logPath = os.path.join(logDir, logfilename)
 if not os.path.exists(logDir):
     os.makedirs(logDir)
-logging.basicConfig(filename=logPath, filemode='w', level=logging.INFO)
+logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
 logger = logging.getLogger('zmq_subscriber')
 
 ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
