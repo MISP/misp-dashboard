@@ -66,11 +66,11 @@ class Users_helper:
     # return: All dates for all orgs, if date is not supplied, return for all dates
     def getUserLogins(self, date=None):
         # get all orgs and retreive their timestamps
-        timestamps = []
+        dates = []
         for org in self.getAllOrg():
             keyname = "{}:{}".format(self.keyOrgLog, org)
-            timestamps += self.getDates(org, date)
-        return timestamps
+            dates += self.getDates(org, date)
+        return dates
 
     # return: All orgs that logged in for the time spanned
     def getAllLoggedInOrgs(self, date, prev_days=31):
@@ -91,7 +91,7 @@ class Users_helper:
             log = self.serv_redis_db.zscore(keyname_log.format(self.keyOrgLog, util.getDateStrFormat(curDate)), org)
             log = 0 if log is None else 1
             contrib = self.serv_redis_db.zscore(keyname_contrib.format(self.keyContribDay, util.getDateStrFormat(curDate)), org)
-            contrib = 0 if contrib is None else 1
+            contrib = 0 if contrib is None else contrib
             data.append([log, contrib])
         return data
 
@@ -184,11 +184,13 @@ class Users_helper:
             keyname = "{}:{}".format(self.keyContribDay, util.getDateStrFormat(curDate))
 
             if org is None:
-                orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=False)
-                orgs_contri_num = len(orgs_contri)
+                orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=True)
+                orgs_contri_num = 0
+                for org, count in orgs_contri:
+                    orgs_contri_num += count
             else:
                 orgs_contri_num = self.serv_redis_db.zscore(keyname, org)
-                orgs_contri_num = 1 if orgs_contri_num is not None else 0
+                orgs_contri_num = orgs_contri_num if orgs_contri_num is not None else 0
 
             for curDate in util.getHoursSpanOfDate(curDate, adaptToFitCurrentTime=True): #fill hole day
                 dico_hours_contrib[util.getTimestamp(curDate)] = orgs_contri_num

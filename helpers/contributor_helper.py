@@ -124,8 +124,8 @@ class Contributor_helper:
         nowSec = int(time.time())
         pnts_to_add = self.default_pnts_per_contribution
     
-        # if there is a contribution, there is a login (even if it comes from the API)
-        self.users_helper.add_user_login(nowSec, org)
+        # Do not consider contribution as login anymore
+        #self.users_helper.add_user_login(nowSec, org)
     
         # is a valid contribution
         if categ is not None:
