@@ -5,7 +5,7 @@ import datetime, time
 import logging
 
 import util
-import contributor_helper
+from . import contributor_helper
 
 logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
 logger = logging.getLogger(__name__)

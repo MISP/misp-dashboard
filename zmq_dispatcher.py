@@ -13,17 +13,17 @@ import sys
 import json
 
 import util
-import geo_helper
-import contributor_helper
-import users_helper
-import trendings_helper
+from helpers import geo_helper
+from helpers import contributor_helper
+from helpers import users_helper
+from helpers import trendings_helper
 
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
 logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('zmq_dispatcher')
 
 CHANNEL = cfg.get('RedisLog', 'channel')
 LISTNAME = cfg.get('RedisLIST', 'listName')

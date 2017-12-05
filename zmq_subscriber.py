@@ -15,7 +15,7 @@ cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
 logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('zmq_subscriber')
 
 ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')

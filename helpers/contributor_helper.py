@@ -10,7 +10,7 @@ import logging
 import redis
 
 import util
-import users_helper
+from . import users_helper
 KEYDAY = "CONTRIB_DAY" # To be used by other module
 logging.basicConfig(filename='logs/logs.log', filemode='w', level=logging.INFO)
 logger = logging.getLogger(__name__)

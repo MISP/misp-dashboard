@@ -11,10 +11,10 @@ import os
 import logging
 
 import util
-import geo_helper
-import contributor_helper
-import users_helper
-import trendings_helper
+from helpers import geo_helper
+from helpers import contributor_helper
+from helpers import users_helper
+from helpers import trendings_helper
 
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
