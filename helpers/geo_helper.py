@@ -95,6 +95,8 @@ class Geo_helper:
             ordDic = OrderedDict() #keep fields with the same layout in redis
             ordDic['lat'] = coord_dic['lat']
             ordDic['lon'] = coord_dic['lon']
+            ordDic['categ'] = categ
+            ordDic['value'] = supposed_ip
             coord_list = [coord['lat'], coord['lon']]
             self.push_to_redis_zset(self.keyCategCoord, json.dumps(ordDic))
             self.push_to_redis_zset(self.keyCategCountry, rep['full_rep'].country.iso_code)
