@@ -186,7 +186,7 @@ class Users_helper:
             if org is None:
                 orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=True)
                 orgs_contri_num = 0
-                for org, count in orgs_contri:
+                for _, count in orgs_contri:
                     orgs_contri_num += count
             else:
                 orgs_contri_num = self.serv_redis_db.zscore(keyname, org)
