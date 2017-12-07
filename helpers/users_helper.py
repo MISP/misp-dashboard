@@ -58,6 +58,8 @@ class Users_helper:
                 t = datetime.datetime.fromtimestamp(float(t[1]))
                 if util.getDateStrFormat(t) == util.getDateStrFormat(date): #same day
                     to_return.append(t)
+                elif util.getDateStrFormat(t) > util.getDateStrFormat(date):
+                    continue # timestamps should be sorted, skipping to reach wanted date
                 else:
                     break # timestamps should be sorted, no need to process anymore
         return to_return
