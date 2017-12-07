@@ -122,19 +122,21 @@ function updateTopMaps(date) {
         }
         for(var i=0; i<6 && i<list.length; i++) {
             // create marker + flyToIt
-            coordJson = JSON.parse(list[i][0]);
-            allOpenStreetMap[i+1].flyTo([coordJson.lat, coordJson.lon], ZOOMLEVEL);
+            dataJson = JSON.parse(list[i][0]);
+            categ = dataJson.categ === undefined ? "" : dataJson.categ;
+            value = dataJson.value === undefined ? "" : dataJson.value;
+            allOpenStreetMap[i+1].flyTo([dataJson.lat, dataJson.lon], ZOOMLEVEL);
 
             // update marker
             var markerToUpdate = savedMarker[i+1];
             if (markerToUpdate != undefined) {
-                markerToUpdate.setLatLng({lat: coordJson.lat, lng: coordJson.lon});
-                markerToUpdate._popup.setContent('lat: '+coordJson.lat+', lon: '+coordJson.lon+' (<strong>'+list[i][1]+'</strong>)');
+                markerToUpdate.setLatLng({lat: dataJson.lat, lng: dataJson.lon});
+                markerToUpdate._popup.setContent(categ+' - '+value+' (<strong>'+list[i][1]+'</strong>)');
                 markerToUpdate.update();
             } else { // create new marker
-                var marker = L.marker([coordJson.lat, coordJson.lon]).addTo(allOpenStreetMap[i+1]);
+                var marker = L.marker([dataJson.lat, dataJson.lon]).addTo(allOpenStreetMap[i+1]);
                 savedMarker[i+1] = marker;
-                marker.bindPopup('lat: '+coordJson.lat+', lon: '+coordJson.lon+' (<strong>'+list[i][1]+'</strong>)').openPopup();
+                marker.bindPopup(categ+' - '+value+' (<strong>'+list[i][1]+'</strong>)').openPopup();
             }
         }
     });
