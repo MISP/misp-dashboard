@@ -3,6 +3,38 @@ var pieOrgWidget;
 var pieApiWidget;
 var overtimeWidget;
 var div_day;
+var allOrg;
+
+var typeaheadOption_punch = {
+    source: function (query, process) {
+        if (allOrg === undefined) { // caching
+            return $.getJSON(url_getTypeaheadData, function (orgs) {
+                    allOrg = orgs;
+                    return process(orgs);
+            });
+        } else {
+            return process(allOrg);
+        }
+    },
+    updater: function(org) {
+        updateDatePunch(undefined, undefined, org);
+    }
+}
+var typeaheadOption_overtime = {
+    source: function (query, process) {
+        if (allOrg === undefined) { // caching
+            return $.getJSON(url_getTypeaheadData, function (orgs) {
+                    allOrg = orgs;
+                    return process(orgs);
+            });
+        } else {
+            return process(allOrg);
+        }
+    },
+    updater: function(org) {
+        updateDateOvertime(undefined, undefined, org);
+    }
+}
 
 function legendFormatter(label, series) {
     // removing unwanted "
@@ -32,9 +64,16 @@ function highlight_punchDay() {
     div_day.addClass('highlightDay')
 }
 
-function updateDatePunch() {
+function updateDatePunch(ignore1, igonre2, org) { //date picker sets ( String dateText, Object inst )
     var date = datePickerWidgetPunch.datepicker( "getDate" );
-    $.getJSON( url_getUserLogins+"?date="+date.getTime()/1000, function( data ) {
+    if (org === undefined){
+        $('#typeaheadPunch').attr('placeholder', "Enter an organization");
+        var url = url_getUserLogins+"?date="+date.getTime()/1000;
+    } else {
+        $('#typeaheadPunch').attr('placeholder', org);
+        var url = url_getUserLogins+"?date="+date.getTime()/1000+"&org="+org;
+    }
+    $.getJSON(url, function( data ) {
         if (!(punchcardWidget === undefined)) {
             punchcardWidget.settings.data = data;
             punchcardWidget.refresh();
@@ -115,7 +154,7 @@ function updateDatePieApi() {
         }
     });
 }
-function updateDateOvertime() {
+function updateDateOvertime(ignore1, igonre2, org) { //date picker sets ( String dateText, Object inst )
     var date = datePickerWidgetOvertime.datepicker( "getDate" );
     var now = new Date();
     if (date.toDateString() == now.toDateString()) {
@@ -123,8 +162,14 @@ function updateDateOvertime() {
     } else {
         date.setTime(date.getTime() + (24*60*60*1000-1)); // include data of selected date
     }
-    $.getJSON( url_getUserLoginsAndContribOvertime+"?date="+parseInt(date.getTime()/1000), function( data ) {
-        console.log(data);
+    if (org === undefined){
+        var url = url_getUserLoginsAndContribOvertime+"?date="+parseInt(date.getTime()/1000)
+        $('#typeaheadOvertime').attr('placeholder', "Enter an organization");
+    } else {
+        var url = url_getUserLoginsAndContribOvertime+"?date="+parseInt(date.getTime()/1000)+"&org="+org;
+        $('#typeaheadOvertime').attr('placeholder', org);
+    }
+    $.getJSON( url, function( data ) {
         data_log = data['login'];
         data_contrib = data['contrib'];
         temp_log = [];
@@ -202,6 +247,9 @@ $(document).ready(function () {
     updateDatePieOrg();
     updateDatePieApi();
     updateDateOvertime();
+
+    $('#typeaheadPunch').typeahead(typeaheadOption_punch);
+    $('#typeaheadOvertime').typeahead(typeaheadOption_overtime);
 
     $("<div id='tooltip'></div>").css({
         position: "absolute",
