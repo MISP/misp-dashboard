@@ -23,11 +23,12 @@ def wipeRedis():
     serv_redis_db.flushall()
 
 def errorExit():
-    wipeRedis()
     sys.exit(1)
 
 def test():
+    flag_error = False
     today = datetime.datetime.now()
+
     # IP -> Coord
     supposed_ip = '8.8.8.8'
     geo_helper.getCoordFromIpAndPublish(supposed_ip, categ)
@@ -35,27 +36,27 @@ def test():
     excpected_result = [['{"lat": 37.751, "lon": -97.822}', 1.0]]
     if rep != excpected_result:
         print('ip to coord result not matching')
-        errorExit()
+        flag_error = True
 
     # gethitmap
     rep = geo_helper.getHitMap(today)
     excpected_result = [['US', 1.0]]
     if rep != excpected_result:
         print('getHitMap result not matching')
-        errorExit()
+        flag_error = True
 
     # getCoordsByRadius
     rep = geo_helper.getCoordsByRadius(today, today, 0.000, 0.000, '1')
     excpected_result = []
     if rep != excpected_result:
         print('getCoordsByRadius result not matching')
-        errorExit()
+        flag_error = True
 
     rep = geo_helper.getCoordsByRadius(today, today, 37.750, -97.821, '10')
     excpected_result = [[['{"categ": "Network Activity", "value": "8.8.8.8"}'], [-97.82200008630753, 37.75100012475438]]]
     if rep != excpected_result:
         print('getCoordsByRadius result not matching')
-        errorExit()
+        flag_error = True
 
     wipeRedis()
     
@@ -67,9 +68,12 @@ def test():
     excpected_result = ['{"lat": "49.7500", "lon": "6.1667"}', 1.0]
     if rep != excpected_result:
         print('Phone to coord result not matching')
-        errorExit()
+        flag_error = True
 
-
-test()
 wipeRedis()
-print('Tests succeeded')
+if test():
+    wipeRedis()
+    errorExit()
+else:
+    wipeRedis()
+    print('Geo tests succeeded')

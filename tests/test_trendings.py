@@ -25,7 +25,7 @@ def errorExit():
     sys.exit(1)
 
 def test():
-    flag_error = True
+    flag_error = False
     today = datetime.datetime.now()
     now = time.time
 
@@ -39,7 +39,7 @@ def test():
     rep = trendings_helper.getTrendingEvents(today, today)
     if rep[0][1] != expected_result[0][1]: #ignore timestamps
         print('getTrendingEvents result not matching')
-        flag_error = False
+        flag_error = True
 
     # Tags
     tag1 = {'id': 'tag1', 'colour': 'blue', 'name': 'tag1Name'}
@@ -51,7 +51,7 @@ def test():
     rep = trendings_helper.getTrendingTags(today, today)
     if rep[0][1] != expected_result[0][1]: #ignore timestamps
         print('getTrendingTags result not matching')
-        flag_error = False
+        flag_error = True
 
     # Sightings
     trendings_helper.addSightings(now())
@@ -61,14 +61,14 @@ def test():
     rep = trendings_helper.getTrendingSightings(today, today)
     if rep[0][1] != expected_result[0][1]: #ignore timestamps
         print('getTrendingSightings result not matching')
-        flag_error = False
+        flag_error = True
     
     return flag_error
 
 wipeRedis()
 if test():
     wipeRedis()
-    print('Trendings tests succeeded')
+    errorExit()
 else:
     wipeRedis()
-    errorExit()
+    print('Trendings tests succeeded')
