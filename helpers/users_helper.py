@@ -51,7 +51,7 @@ class Users_helper:
         keyname = "{}:{}".format(self.keyTimestamp, org)
         timestamps = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=True)
         if date is None:
-            to_return = [ t[1] for t in timestamps ]
+            to_return = [ datetime.datetime.fromtimestamp(float(t[1])) for t in timestamps ]
         else:
             to_return = []
             for t in timestamps:
@@ -165,7 +165,7 @@ class Users_helper:
                 data.append(to_append)
             except KeyError: # no data
                 data.append([0 for x in range(24)])
-        # swap: punchcard day starts on monday
+        # swap: punchcard day starts on sunday
         data = [data[6]]+data[:6]
         return data
 
