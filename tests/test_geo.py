@@ -33,7 +33,7 @@ def test():
     supposed_ip = '8.8.8.8'
     geo_helper.getCoordFromIpAndPublish(supposed_ip, categ)
     rep = geo_helper.getTopCoord(today)
-    excpected_result = [['{"lat": 37.751, "lon": -97.822}', 1.0]]
+    excpected_result = [['{"lat": 37.751, "lon": -97.822, "categ": "Network Activity", "value": "8.8.8.8"}', 1.0]]
     if rep != excpected_result:
         print('ip to coord result not matching')
         flag_error = True
@@ -69,6 +69,8 @@ def test():
     if rep != excpected_result:
         print('Phone to coord result not matching')
         flag_error = True
+
+    return flag_error
 
 wipeRedis()
 if test():
