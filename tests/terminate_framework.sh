@@ -17,3 +17,5 @@ screenName="Misp-Dashboard-test"
 
 bash -c $redis_dir'redis-cli -p 6260 shutdown'
 screen -S $screenName -X quit
+echo -e $GREEN"* Shutting down Redis servers"$DEFAULT
+

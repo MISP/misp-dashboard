@@ -15,5 +15,5 @@ screenName="Misp-Dashboard-test"
 
 screen -dmS "$screenName"
 sleep 0.1
-echo -e $GREEN"\t* Launching Redis servers"$DEFAULT
+echo -e $GREEN"* Launching Redis servers"$DEFAULT
 screen -S "$screenName" -X screen -t "redis-server" bash -c $redis_dir'redis-server --port 6260; read x'
