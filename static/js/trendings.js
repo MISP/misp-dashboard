@@ -104,7 +104,7 @@ var typeaheadOption_tag = {
         updateLineForLabel(tagLine, tag, undefined, url_getTrendingTag);
     }
 }
-var timeline_option = {};
+var timeline_option = {groupOrder: 'content'};
 
 
 /* FUNCTIONS */
@@ -402,23 +402,33 @@ function updateDisc() {
 function updateTimeline() {
     $.getJSON( url_getGenericTrendingOvertime+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
         var items = [];
+        var groups = new vis.DataSet();
+        var dico_groups = {};
         var i = 1;
+        var g = 1;
         for (var obj of data) {
-            if (obj.end == obj.start) { console.log(obj);}
+            var index = dico_groups[obj.name];
+            if (index == undefined) { // new group
+                index = groups.add({id: g, content: obj.name});
+                dico_groups[obj.name] = g;
+                g++;
+            }
             items.push({
                 id: i,
                 content: obj.name,
                 start: obj.start*1000,
-                end: obj.end*1000
+                end: obj.end*1000,
+                group: dico_groups[obj.name]
             });
             i++;
         }
         items = new vis.DataSet(items);
         if (timeline === undefined) { // create timeline
-            timeline = new vis.Timeline(document.getElementById('timeline'), items, timeline_option);
-        } else { // update
-            timeline.setItems(items);
+            timeline = new vis.Timeline(document.getElementById('timeline'));
+            timeline.setOptions(timeline_option);
         }
+        timeline.setGroups(groups);
+        timeline.setItems(items);
     });
 }
 

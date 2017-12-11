@@ -1,6 +1,7 @@
 import math, random
 import os
 import json
+import copy
 import datetime, time
 import logging
 from collections import OrderedDict
@@ -190,11 +191,10 @@ class Trendings_helper:
             obj = {'name': item, 'start': timestamps[0]-ONEDAY, 'end': timestamps[0]}
             for t in timestamps:
                 if t-obj['end'] > ONEDAY: #new entry
-                    to_ret.append(obj)
+                    to_ret.append(copy.deepcopy(obj))
                     obj['start'] = t-ONEDAY
                     obj['end'] = t
                 else: # contrinue entry
                     obj['end'] = t
             to_ret.append(obj)
-
         return to_ret
