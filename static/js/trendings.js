@@ -9,6 +9,7 @@ var tagPie = ["#tagPie"];
 var tagLine = ["#tagLine"];
 var sightingLineWidget;
 var discLine = ["#discussionLine"];
+var timeline;
 var allData;
 var globalColorMapping = {};
 
@@ -103,6 +104,8 @@ var typeaheadOption_tag = {
         updateLineForLabel(tagLine, tag, undefined, url_getTrendingTag);
     }
 }
+var timeline_option = {};
+
 
 /* FUNCTIONS */
 function getColor(label) {
@@ -396,6 +399,29 @@ function updateDisc() {
     });
 }
 
+function updateTimeline() {
+    $.getJSON( url_getGenericTrendingOvertime+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
+        var items = [];
+        var i = 1;
+        for (var obj of data) {
+            if (obj.end == obj.start) { console.log(obj);}
+            items.push({
+                id: i,
+                content: obj.name,
+                start: obj.start*1000,
+                end: obj.end*1000
+            });
+            i++;
+        }
+        items = new vis.DataSet(items);
+        if (timeline === undefined) { // create timeline
+            timeline = new vis.Timeline(document.getElementById('timeline'), items, timeline_option);
+        } else { // update
+            timeline.setItems(items);
+        }
+    });
+}
+
 function dateChanged() {
     dateStart = datePickerWidgetStart.datepicker( "getDate" );
     dateEnd = datePickerWidgetEnd.datepicker( "getDate" );
@@ -404,6 +430,7 @@ function dateChanged() {
     updatePieLine(tagPie, tagLine, url_getTrendingTag);
     updateSignthingsChart();
     updateDisc();
+    updateTimeline();
 }
 
 $(document).ready(function () {
@@ -426,6 +453,7 @@ $(document).ready(function () {
     updatePieLine(tagPie, tagLine, url_getTrendingTag)
     updateSignthingsChart();
     updateDisc();
+    updateTimeline();
 
     $( "#num_selector" ).change(function() {
         var sel = parseInt($( this ).val());
@@ -437,5 +465,4 @@ $(document).ready(function () {
         position: "absolute",
         display: "none",
     }).appendTo("body");
-
 });

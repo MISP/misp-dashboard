@@ -158,3 +158,43 @@ class Trendings_helper:
                 tagSet.add(tag['name'])
         to_ret[self.keyTag] = list(tagSet)
         return to_ret
+
+    # In contrary of getGenericTrending, it regroups items in the format: {item, start: timestamp1, end: timestamp2}
+    # so that it can be displayed easily on the timeline.
+    def getGenericTrendingOvertime(self, dateS, dateE, trendingType=None, topNum=0):
+        trendingType = self.keyEvent
+        dico_items = {}
+        to_format = []
+        prev_days = (dateE - dateS).days
+        # get data
+        for curDate in util.getXPrevDaysSpan(dateE, prev_days):
+            keyname = "{}:{}".format(trendingType, util.getDateStrFormat(curDate))
+            data = self.serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
+            data = [ [record[0].decode('utf8'), record[1]] for record in data ]
+            data = data if data is not None else []
+            to_format.append([util.getTimestamp(curDate), data])
+
+        for timestamp, array in to_format:
+            for item, _ in array:
+                if item not in dico_items:
+                    dico_items[item] = []
+                dico_items[item].append(timestamp)
+
+        # sort timestamps in correct order
+        for item in dico_items.keys():
+            dico_items[item].sort()
+        # dico_items have the form: {item: [t1,t2,t4], ...}
+        to_ret = []
+        ONEDAY = 60*60*24
+        for item, timestamps in dico_items.items():
+            obj = {'name': item, 'start': timestamps[0]-ONEDAY, 'end': timestamps[0]}
+            for t in timestamps:
+                if t-obj['end'] > ONEDAY: #new entry
+                    to_ret.append(obj)
+                    obj['start'] = t-ONEDAY
+                    obj['end'] = t
+                else: # contrinue entry
+                    obj['end'] = t
+            to_ret.append(obj)
+
+        return to_ret
