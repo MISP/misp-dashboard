@@ -192,13 +192,13 @@ class Trendings_helper:
         to_ret = []
         ONEDAY = 60*60*24
         for item, timestamps in dico_items.items():
-            obj = {'name': item, 'start': timestamps[0]-ONEDAY, 'end': timestamps[0]}
+            obj = {'name': item, 'start': timestamps[0], 'end': timestamps[0]+ONEDAY}
             for t in timestamps:
                 if t-obj['end'] > ONEDAY: #new entry
                     to_ret.append(copy.deepcopy(obj))
-                    obj['start'] = t-ONEDAY
-                    obj['end'] = t
+                    obj['start'] = t
+                    obj['end'] = t+ONEDAY
                 else: # contrinue entry
-                    obj['end'] = t
+                    obj['end'] = t+ONEDAY
             to_ret.append(obj)
         return to_ret

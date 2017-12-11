@@ -447,6 +447,7 @@ function updateTimeline() {
         }
         timeline.setGroups(groups);
         timeline.setItems(items);
+        timeline.setWindow(dateStart, dateEnd);
     });
 }
 
