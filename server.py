@@ -544,8 +544,9 @@ def getGenericTrendingOvertime():
     except:
         dateS = datetime.datetime.now() - datetime.timedelta(days=7)
         dateE = datetime.datetime.now()
+    choice = request.args.get('choice', 'events')
 
-    data = trendings_helper.getGenericTrendingOvertime(dateS, dateE)
+    data = trendings_helper.getGenericTrendingOvertime(dateS, dateE, choice)
     return jsonify(data)
 
 if __name__ == '__main__':

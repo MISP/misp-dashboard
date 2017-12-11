@@ -162,8 +162,12 @@ class Trendings_helper:
 
     # In contrary of getGenericTrending, it regroups items in the format: {item, start: timestamp1, end: timestamp2}
     # so that it can be displayed easily on the timeline.
-    def getGenericTrendingOvertime(self, dateS, dateE, trendingType=None, topNum=0):
-        trendingType = self.keyEvent
+    def getGenericTrendingOvertime(self, dateS, dateE, choice=None, topNum=0):
+        if choice == 'tags':
+            trendingType = self.keyTag
+        else:
+            trendingType = self.keyEvent
+
         dico_items = {}
         to_format = []
         prev_days = (dateE - dateS).days

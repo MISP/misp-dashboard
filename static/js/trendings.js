@@ -104,7 +104,13 @@ var typeaheadOption_tag = {
         updateLineForLabel(tagLine, tag, undefined, url_getTrendingTag);
     }
 }
-var timeline_option = {groupOrder: 'content'};
+var timeline_option = {
+    groupOrder: 'content',
+    maxHeight: '94vh',
+    verticalScroll: true,
+    horizontalScroll: true,
+    zoomKey: 'ctrlKey',
+};
 
 
 /* FUNCTIONS */
@@ -137,7 +143,18 @@ function getTextColour(rgb) {
         return 'black';
     }
 }
-function legendFormatter(label, series) {
+
+// If json (from tag), only retreive the name> otherwise return the supplied arg.
+function getOnlyName(potentialJson) {
+    try {
+        jsonLabel = JSON.parse(potentialJson);
+        return jsonLabel.name;
+    } catch(err) {
+        return potentialJson;
+    }
+}
+
+function legendFormatter(label) {
     try {
         jsonLabel = JSON.parse(label);
         var backgroundColor = jsonLabel.colour;
@@ -400,7 +417,8 @@ function updateDisc() {
 }
 
 function updateTimeline() {
-    $.getJSON( url_getGenericTrendingOvertime+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000), function( data ) {
+    var selected = $( "#timeline_selector" ).val();
+    $.getJSON( url_getGenericTrendingOvertime+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000)+"&choice="+selected, function( data ) {
         var items = [];
         var groups = new vis.DataSet();
         var dico_groups = {};
@@ -409,13 +427,13 @@ function updateTimeline() {
         for (var obj of data) {
             var index = dico_groups[obj.name];
             if (index == undefined) { // new group
-                index = groups.add({id: g, content: obj.name});
+                index = groups.add({id: g, content: legendFormatter(obj.name)});
                 dico_groups[obj.name] = g;
                 g++;
             }
             items.push({
                 id: i,
-                content: obj.name,
+                content: getOnlyName(obj.name),
                 start: obj.start*1000,
                 end: obj.end*1000,
                 group: dico_groups[obj.name]
@@ -469,6 +487,10 @@ $(document).ready(function () {
         var sel = parseInt($( this ).val());
         var maxNum = sel;
         window.location.href = url_currentPage+'?maxNum='+maxNum;
+    });
+
+    $( "#timeline_selector" ).change(function() {
+        updateTimeline();
     });
 
     $("<div id='tooltip'></div>").css({
