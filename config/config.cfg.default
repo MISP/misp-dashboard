@@ -1,3 +1,7 @@
+[Server]
+host = localhost
+port = 9001
+
 [Dashboard]
 #hours
 graph_log_refresh_rate = 1
