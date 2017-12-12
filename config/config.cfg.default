@@ -1,6 +1,6 @@
 [Server]
 host = localhost
-port = 9001
+port = 8001
 
 [Dashboard]
 #hours
