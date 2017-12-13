@@ -176,7 +176,7 @@ function legendFormatter(label) {
         }
         return '<div '
                 + 'style="font-size:8pt;text-align:inherit;padding:2px;">'
-                    + '<a class="tagElem" style="background-color: white; color: black;"> ' + labelLimited
+                    + '<a class="tagElem" title="'+label+'" style="background-color: white; color: black;"> ' + labelLimited
                     + '</a>';
                 + '</div>';
     }
