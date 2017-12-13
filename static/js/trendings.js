@@ -443,11 +443,13 @@ function updateTimeline() {
         items = new vis.DataSet(items);
         if (timeline === undefined) { // create timeline
             timeline = new vis.Timeline(document.getElementById('timeline'));
-            timeline.setOptions(timeline_option);
         }
+        var dateEndExtended = new Date(dateEnd).setDate(dateEnd.getDate()+1); // dateEnd+1
+        timeline_option.start = dateStart;
+        timeline_option.end = dateEndExtended;
+        timeline.setOptions(timeline_option);
         timeline.setGroups(groups);
         timeline.setItems(items);
-        timeline.setWindow(dateStart, dateEnd);
     });
 }
 
