@@ -88,7 +88,7 @@ optional arguments:
                         The URL to connect to
 ```
 
-## Deploy in production using mod_wsgi
+# Deploy in production using mod_wsgi
 
 Install Apache's mod-wsgi for Python3
 
