@@ -2,7 +2,7 @@
 
 import time, datetime
 import copy
-from pprint import pprint
+import logging
 import zmq
 import redis
 import random
@@ -13,14 +13,22 @@ import sys
 import json
 
 import util
-import geo_helper
-import contributor_helper
-import users_helper
-import trendings_helper
+from helpers import geo_helper
+from helpers import contributor_helper
+from helpers import users_helper
+from helpers import trendings_helper
 
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
+
+logDir = cfg.get('Log', 'directory')
+logfilename = cfg.get('Log', 'filename')
+logPath = os.path.join(logDir, logfilename)
+if not os.path.exists(logDir):
+    os.makedirs(logDir)
+logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+logger = logging.getLogger('zmq_dispatcher')
 
 CHANNEL = cfg.get('RedisLog', 'channel')
 LISTNAME = cfg.get('RedisLIST', 'listName')
@@ -47,6 +55,7 @@ trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
 def publish_log(zmq_name, name, content, channel=CHANNEL):
     to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
     serv_log.publish(channel, json.dumps(to_send))
+    logger.debug('Published: {}'.format(json.dumps(to_send)))
 
 def getFields(obj, fields):
     jsonWalker = fields.split('.')
@@ -68,7 +77,7 @@ def getFields(obj, fields):
 ##############
 
 def handler_log(zmq_name, jsonevent):
-    print('sending', 'log')
+    logger.info('Log not processed')
     return
 
 def handler_dispatcher(zmq_name, jsonObj):
@@ -76,12 +85,12 @@ def handler_dispatcher(zmq_name, jsonObj):
         handler_event(zmq_name, jsonObj)
 
 def handler_keepalive(zmq_name, jsonevent):
-    print('sending', 'keepalive')
+    logger.info('Handling keepalive')
     to_push = [ jsonevent['uptime'] ]
     publish_log(zmq_name, 'Keepalive', to_push)
 
 def handler_user(zmq_name, jsondata):
-    print('sending', 'user')
+    logger.info('Handling user')
     action = jsondata['action']
     json_user = jsondata['User']
     json_org = jsondata['Organisation']
@@ -93,11 +102,11 @@ def handler_user(zmq_name, jsondata):
         pass
 
 def handler_conversation(zmq_name, jsonevent):
+    logger.info('Handling conversation')
     try: #only consider POST, not THREAD
         jsonpost = jsonevent['Post']
-    except KeyError:
-        return
-    print('sending' ,'Post')
+    except KeyError as e:
+        logger.error('Error in handler_conversation: {}'.format(e))
     org = jsonpost['org_name']
     categ = None
     action = 'add'
@@ -112,11 +121,11 @@ def handler_conversation(zmq_name, jsonevent):
     trendings_helper.addTrendingDisc(eventName, nowSec)
 
 def handler_object(zmq_name, jsondata):
-    print('obj')
+    logger.info('Handling object')
     return
 
 def handler_sighting(zmq_name, jsondata):
-    print('sending' ,'sighting')
+    logger.info('Handling sighting')
     jsonsight = jsondata['Sighting']
     org = jsonsight['Event']['Orgc']['name']
     categ = jsonsight['Attribute']['category']
@@ -132,6 +141,7 @@ def handler_sighting(zmq_name, jsondata):
         trendings_helper.addFalsePositive(timestamp)
 
 def handler_event(zmq_name, jsonobj):
+    logger.info('Handling event')
     #fields: threat_level_id, id, info
     jsonevent = jsonobj['Event']
 
@@ -170,6 +180,7 @@ def handler_event(zmq_name, jsonobj):
                         isLabeled=eventLabeled)
 
 def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
+    logger.info('Handling attribute')
     # check if jsonattr is an attribute object
     if 'Attribute' in jsonobj:
         jsonattr = jsonobj['Attribute']
@@ -187,12 +198,12 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
     trendings_helper.addTrendingTags(tags, timestamp)
 
     to_push = []
-    for field in json.loads(cfg.get('Log', 'fieldname_order')):
+    for field in json.loads(cfg.get('Dashboard', 'fieldname_order')):
         if type(field) is list:
             to_join = []
             for subField in field:
                 to_join.append(getFields(jsonobj, subField))
-            to_add = cfg.get('Log', 'char_separator').join(to_join)
+            to_add = cfg.get('Dashboard', 'char_separator').join(to_join)
         else:
             to_add = getFields(jsonobj, field)
         to_push.append(to_add)
@@ -227,7 +238,7 @@ def process_log(zmq_name, event):
     try:
         dico_action[topic](zmq_name, jsonevent)
     except KeyError as e:
-        print(e)
+        logger.error(e)
 
 
 def main(sleeptime):
@@ -235,7 +246,7 @@ def main(sleeptime):
     while True:
         content = serv_list.rpop(LISTNAME)
         if content is None:
-            print('Processed', numMsg, 'message(s) since last sleep.')
+            logger.debug('Processed {} message(s) since last sleep.'.format(numMsg))
             numMsg = 0
             time.sleep(sleeptime)
             continue

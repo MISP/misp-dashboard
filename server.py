@@ -8,16 +8,20 @@ from time import gmtime as now
 from time import sleep, strftime
 import datetime
 import os
+import logging
 
 import util
-import geo_helper
-import contributor_helper
-import users_helper
-import trendings_helper
+from helpers import geo_helper
+from helpers import contributor_helper
+from helpers import users_helper
+from helpers import trendings_helper
 
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
+
+logger = logging.getLogger('werkzeug')
+logger.setLevel(logging.ERROR)
 
 server_host = cfg.get("Server", "host")
 server_port = cfg.getint("Server", "port")
@@ -64,7 +68,7 @@ class LogItem():
     FIELDNAME_ORDER_HEADER = []
     FIELDNAME_ORDER.append("Time")
     FIELDNAME_ORDER_HEADER.append("Time")
-    for item in json.loads(cfg.get('Log', 'fieldname_order')):
+    for item in json.loads(cfg.get('Dashboard', 'fieldname_order')):
         if type(item) is list:
             FIELDNAME_ORDER_HEADER.append(" | ".join(item))
         else:
@@ -102,8 +106,8 @@ class EventMessage():
         msg = msg.decode('utf8')
         try:
             jsonMsg = json.loads(msg)
-        except json.JSONDecodeError:
-            print('json decode error')
+        except json.JSONDecodeError as e:
+            logger.error(e)
             jsonMsg = { 'name': "undefined" ,'log': json.loads(msg) }
 
         self.feedName = jsonMsg['name']
@@ -135,7 +139,7 @@ def index():
             size_dashboard_width=[cfg.getint('Dashboard' ,'size_dashboard_left_width'), 12-cfg.getint('Dashboard', 'size_dashboard_left_width')],
             itemToPlot=cfg.get('Dashboard', 'item_to_plot'),
             graph_log_refresh_rate=cfg.getint('Dashboard' ,'graph_log_refresh_rate'),
-            char_separator=cfg.get('Log', 'char_separator'),
+            char_separator=cfg.get('Dashboard', 'char_separator'),
             rotation_wait_time=cfg.getint('Dashboard' ,'rotation_wait_time'),
             max_img_rotation=cfg.getint('Dashboard' ,'max_img_rotation'),
             hours_spanned=cfg.getint('Dashboard' ,'hours_spanned'),

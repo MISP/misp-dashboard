@@ -1,8 +1,8 @@
 #!/usr/bin/env python3.5
 
 import time, datetime
-from pprint import pprint
 import zmq
+import logging
 import redis
 import configparser
 import argparse
@@ -13,6 +13,13 @@ import json
 configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
+logDir = cfg.get('Log', 'directory')
+logfilename = cfg.get('Log', 'filename')
+logPath = os.path.join(logDir, logfilename)
+if not os.path.exists(logDir):
+    os.makedirs(logDir)
+logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+logger = logging.getLogger('zmq_subscriber')
 
 ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')
@@ -32,6 +39,7 @@ def put_in_redis_list(zmq_name, content):
     content = content.decode('utf8')
     to_add = {'zmq_name': zmq_name, 'content': content}
     serv_list.lpush(LISTNAME, json.dumps(to_add))
+    logger.debug('Pushed: {}'.format(json.dumps(to_add)))
 
 def main(zmqName):
     context = zmq.Context()
