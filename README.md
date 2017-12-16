@@ -88,6 +88,47 @@ optional arguments:
                         The URL to connect to
 ```
 
+# Deploy in production using mod_wsgi
+
+Install Apache's mod-wsgi for Python3
+
+```bash
+sudo apt-get install libapache2-mod-wsgi-py3
+```
+
+Caveat: If you already have mod-wsgi installed for Python2, it will be replaced!
+
+```bash
+The following packages will be REMOVED:
+  libapache2-mod-wsgi
+The following NEW packages will be installed:
+  libapache2-mod-wsgi-py3
+```
+
+Configuration file `/etc/apache2/sites-available/misp-dashboard.conf` assumes that `misp-dashboard` is cloned into `var/www/misp-dashboard`. It runs as user `misp` in this example. Change the permissions to folder and files accordingly.
+
+```
+<VirtualHost *:8000>
+    ServerAdmin admin@misp.local
+    ServerName misp.local
+
+    DocumentRoot /var/www/misp-dashboard
+    WSGIDaemonProcess misp-dashboard user=misp group=misp threads=5 python-home=/var/www/misp-dashboard/DASHENV
+    WSGIScriptAlias / /var/www/misp-dashboard/misp-dashboard.wsgi
+
+    <Directory /var/www/misp-dashboard>
+        WSGIProcessGroup misp-dashboard
+        WSGIApplicationGroup %{GLOBAL}
+        Require all granted
+    </Directory>
+
+    LogLevel info
+    ErrorLog /var/log/apache2/misp-dashboard.local_error.log
+    CustomLog /var/log/apache2/misp-dashboard.local_access.log combined
+    ServerSignature Off
+</VirtualHost>
+```
+
 # License
 Images and logos are handmade for:
 - rankingMISPOrg/
