@@ -113,7 +113,29 @@ Configuration file `/etc/apache2/sites-available/misp-dashboard.conf` assumes th
     ServerName misp.local
 
     DocumentRoot /var/www/misp-dashboard
-    WSGIDaemonProcess misp-dashboard user=misp group=misp threads=5 python-home=/var/www/misp-dashboard/DASHENV
+    
+    WSGIDaemonProcess misp-dashboard \
+       user=misp group=misp \
+       python-home=/var/www/misp-dashboard/DASHENV \
+       processes=1 \
+       threads=15 \
+       maximum-requests=5000 \
+       listen-backlog=100 \
+       queue-timeout=45 \
+       socket-timeout=60 \
+       connect-timeout=15 \
+       request-timeout=60 \
+       inactivity-timeout=0 \
+       deadlock-timeout=60 \
+       graceful-timeout=15 \
+       eviction-timeout=0 \
+       shutdown-timeout=5 \
+       send-buffer-size=0 \
+       receive-buffer-size=0 \
+       header-buffer-size=0 \
+       response-buffer-size=0 \
+       server-metrics=Off
+
     WSGIScriptAlias / /var/www/misp-dashboard/misp-dashboard.wsgi
 
     <Directory /var/www/misp-dashboard>
