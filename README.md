@@ -116,7 +116,6 @@ Configuration file `/etc/apache2/sites-available/misp-dashboard.conf` assumes th
     
     WSGIDaemonProcess misp-dashboard \
        user=misp group=misp \
-       threads=5 \
        python-home=/var/www/misp-dashboard/DASHENV \
        processes=1 \
        threads=15 \
