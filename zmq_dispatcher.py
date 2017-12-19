@@ -107,6 +107,7 @@ def handler_conversation(zmq_name, jsonevent):
         jsonpost = jsonevent['Post']
     except KeyError as e:
         logger.error('Error in handler_conversation: {}'.format(e))
+        return
     org = jsonpost['org_name']
     categ = None
     action = 'add'
