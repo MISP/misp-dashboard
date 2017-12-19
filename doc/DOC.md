@@ -33,11 +33,11 @@ Real time data are sent to their respective server's Redis pubsub channel
 
 ## Users
 
-| Module              | Feature                               | Key name                           | Key type | Key content              |
-|---------------------|---------------------------------------|------------------------------------|----------|--------------------------|
-| users_helper        | Use to consider only one org per hour | ```LOGIN_TIMESTAMPSET:date_hour``` | set      | org (TTL = 1 hour)       |
-| users_helper        | Use to get when users connect to MISP | ```LOGIN_TIMESTAMP:date```         | set      | timestamp                |
-| users_helper        | When an org connects to MISP          | ```LOGIN_ORG:date```               | zset     | org                      |
+| Module              | Feature                                  | Key name                           | Key type | Key content              |
+|---------------------|------------------------------------------|------------------------------------|----------|--------------------------|
+| users_helper        | Use to get when orgs connect to MISP     | ```LOGIN_TIMESTAMP:org```          | zset     | timestamp                |
+| users_helper        | Num. of time an org connected on a date  | ```LOGIN_ORG:date```               | zset     | org                      |
+| users_helper        | All ORG that has logged                  | ```LOGIN_ALL_ORG```                | set      | org                      |
 
 ## Trendings
 | Module              | Feature                               | Key name                           | Key type | Key content              |

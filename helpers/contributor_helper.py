@@ -12,6 +12,7 @@ import redis
 import util
 from . import users_helper
 KEYDAY = "CONTRIB_DAY" # To be used by other module
+KEYALLORG = "CONTRIB_ALL_ORG" # To be used by other module
 
 class Contributor_helper:
     def __init__(self, serv_redis_db, cfg):
@@ -91,7 +92,7 @@ class Contributor_helper:
         self.keyDay         = KEYDAY
         self.keyCateg       = "CONTRIB_CATEG"
         self.keyLastContrib = "CONTRIB_LAST"
-        self.keyAllOrg      = "CONTRIB_ALL_ORG"
+        self.keyAllOrg      = KEYALLORG
         self.keyContribReq  = "CONTRIB_ORG"
         self.keyTrophy      = "CONTRIB_TROPHY"
         self.keyLastAward   = "CONTRIB_LAST_AWARDS"
@@ -123,8 +124,8 @@ class Contributor_helper:
         nowSec = int(time.time())
         pnts_to_add = self.default_pnts_per_contribution
     
-        # if there is a contribution, there is a login (even if it comes from the API)
-        self.users_helper.add_user_login(nowSec, org)
+        # Do not consider contribution as login anymore
+        #self.users_helper.add_user_login(nowSec, org)
     
         # is a valid contribution
         if categ is not None:

@@ -427,17 +427,8 @@ def getUserLogins():
     except:
         date = datetime.datetime.now()
 
-    data = users_helper.getUserLoginsForPunchCard(date)
-    return jsonify(data)
-
-@app.route("/_getUserLoginsOvertime")
-def getUserLoginsOvertime():
-    try:
-        date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
-    except:
-        date = datetime.datetime.now()
-
-    data = users_helper.getUserLoginsOvertime(date)
+    org = request.args.get('org', None)
+    data = users_helper.getUserLoginsForPunchCard(date, org)
     return jsonify(data)
 
 @app.route("/_getTopOrglogin")
@@ -467,7 +458,8 @@ def getUserLoginsAndContribOvertime():
     except:
         date = datetime.datetime.now()
 
-    data = users_helper.getUserLoginsAndContribOvertime(date)
+    org = request.args.get('org', None)
+    data = users_helper.getUserLoginsAndContribOvertime(date, org)
     return jsonify(data)
 
 ''' TRENDINGS '''
