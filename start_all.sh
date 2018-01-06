@@ -9,11 +9,11 @@ RED="\\033[1;31m"
 [ -z "$DASH_HOME" ] && echo "Needs the env var DASHENV. (Did you: . ./DASHENV/bin/activate ) Please run the script from the virtual environment." && exit 1;
 
 redis_dir="${DASH_HOME}/../redis/src/"
-if [ -e "${redis_dir}" ]; then
+if [ ! -e "${redis_dir}" ]; then
+    [ -f "`which redis-server`" ] && echo "Either ${DASH_HOME}/../redis/src/ does not exist or 'redis-server' is not installed/not on PATH. Please fix and run again." && exit 1
     redis_dir=""
 fi
 
-[ -f "`which redis-server`" ] || [ ! -e "${redis_dir}" ] && echo "Either ${DASH_HOME}/../redis/src/ does not exist or 'redis-server' is not installed/not on PATH. Please fix and run again." && exit 1
 
 conf_dir="${DASH_HOME}/config/"
 
