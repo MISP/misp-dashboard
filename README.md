@@ -17,6 +17,9 @@ An experimental dashboard showing live data and statistics from the ZMQ of one o
 - Re-update your configuration file ```config.cfg```
 
 # Starting the System
+
+/!\ You do not need to run it as root. Normal privileges are fine.
+
 - Be sure to have a running redis server
     - e.g. ```redis-server -p 6250```
 - Activate your virtualenv ```. ./DASHENV/bin/activate```
@@ -24,6 +27,23 @@ An experimental dashboard showing live data and statistics from the ZMQ of one o
 - Start the dispatcher to process received messages ```./zmq_dispatcher.py```
 - Start the Flask server ```./server.py```
 - Access the interface at ```http://localhost:8001/```
+
+# Debug
+
+Debug is fun and gives you more details on what is going on when things fail.
+Bare in mind running Flask in debug is NOT suitable for production, it will drop you to a Python shell if enabled, to do further digging.
+
+Just before running ./server.py do:
+
+```
+export FLASK_DEBUG=1
+export FLASK_APP=server.py
+flask run --host=0.0.0.0 --port=8001 # <- Be careful here, this exposes it on ALL ip addresses. Ideally if run locally --host=127.0.0.1
+```
+
+OR, just toggle the debug flag in start_all.sh script.
+
+Happy hacking ;)
 
 # Features
 
