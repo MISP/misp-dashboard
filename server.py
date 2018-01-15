@@ -539,5 +539,18 @@ def getTypeaheadData():
     data = trendings_helper.getTypeaheadData(dateS, dateE)
     return jsonify(data)
 
+@app.route("/_getGenericTrendingOvertime")
+def getGenericTrendingOvertime():
+    try:
+        dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
+        dateE = datetime.datetime.fromtimestamp(float(request.args.get('dateE')))
+    except:
+        dateS = datetime.datetime.now() - datetime.timedelta(days=7)
+        dateE = datetime.datetime.now()
+    choice = request.args.get('choice', 'events')
+
+    data = trendings_helper.getGenericTrendingOvertime(dateS, dateE, choice)
+    return jsonify(data)
+
 if __name__ == '__main__':
     app.run(host=server_host, port=server_port, threaded=True)

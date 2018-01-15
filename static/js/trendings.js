@@ -9,6 +9,7 @@ var tagPie = ["#tagPie"];
 var tagLine = ["#tagLine"];
 var sightingLineWidget;
 var discLine = ["#discussionLine"];
+var timeline;
 var allData;
 var globalColorMapping = {};
 
@@ -103,6 +104,14 @@ var typeaheadOption_tag = {
         updateLineForLabel(tagLine, tag, undefined, url_getTrendingTag);
     }
 }
+var timeline_option = {
+    groupOrder: 'content',
+    maxHeight: '94vh',
+    verticalScroll: true,
+    horizontalScroll: true,
+    zoomKey: 'ctrlKey',
+};
+
 
 /* FUNCTIONS */
 function getColor(label) {
@@ -134,7 +143,18 @@ function getTextColour(rgb) {
         return 'black';
     }
 }
-function legendFormatter(label, series) {
+
+// If json (from tag), only retreive the name> otherwise return the supplied arg.
+function getOnlyName(potentialJson) {
+    try {
+        jsonLabel = JSON.parse(potentialJson);
+        return jsonLabel.name;
+    } catch(err) {
+        return potentialJson;
+    }
+}
+
+function legendFormatter(label) {
     try {
         jsonLabel = JSON.parse(label);
         var backgroundColor = jsonLabel.colour;
@@ -156,7 +176,7 @@ function legendFormatter(label, series) {
         }
         return '<div '
                 + 'style="font-size:8pt;text-align:inherit;padding:2px;">'
-                    + '<a class="tagElem" style="background-color: white; color: black;"> ' + labelLimited
+                    + '<a class="tagElem" title="'+label+'" style="background-color: white; color: black;"> ' + labelLimited
                     + '</a>';
                 + '</div>';
     }
@@ -396,6 +416,43 @@ function updateDisc() {
     });
 }
 
+function updateTimeline() {
+    var selected = $( "#timeline_selector" ).val();
+    $.getJSON( url_getGenericTrendingOvertime+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000)+"&choice="+selected, function( data ) {
+        var items = [];
+        var groups = new vis.DataSet();
+        var dico_groups = {};
+        var i = 1;
+        var g = 1;
+        for (var obj of data) {
+            var index = dico_groups[obj.name];
+            if (index == undefined) { // new group
+                index = groups.add({id: g, content: legendFormatter(obj.name)});
+                dico_groups[obj.name] = g;
+                g++;
+            }
+            items.push({
+                id: i,
+                content: getOnlyName(obj.name),
+                start: obj.start*1000,
+                end: obj.end*1000,
+                group: dico_groups[obj.name]
+            });
+            i++;
+        }
+        items = new vis.DataSet(items);
+        if (timeline === undefined) { // create timeline
+            timeline = new vis.Timeline(document.getElementById('timeline'));
+        }
+        var dateEndExtended = new Date(dateEnd).setDate(dateEnd.getDate()+1); // dateEnd+1
+        timeline_option.start = dateStart;
+        timeline_option.end = dateEndExtended;
+        timeline.setOptions(timeline_option);
+        timeline.setGroups(groups);
+        timeline.setItems(items);
+    });
+}
+
 function dateChanged() {
     dateStart = datePickerWidgetStart.datepicker( "getDate" );
     dateEnd = datePickerWidgetEnd.datepicker( "getDate" );
@@ -404,6 +461,7 @@ function dateChanged() {
     updatePieLine(tagPie, tagLine, url_getTrendingTag);
     updateSignthingsChart();
     updateDisc();
+    updateTimeline();
 }
 
 $(document).ready(function () {
@@ -426,6 +484,7 @@ $(document).ready(function () {
     updatePieLine(tagPie, tagLine, url_getTrendingTag)
     updateSignthingsChart();
     updateDisc();
+    updateTimeline();
 
     $( "#num_selector" ).change(function() {
         var sel = parseInt($( this ).val());
@@ -433,9 +492,12 @@ $(document).ready(function () {
         window.location.href = url_currentPage+'?maxNum='+maxNum;
     });
 
+    $( "#timeline_selector" ).change(function() {
+        updateTimeline();
+    });
+
     $("<div id='tooltip'></div>").css({
         position: "absolute",
         display: "none",
     }).appendTo("body");
-
 });

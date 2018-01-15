@@ -108,4 +108,9 @@ mv temp/jquery-punchcard/src/punchcard.js ./static/js
 mv temp/jquery-punchcard/src/punchcard.css ./static/css
 wget https://momentjs.com/downloads/moment.js -O ./static/js/moment.js
 
+# timeline
+VISJS_VERSION="4.21.0"
+wget https://cdnjs.cloudflare.com/ajax/libs/vis/${VISJS_VERSION}/vis.min.js ./static/js/vis.min.js
+wget https://cdnjs.cloudflare.com/ajax/libs/vis/${VISJS_VERSION}/vis.min.css ./static/css/vis.min.css
+
 rm -rf ./temp
