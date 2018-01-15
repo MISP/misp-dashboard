@@ -23,6 +23,9 @@ cfg.read(configfile)
 logger = logging.getLogger('werkzeug')
 logger.setLevel(logging.ERROR)
 
+server_host = cfg.get("Server", "host")
+server_port = cfg.getint("Server", "port")
+
 app = Flask(__name__)
 
 redis_server_log = redis.StrictRedis(
@@ -550,4 +553,4 @@ def getGenericTrendingOvertime():
     return jsonify(data)
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=8001, threaded=True)
+    app.run(host=server_host, port=server_port, threaded=True)

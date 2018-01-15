@@ -174,8 +174,15 @@ class Geo_helper:
 
     def ip_to_coord(self, ip):
         resp = self.reader.city(ip)
-        lat = float(resp.location.latitude)
-        lon = float(resp.location.longitude)
+        try:
+            lat = float(resp.location.latitude)
+            lon = float(resp.location.longitude)
+        except TypeError: # No location, try to use iso_code instead
+            self.logger.info('no location in geIP.database response for ip: {}'.format(ip))
+            iso_code = resp.registered_country.iso_code #if no iso_code, throws
+            coord = self.country_code_to_coord[iso_code.lower()]  # countrycode is in upper case
+            lat = float(coord['lat'])
+            lon = float(coord['long'])
         # 0.0001 correspond to ~10m
         # Cast the float so that it has the correct float format
         lat_corrected = float("{:.4f}".format(lat))
