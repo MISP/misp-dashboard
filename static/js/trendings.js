@@ -416,10 +416,11 @@ function updateDisc() {
     });
 }
 
+var items_timeline = [];
 function updateTimeline() {
     var selected = $( "#timeline_selector" ).val();
     $.getJSON( url_getGenericTrendingOvertime+"?dateS="+parseInt(dateStart.getTime()/1000)+"&dateE="+parseInt(dateEnd.getTime()/1000)+"&choice="+selected, function( data ) {
-        var items = [];
+        items_timeline = [];
         var groups = new vis.DataSet();
         var dico_groups = {};
         var i = 1;
@@ -431,25 +432,34 @@ function updateTimeline() {
                 dico_groups[obj.name] = g;
                 g++;
             }
-            items.push({
+            items_timeline.push({
                 id: i,
                 content: getOnlyName(obj.name),
+                title: obj.name,
                 start: obj.start*1000,
                 end: obj.end*1000,
                 group: dico_groups[obj.name]
             });
             i++;
         }
-        items = new vis.DataSet(items);
+        items_timeline = new vis.DataSet(items_timeline);
         if (timeline === undefined) { // create timeline
             timeline = new vis.Timeline(document.getElementById('timeline'));
+            // set listener for tooltip
+            timeline.on('doubleClick', function (properties) {
+                var type = $( "#timeline_selector" ).val();
+                var itemValue = items_timeline.get(properties.item).content;
+                if (type.localeCompare('events') == 0 || type.localeCompare('tags') == 0) { // Do not open a tab for categ
+                    window.open(url_misp+'/'+type+'/index/searchall:'+itemValue, '_blank'); // as we do not have index for the moment, search it
+                }
+            });
         }
         var dateEndExtended = new Date(dateEnd).setDate(dateEnd.getDate()+1); // dateEnd+1
         timeline_option.start = dateStart;
         timeline_option.end = dateEndExtended;
         timeline.setOptions(timeline_option);
         timeline.setGroups(groups);
-        timeline.setItems(items);
+        timeline.setItems(items_timeline);
     });
 }
 
