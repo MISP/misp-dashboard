@@ -218,9 +218,11 @@ def trendings():
         maxNum = int(maxNum)
     except:
         maxNum = 15
+    url_misp_event = cfg.get('RedisGlobal', 'misp_web_url')
 
     return render_template('trendings.html',
-            maxNum=maxNum
+            maxNum=maxNum,
+            url_misp_event=url_misp_event
             )
 
 ''' INDEX '''
