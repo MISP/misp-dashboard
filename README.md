@@ -23,9 +23,9 @@ An experimental dashboard showing live data and statistics from the ZMQ of one o
 - Be sure to have a running redis server
     - e.g. ```redis-server -p 6250```
 - Activate your virtualenv ```. ./DASHENV/bin/activate```
-- Listen to the MISP feed by starting the zmq_subscriber ```./zmq_subscriber.py```
-- Start the dispatcher to process received messages ```./zmq_dispatcher.py```
-- Start the Flask server ```./server.py```
+- Listen to the MISP feed by starting the zmq_subscriber ```./zmq_subscriber.py &```
+- Start the dispatcher to process received messages ```./zmq_dispatcher.py &```
+- Start the Flask server ```./server.py &```
 - Access the interface at ```http://localhost:8001/```
 
 # Debug
