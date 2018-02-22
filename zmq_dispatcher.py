@@ -193,7 +193,7 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
     tags = []
     for tag in jsonattr.get('Tag', []):
         try:
-            tags.append(tag['Tag'])
+            tags.append(tag)
         except KeyError:
             pass
     trendings_helper.addTrendingTags(tags, timestamp)
