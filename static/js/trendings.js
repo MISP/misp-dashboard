@@ -43,6 +43,7 @@ var pieChartOption = {
             innerRadius: 0.2,
             show: true,
             radius: 100,
+            stroke: { color: 'black' },
             label: {
                 show: true,
                 radius: 6/10,
