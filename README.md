@@ -21,7 +21,7 @@ An experimental dashboard showing live data and statistics from the ZMQ of one o
 /!\ You do not need to run it as root. Normal privileges are fine.
 
 - Be sure to have a running redis server
-    - e.g. ```redis-server -p 6250```
+    - e.g. ```redis-server --port 6250```
 - Activate your virtualenv ```. ./DASHENV/bin/activate```
 - Listen to the MISP feed by starting the zmq_subscriber ```./zmq_subscriber.py &```
 - Start the dispatcher to process received messages ```./zmq_dispatcher.py &```
