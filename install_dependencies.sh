@@ -17,7 +17,15 @@ fi
 pip3 install -U pip argparse redis zmq geoip2 flask phonenumbers pycountry
 
 ## config
-cp -i config/config.cfg.default config/config.cfg
+if [ -e "config/config.cfg" ]; then
+    diff -u config/config.cfg.default config/config.cfg
+    if [ "$?" == "0" ]; then
+        cp -f config/config.cfg.default config/config.cfg
+    else
+        echo "Your config has changes, giving you a chance to see the changes and decide if you want to overwrite"
+        cp -i config/config.cfg.default config/config.cfg
+    fi
+fi
 
 ## Web stuff
 pushd static/
