@@ -3,7 +3,7 @@
 set -e
 set -x
 
-sudo apt-get install python3-virtualenv virtualenv screen redis-server -y
+sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip -y
 
 if [ -z "$VIRTUAL_ENV" ]; then
     virtualenv -p python3 DASHENV
