@@ -56,7 +56,7 @@ channelLastAwards = lastAwards
 db=1
 channelDisp=PicToDisplay
 # Database updates regularly make sure to adapt date
-pathMaxMindDB=./data/GeoLite2-City_20180102/GeoLite2-City.mmdb
+pathMaxMindDB=./data/GeoLite2-City/GeoLite2-City.mmdb
 path_countrycode_to_coord_JSON=./data/country_code_lat_long.json
 
 [RedisDB]

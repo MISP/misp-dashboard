@@ -16,6 +16,27 @@ An experimental dashboard showing live data and statistics from the ZMQ of one o
 - Re-launch ```./install_dependencies.sh``` to fetch new required dependencies
 - Re-update your configuration file ```config.cfg```
 
+:warning: Make sure no zmq python3 scripts are running. They block the update.
+
+```python
++ virtualenv -p python3 DASHENV
+Already using interpreter /usr/bin/python3
+Using base prefix '/usr'
+New python executable in /home/steve/code/misp-dashboard/DASHENV/bin/python3
+Traceback (most recent call last):
+  File "/usr/bin/virtualenv", line 9, in <module>
+    load_entry_point('virtualenv==15.0.1', 'console_scripts', 'virtualenv')()
+  File "/usr/lib/python3/dist-packages/virtualenv.py", line 719, in main
+    symlink=options.symlink)
+  File "/usr/lib/python3/dist-packages/virtualenv.py", line 942, in create_environment
+    site_packages=site_packages, clear=clear, symlink=symlink))
+  File "/usr/lib/python3/dist-packages/virtualenv.py", line 1261, in install_python
+    shutil.copyfile(executable, py_executable)
+  File "/usr/lib/python3.5/shutil.py", line 115, in copyfile
+    with open(dst, 'wb') as fdst:
+OSError: [Errno 26] Text file busy: '/home/steve/code/misp-dashboard/DASHENV/bin/python3'
+```
+
 # Starting the System
 
 /!\ You do not need to run it as root. Normal privileges are fine.
