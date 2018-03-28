@@ -18,7 +18,7 @@ An experimental dashboard showing live data and statistics from the ZMQ of one o
 
 :warning: Make sure no zmq python3 scripts are running. They block the update.
 
-`python
+```python
 + virtualenv -p python3 DASHENV
 Already using interpreter /usr/bin/python3
 Using base prefix '/usr'
@@ -35,7 +35,7 @@ Traceback (most recent call last):
   File "/usr/lib/python3.5/shutil.py", line 115, in copyfile
     with open(dst, 'wb') as fdst:
 OSError: [Errno 26] Text file busy: '/home/steve/code/misp-dashboard/DASHENV/bin/python3'
-`
+```
 
 # Starting the System
 
