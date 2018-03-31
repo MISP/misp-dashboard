@@ -10,7 +10,7 @@ import os
 import sys
 import json
 
-configfile = os.path.join(os.path.dirname(os.path.realpath(_file_)), 'config/config.cfg')
+configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 logDir = cfg.get('Log', 'directory')
