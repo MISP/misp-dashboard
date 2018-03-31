@@ -9,7 +9,7 @@ import util
 import contributor_helper
 
 ONE_DAY = 60*60*24
-configfile = os.path.join(os.environ['DASH_CONFIG'], 'config.cfg')
+configfile = os.path.join(os.path.dirname(os.path.realpath(_file_)), 'config/config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 serv_log = redis.StrictRedis(

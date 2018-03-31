@@ -9,7 +9,6 @@ if [ -z "$VIRTUAL_ENV" ]; then
     virtualenv -p python3 DASHENV
 
     echo export DASH_HOME=$(pwd) >> ./DASHENV/bin/activate
-    echo export DASH_CONFIG=$(pwd)/config/ >> ./DASHENV/bin/activate
 
     . ./DASHENV/bin/activate
 fi
