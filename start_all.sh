@@ -15,6 +15,9 @@ if [ ! -e "${redis_dir}" ]; then
     redis_dir=""
 fi
 
+
+check_redis_port=$(netstat -an |grep LISTEN |grep 6250 |grep -v tcp6)
+
 # Configure accordingly, remember: 0.0.0.0 exposes to every active IP interface, play safe and bind it to something you trust and know
 export FLASK_APP=server.py
 export FLASK_DEBUG=0
@@ -27,8 +30,12 @@ screenName="Misp-Dashboard"
 
 screen -dmS "$screenName"
 sleep 0.1
-echo -e $GREEN"\t* Launching Redis servers"$DEFAULT
-screen -S "$screenName" -X screen -t "redis-server" bash -c $redis_dir'redis-server '$conf_dir'6250.conf && echo "Started Redis" ; read x'
+if [ -z "${check_redis_port}" ]; then
+    echo -e $GREEN"\t* Launching Redis servers"$DEFAULT
+#    screen -S "$screenName" -X screen -t "redis-server" bash -c $redis_dir'redis-server '$conf_dir'6250.conf && echo "Started Redis" ; read x'
+else
+    echo -e $RED"\t* NOT starting Redis server, made a very unrealiable check on port 6250, and something seems to be there… please double check if this is good!"$DEFAULT
+fi
 
 echo -e $GREEN"\t* Launching zmq subscriber"$DEFAULT
 screen -S "$screenName" -X screen -t "zmq-subscriber" bash -c 'echo "Starting zmq-subscriber" ; ./zmq_subscriber.py; read x'
