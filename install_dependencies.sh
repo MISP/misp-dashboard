@@ -8,8 +8,6 @@ sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip -y
 if [ -z "$VIRTUAL_ENV" ]; then
     virtualenv -p python3 DASHENV
 
-    echo export DASH_HOME=$(pwd) >> ./DASHENV/bin/activate
-
     . ./DASHENV/bin/activate
 fi
 
