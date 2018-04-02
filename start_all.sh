@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
 set -x
 
 GREEN="\\033[1;32m"
