@@ -11,6 +11,8 @@ RED="\\033[1;31m"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DASH_HOME=${DIR}
 
+cd ${DASH_HOME}
+
 if [ -e "${DIR}/DASHENV/bin/python" ]; then
     echo "dashboard virtualenv seems to exist, good"
     ENV_PY=${DIR}/DASHENV/bin/python
@@ -25,7 +27,7 @@ if [ ! -e "${redis_dir}" ]; then
     redis_dir=""
 fi
 
-check_redis_port="$(netstat -an |grep LISTEN |grep 6250 |grep -v tcp6)"
+netstat -an |grep LISTEN |grep 6250 |grep -v tcp6 ; check_redis_port=$?
 
 # Configure accordingly, remember: 0.0.0.0 exposes to every active IP interface, play safe and bind it to something you trust and know
 export FLASK_APP=server.py
@@ -39,7 +41,7 @@ screenName="Misp-Dashboard"
 
 screen -dmS "$screenName"
 sleep 0.1
-if [ -z "${check_redis_port}" ]; then
+if [ "${check_redis_port}" == "1" ]; then
     echo -e $GREEN"\t* Launching Redis servers"$DEFAULT
     screen -S "$screenName" -X screen -t "redis-server" bash -c $redis_dir'redis-server '$conf_dir'6250.conf && echo "Started Redis" ; read x'
 else
