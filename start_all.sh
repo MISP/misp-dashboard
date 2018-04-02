@@ -20,11 +20,7 @@ else
     exit 1
 fi
 
-redis_dir="${DASH_HOME}/../redis/src/"
-if [ ! -e "${redis_dir}" ]; then
-    [ ! -f "`which redis-server`" ] && echo "Either ${DASH_HOME}/../redis/src/ does not exist or 'redis-server' is not installed/not on PATH. Please fix and run again." && exit 1
-    redis_dir=""
-fi
+[ ! -f "`which redis-server`" ] && echo "'redis-server' is not installed/not on PATH. Please fix and run again." && exit 1
 
 netstat -an |grep LISTEN |grep 6250 |grep -v tcp6 ; check_redis_port=$?
 
@@ -36,22 +32,19 @@ export FLASK_HOST=127.0.0.1
 
 conf_dir="config/"
 
-screenName="Misp-Dashboard"
-
-screen -dmS "$screenName"
 sleep 0.1
 if [ "${check_redis_port}" == "1" ]; then
     echo -e $GREEN"\t* Launching Redis servers"$DEFAULT
-    screen -S "$screenName" -X screen -t "redis-server" bash -c '${0}redis-server ${1}6250.conf && echo "Started Redis" ; read x' ${redis_dir} ${conf_dir}
+    redis-server ${conf_dir}6250.conf &
 else
     echo -e $RED"\t* NOT starting Redis server, made a very unrealiable check on port 6250, and something seems to be there… please double check if this is good!"$DEFAULT
 fi
 
 echo -e $GREEN"\t* Launching zmq subscriber"$DEFAULT
-screen -S "$screenName" -X screen -t "zmq-subscriber" bash -c 'echo "Starting zmq-subscriber" ; ${0} ./zmq_subscriber.py; read x' ${ENV_PY}
+${ENV_PY} ./zmq_subscriber.py &
 
 echo -e $GREEN"\t* Launching zmq dispatcher"$DEFAULT
-screen -S "$screenName" -X screen -t "zmq-dispatcher" bash -c 'echo "Starting zmq-dispatcher"; ${0} ./zmq_dispatcher.py; read x' ${ENV_PY}
+${ENV_PY} ./zmq_dispatcher.py &
 
 echo -e $GREEN"\t* Launching flask server"$DEFAULT
-screen -S "$screenName" -X screen -t "flask" bash -c 'echo "Starting Flask Server"; ${0} ./server.py; read x' ${ENV_PY}
+${ENV_PY} ./server.py &
