@@ -34,7 +34,7 @@ export FLASK_DEBUG=0
 export FLASK_PORT=8001
 export FLASK_HOST=127.0.0.1
 
-conf_dir="${DASH_HOME}/config/"
+conf_dir="config/"
 
 screenName="Misp-Dashboard"
 
@@ -48,10 +48,10 @@ else
 fi
 
 echo -e $GREEN"\t* Launching zmq subscriber"$DEFAULT
-screen -S "$screenName" -X screen -t "zmq-subscriber" bash -c 'echo "Starting zmq-subscriber" ; ${0} ${1}'/zmq_subscriber.py; read x' ${ENV_PY} ${DIR}
+screen -S "$screenName" -X screen -t "zmq-subscriber" bash -c 'echo "Starting zmq-subscriber" ; ${0} ./zmq_subscriber.py; read x' ${ENV_PY}
 
 echo -e $GREEN"\t* Launching zmq dispatcher"$DEFAULT
-screen -S "$screenName" -X screen -t "zmq-dispatcher" bash -c 'echo "Starting zmq-dispatcher"; ${0} ${1}/zmq_dispatcher.py; read x' ${ENV_PY} ${DIR}
+screen -S "$screenName" -X screen -t "zmq-dispatcher" bash -c 'echo "Starting zmq-dispatcher"; ${0} ./zmq_dispatcher.py; read x' ${ENV_PY}
 
 echo -e $GREEN"\t* Launching flask server"$DEFAULT
-screen -S "$screenName" -X screen -t "flask" bash -c 'echo "Starting Flask Server"; ${0} ${1}/server.py; read x' ${ENV_PY} ${DIR}
+screen -S "$screenName" -X screen -t "flask" bash -c 'echo "Starting Flask Server"; ${0} ./server.py; read x' ${ENV_PY}
