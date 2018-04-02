@@ -8,13 +8,13 @@ RED="\\033[1;31m"
 
 # Getting CWD where bash script resides
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-DASH_HOME=${DIR}
+DASH_HOME="${DIR}"
 
 cd ${DASH_HOME}
 
 if [ -e "${DIR}/DASHENV/bin/python" ]; then
     echo "dashboard virtualenv seems to exist, good"
-    ENV_PY=${DIR}/DASHENV/bin/python
+    ENV_PY="${DIR}/DASHENV/bin/python"
 else
     echo "Please make sure you have a dashboard environment, au revoir"
     exit 1
@@ -42,16 +42,16 @@ screen -dmS "$screenName"
 sleep 0.1
 if [ "${check_redis_port}" == "1" ]; then
     echo -e $GREEN"\t* Launching Redis servers"$DEFAULT
-    screen -S "$screenName" -X screen -t "redis-server" bash -c $redis_dir'redis-server '$conf_dir'6250.conf && echo "Started Redis" ; read x'
+    screen -S "$screenName" -X screen -t "redis-server" bash -c '${0}redis-server ${1}6250.conf && echo "Started Redis" ; read x' ${redis_dir} ${conf_dir}
 else
     echo -e $RED"\t* NOT starting Redis server, made a very unrealiable check on port 6250, and something seems to be there… please double check if this is good!"$DEFAULT
 fi
 
 echo -e $GREEN"\t* Launching zmq subscriber"$DEFAULT
-screen -S "$screenName" -X screen -t "zmq-subscriber" bash -c 'echo "Starting zmq-subscriber" ; ${ENV_PY} ${DIR}/zmq_subscriber.py; read x'
+screen -S "$screenName" -X screen -t "zmq-subscriber" bash -c 'echo "Starting zmq-subscriber" ; ${0} ${1}'/zmq_subscriber.py; read x' ${ENV_PY} ${DIR}
 
 echo -e $GREEN"\t* Launching zmq dispatcher"$DEFAULT
-screen -S "$screenName" -X screen -t "zmq-dispatcher" bash -c 'echo "Starting zmq-dispatcher"; ${ENV_PY} ${DIR}/zmq_dispatcher.py; read x'
+screen -S "$screenName" -X screen -t "zmq-dispatcher" bash -c 'echo "Starting zmq-dispatcher"; ${0} ${1}/zmq_dispatcher.py; read x' ${ENV_PY} ${DIR}
 
 echo -e $GREEN"\t* Launching flask server"$DEFAULT
-screen -S "$screenName" -X screen -t "flask" bash -c 'echo "Starting Flask Server"; ${ENV_PY} ${DIR}/server.py; read x'
+screen -S "$screenName" -X screen -t "flask" bash -c 'echo "Starting Flask Server"; ${0} ${1}/server.py; read x' ${ENV_PY} ${DIR}
