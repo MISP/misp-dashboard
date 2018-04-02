@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 set -x
@@ -9,6 +9,7 @@ RED="\\033[1;31m"
 
 # Getting CWD where bash script resides
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DASH_HOME=${DIR}
 
 if [ -e "${DIR}/DASHENV/bin/python" ]; then
     echo "dashboard virtualenv seems to exist, good"
@@ -24,7 +25,7 @@ if [ ! -e "${redis_dir}" ]; then
     redis_dir=""
 fi
 
-check_redis_port=$(netstat -an |grep LISTEN |grep 6250 |grep -v tcp6)
+check_redis_port="$(netstat -an |grep LISTEN |grep 6250 |grep -v tcp6)"
 
 # Configure accordingly, remember: 0.0.0.0 exposes to every active IP interface, play safe and bind it to something you trust and know
 export FLASK_APP=server.py
