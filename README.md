@@ -1,7 +1,6 @@
 # MISP-Dashboard
 An experimental dashboard showing live data and statistics from the ZMQ of one or more MISP instances.
 
-
 # Installation
 - Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory
 - Update the configuration file ```config.cfg``` so that it matches your system
@@ -38,8 +37,7 @@ OSError: [Errno 26] Text file busy: '/home/steve/code/misp-dashboard/DASHENV/bin
 ```
 
 # Starting the System
-
-/!\ You do not need to run it as root. Normal privileges are fine.
+:warning: You do not need to run it as root. Normal privileges are fine.
 
 - Be sure to have a running redis server
     - e.g. ```redis-server --port 6250```
