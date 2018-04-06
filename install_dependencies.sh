@@ -8,9 +8,6 @@ sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip -y
 if [ -z "$VIRTUAL_ENV" ]; then
     virtualenv -p python3 DASHENV
 
-    echo export DASH_HOME=$(pwd) >> ./DASHENV/bin/activate
-    echo export DASH_CONFIG=$(pwd)/config/ >> ./DASHENV/bin/activate
-
     . ./DASHENV/bin/activate
 fi
 
@@ -27,6 +24,9 @@ if [ -e "config/config.cfg" ]; then
     fi
 else
     cp -i config/config.cfg.default config/config.cfg
+    echo "Sanitizing MaxMindDB Path"
+    sed -i "s|pathMaxMindDB=./data/GeoLite2-City/GeoLite2-City.mmdb|pathMaxMindDB=$PWD/data/GeoLite2-City/GeoLite2-City.mmdb|" config/config.cfg
+    sed -i "s|path_countrycode_to_coord_JSON=./data/country_code_lat_long.json|path_countrycode_to_coord_JSON=$PWD/data/country_code_lat_long.json|" config/config.cfg
 fi
 
 ## Web stuff

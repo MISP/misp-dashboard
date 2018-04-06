@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
-[ -z "$DASH_HOME" ] && echo "Needs the env var DASHENV. Run the script from the virtual environment." && exit 1;
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DASH_HOME="${DIR}/.."
+
 
 ./start_framework.sh
 # Wait a bit that redis terminate

@@ -23,7 +23,7 @@ class Contributor_helper:
             db=cfg.getint('RedisLog', 'db'))
         self.cfg = cfg
         self.cfg_org_rank = configparser.ConfigParser()
-        self.cfg_org_rank.read(os.path.join(os.environ['DASH_CONFIG'], 'ranking.cfg'))
+        self.cfg_org_rank.read(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../config/ranking.cfg'))
         self.CHANNEL_LASTAWARDS = cfg.get('RedisLog', 'channelLastAwards')
         self.CHANNEL_LASTCONTRIB = cfg.get('RedisLog', 'channelLastContributor')
         self.users_helper = users_helper.Users_helper(serv_redis_db, cfg)

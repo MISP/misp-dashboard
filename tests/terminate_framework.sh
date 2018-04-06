@@ -6,7 +6,9 @@ GREEN="\\033[1;32m"
 DEFAULT="\\033[0;39m"
 RED="\\033[1;31m"
 
-[ -z "$DASH_HOME" ] && echo "Needs the env var DASHENV. Run the script from the virtual environment." && exit 1;
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DASH_HOME="${DIR}/..
+
 
 conf_dir="${DASH_HOME}/config/"
 redis_dir="${DASH_HOME}/../redis/src/"
