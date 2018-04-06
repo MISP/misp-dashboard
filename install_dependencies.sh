@@ -24,6 +24,9 @@ if [ -e "config/config.cfg" ]; then
     fi
 else
     cp -i config/config.cfg.default config/config.cfg
+    echo "Sanitizing MaxMindDB Path"
+    sed -i "s|pathMaxMindDB=./data/GeoLite2-City/GeoLite2-City.mmdb|pathMaxMindDB=$PWD/data/GeoLite2-City/GeoLite2-City.mmdb|" config/config.cfg
+    sed -i "s|path_countrycode_to_coord_JSON=./data/country_code_lat_long.json|path_countrycode_to_coord_JSON=$PWD/data/country_code_lat_long.json|" config/config.cfg
 fi
 
 ## Web stuff
