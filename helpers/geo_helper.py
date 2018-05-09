@@ -211,8 +211,8 @@ class Geo_helper:
     # by EPSG:900913 / EPSG:3785 / OSGEO:41001
     # coord_list = [lat, lon]
     def coordinate_list_valid(self, coord_list):
-        lat = int(coord_list[0])
-        lon = int(coord_list[1])
+        lat = float(coord_list[0])
+        lon = float(coord_list[1])
         if (-180 <= lon <= 180) and (-85.05112878 <= lat <= 85.05112878):
             return True
         else:
