@@ -101,7 +101,7 @@ class Geo_helper:
             ordDic['categ'] = categ
             ordDic['value'] = supposed_ip
             coord_list = [coord['lat'], coord['lon']]
-            if self.coordinate_list_valid(coord_list):
+            if not self.coordinate_list_valid(coord_list):
                 raise InvalidCoordinate("Coordinate do not match EPSG:900913 / EPSG:3785 / OSGEO:41001")
             self.push_to_redis_zset(self.keyCategCoord, json.dumps(ordDic))
             self.push_to_redis_zset(self.keyCategCountry, rep['full_rep'].country.iso_code)
@@ -146,7 +146,7 @@ class Geo_helper:
             ordDic['lat'] = coord_dic['lat']
             ordDic['lon'] = coord_dic['lon']
             coord_list = [coord['lat'], coord['long']]
-            if self.coordinate_list_valid(coord_list):
+            if not self.coordinate_list_valid(coord_list):
                 raise InvalidCoordinate("Coordinate do not match EPSG:900913 / EPSG:3785 / OSGEO:41001")
             self.push_to_redis_zset(self.keyCategCoord, json.dumps(ordDic))
             self.push_to_redis_zset(self.keyCategCountry, country_code)
@@ -167,6 +167,8 @@ class Geo_helper:
             self.logger.info('Published: {}'.format(json.dumps(to_send)))
         except phonenumbers.NumberParseException:
             self.logger.warning("Can't resolve phone number country")
+        except InvalidCoordinate:
+            self.logger.warning("Coordinate do not follow redis specification")
 
     ''' UTIL '''
     def push_to_redis_geo(self, keyCateg, lon, lat, content):
