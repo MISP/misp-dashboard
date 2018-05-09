@@ -13,6 +13,9 @@ from phonenumbers import geocoder
 
 import util
 
+class InvalidCoordinate(Exception):
+    pass
+
 class Geo_helper:
     def __init__(self, serv_redis_db, cfg):
         self.serv_redis_db = serv_redis_db
@@ -98,6 +101,8 @@ class Geo_helper:
             ordDic['categ'] = categ
             ordDic['value'] = supposed_ip
             coord_list = [coord['lat'], coord['lon']]
+            if self.coordinate_list_valid(coord_list):
+                raise InvalidCoordinate("Coordinate do not match EPSG:900913 / EPSG:3785 / OSGEO:41001")
             self.push_to_redis_zset(self.keyCategCoord, json.dumps(ordDic))
             self.push_to_redis_zset(self.keyCategCountry, rep['full_rep'].country.iso_code)
             ordDic = OrderedDict() #keep fields with the same layout in redis
@@ -119,6 +124,9 @@ class Geo_helper:
             self.logger.warning("can't resolve ip")
         except geoip2.errors.AddressNotFoundError:
             self.logger.warning("Address not in Database")
+        except InvalidCoordinate:
+            self.logger.warning("Coordinate do not follow redis specification")
+
 
     def getCoordFromPhoneAndPublish(self, phoneNumber, categ):
         try:
@@ -138,6 +146,8 @@ class Geo_helper:
             ordDic['lat'] = coord_dic['lat']
             ordDic['lon'] = coord_dic['lon']
             coord_list = [coord['lat'], coord['long']]
+            if self.coordinate_list_valid(coord_list):
+                raise InvalidCoordinate("Coordinate do not match EPSG:900913 / EPSG:3785 / OSGEO:41001")
             self.push_to_redis_zset(self.keyCategCoord, json.dumps(ordDic))
             self.push_to_redis_zset(self.keyCategCountry, country_code)
             ordDic = OrderedDict() #keep fields with the same layout in redis
@@ -196,3 +206,14 @@ class Geo_helper:
             if abs(float(coord1[1]) - float(coord2[1])) <= clusterThres:
                 return True
         return False
+
+    # adjust latitude and longitude to fit the limit, as specified
+    # by EPSG:900913 / EPSG:3785 / OSGEO:41001
+    # coord_list = [lat, lon]
+    def coordinate_list_valid(coord_list):
+        lat = coord_list[0]
+        lon = coord_list[1]
+        if (-180 <= lon <= 180) and (-85.05112878 <= lat <= 85.05112878):
+            return True
+        else:
+            return False
