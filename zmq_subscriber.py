@@ -50,7 +50,6 @@ def main(zmqName):
     while True:
         try:
             content = socket.recv()
-            content.replace(b'\n', b'') # remove \n...
             put_in_redis_list(zmqName, content)
         except KeyboardInterrupt:
             return
