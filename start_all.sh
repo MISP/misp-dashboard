@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -x
+#set -x
 
 GREEN="\\033[1;32m"
 DEFAULT="\\033[0;39m"

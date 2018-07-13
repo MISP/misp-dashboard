@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-set -x
+#set -x
 
 sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip -y
 
