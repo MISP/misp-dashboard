@@ -134,7 +134,7 @@
                     nodeEnter.filter(function(d) {
                         return d.additionalNode === undefined || !d.additionalNode;
                     })
-			.on("click", function(d, i) { that.click(d, i, this); });
+                    .on("click", function(d, i) { that.click(d, i, this); });
                 } else {
                     nodeEnter.attr("class", "node nodeNoInteraction");
                 }
@@ -183,7 +183,13 @@
                     .data(links, function(d) { return d.target.id; });
 
                 // Enter any new links at the parent's previous position.
-                var linkEnter = link.enter().insert("g", "g");
+                var linkEnter = link.enter()
+                    .insert("g", "g")
+                    .attr("class", "linkContainer")
+                    .attr("id", function(d) { 
+                        let u_id = d.source.id + '-' + d.target.id;
+                        return u_id;
+                    });
                 linkEnter.append("path")
                     .attr("class", "link")
                     .attr("d", function(d) {
@@ -193,7 +199,7 @@
 
 
                 linkEnter.append('rect')
-                    .attr("class", "rectText")
+                    .attr("class", "rectText linkLabel")
                     .attr("rx", 5)
                     .attr("ry", 5)
                     .attr("transform", function(d) {
@@ -205,7 +211,7 @@
                         })
                     .style("opacity", 1e-6);
                 linkEnter.append('text')
-                    .attr("class", "linkText")
+                    .attr("class", "linkText linkLabel")
                     .attr("font-family", "Arial, Helvetica, sans-serif")
                     .attr("fill", "Black")
                     .attr("transform", function(d) {
@@ -224,6 +230,13 @@
                 linkEnter.selectAll("rect")
                     .attr("width", function(d) { return d.target.linkname !== undefined ? that.letterWidth*that.adjust_text_length(d.target.linkname).length : 0; })
                     .attr("height", 22)
+
+                // setup onclick on link label
+                if (this.options.interaction) {
+                    linkEnter.on("click", function(d, i) { 
+                        that.clickLabel(d, i, this);
+                    });
+                }
 
 
                 // Transition links to their new position.
@@ -307,6 +320,7 @@
 
                 this.reset_selected();
 
+                // select all nodes matching the clicked element
                 var res;
                 if (clicked.data()[0].children === undefined) { // is leaf
                     res = d3.selectAll(".node circle")
@@ -350,19 +364,93 @@
                 this.add_instruction(instructions);
             },
 
+            clickLabel: function(d, i, clickedContext) {
+                var u_id = d.source.id + '-' + d.target.id;
+                var l_id = '#'+u_id;
+                var link_html = d3.select($(l_id));
+                console.log(clickedContext);
+
+                var that = this;
+                var o_depth = d.source.depth;
+                var dest_depth = d.target.depth;
+                var c_id = d.source.id;
+                var c_index; // no index as the index is the label itself
+                var clicked = d3.select(clickedContext);
+                var itemColor = this.itemColors.get(this.currentPicking);
+
+                this.reset_selected();
+
+                // select all labels matching the clicked element
+                var resRect = this.svg.selectAll(".rectText")
+                    .filter(function(d) {
+                        if (d.depth == 0) {
+                            return false;
+                        }
+                        var c1 = d.source.depth == o_depth;
+                        return c1;
+                    });
+                var resText = this.svg.selectAll(".linkText")
+                    .filter(function(d) {
+                        if (d.depth == 0) {
+                            return false;
+                        }
+                        var c1 = d.source.depth == o_depth;
+                        return c1;
+                    });
+
+
+                resRect.data().forEach(function(elem) {
+                    if (elem.picked !== undefined  && elem.picked != '') {
+                        // alert || repick conflicting ????
+                        console.log('Possible collision with '+elem.picked);
+                        //alert('Possible collision with '+elem.picked);
+                    }
+                    elem.picked = that.currentPicking;
+                });
+
+                resRect.style('fill', itemColor)
+                resText.style('fill', that.should_invert_text_color(itemColor) ? 'white' : 'black');
+
+                // find all paths
+                var paths = [];
+                var nodes = that.svg.selectAll(".node circle").filter(
+                        function(d) { return d.depth == dest_depth;}
+                );
+
+                nodes.data().forEach(function(d, i) {
+                    paths[i] = that.find_full_path(d, []);
+                });
+                var instructions = this.compute_mapping_instructions(paths);
+                this.add_instruction(instructions);
+
+            },
+
             reset_selected: function() {
                 var that = this;
-                var res = d3.selectAll(".node circle")
+                var resNode = that.svg.selectAll(".node circle")
                     .filter(function(d) {
                         return d.picked == that.currentPicking;
                     });
-                res.style('fill', 'white')
+                resNode.style('fill', 'white')
                     .style('fill-opacity', 1.00);
 
-                res.data().forEach(function(elem) {
+                resNode.data().forEach(function(elem) {
                     elem.picked = '';
                 });
 
+
+                var resLabel = that.svg.selectAll(".rectText")
+                    .filter(function(d) {
+                        return d.picked == that.currentPicking;
+                    });
+                resLabel.style('fill', 'white')
+                    .style('fill-opacity', 1.00);
+
+                resLabel.data().forEach(function(elem) {
+                    elem.picked = '';
+                });
+
+                this.add_instruction('');
             },
 
 
@@ -561,7 +649,8 @@
                     }
                     if (root.length > maxWidth) {
                         var addNode = {};
-                        addNode.name = '...';
+                        var remaining = root.length - maxWidth;
+                        addNode.name = ''+remaining+'...';
                         addNode.parent = null;
                         addNode.additionalNode = true;
                         child['children'].push(addNode);
@@ -581,7 +670,8 @@
                     }
                     if (Object.keys(root).length > maxWidth) {
                         var addNode = {};
-                        addNode.name = '...';
+                        var remaining = root.length - maxWidth;
+                        addNode.name = ''+remaining+' ...';
                         addNode.parent = null;
                         addNode.additionalNode = true;
                         child.children.push(addNode);
