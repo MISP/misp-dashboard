@@ -35,7 +35,6 @@
             constructor: ProxyMapper,
 
             perform_mapping: function(data) {
-                console.log(this.mapping);
                 if (this.mapping.dates.length > 0) {
                     this.c_dates(this.data, this.mapping.dates); // probe and fetch all dates
                 }
@@ -65,7 +64,9 @@
                     let label = intermediate[index];
                     let val = [];
                     for (var i=0; i<additionalData.valueLength; i++) {
-                        val.push(that.options.fillValue);
+                        if ((that.options.fillValue !== undefined && that.options.fillValue != '')) {
+                            val.push(that.options.fillValue);
+                        }
                     }
                     that.result[label] = val;
                 };

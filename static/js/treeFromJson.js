@@ -11,14 +11,16 @@
 
         var TreeFromJson = function(container, data, options) {
             this.container = container;
+            console.log(container.width());
             this._default_options = {
                 margin: {top: 20, right: 20, bottom: 20, left: 20},
-                width: 800,
-                height: 800,
+                width: container.width() > 800 ? container.width()/2 : 800,
+                height: container.height() > 800 ? container.height()/2 : 800,
                 treeNodes : {
                     width: 3,
                     depth: 5
                 },
+                maxCharDisplay: 20,
                 itemColors: ['#fc440f', '#a5e12e', '#5d2e8c', '#2ec4b6', '#65524d', '#adcad6', '#99c24d'],
                 duration: 500,
                 interaction: true,
@@ -29,7 +31,11 @@
             this.data = data;
             this.treeData = [this.create_tree(data, '', this.options.treeNodes.depth, this.options.treeNodes.depth, this.options.treeNodes.width)];
 
-            this.letterWidth = 10;
+            this.letterWidth = 8;
+            this.treeDiv = $('<div class="treeDiv panel panel-default panel-body"></div>');
+            this.container.append(
+                $('<div></div>').append(this.treeDiv)
+            );
             this.width = this.options.width - this.options.margin.right - this.options.margin.left,
             this.height = this.options.height - this.options.margin.top - this.options.margin.bottom;
 
@@ -47,7 +53,7 @@
             this.diagonal = d3.svg.diagonal()
                     .projection(function(d) { return [d.y, d.x]; });
             
-            this.svg = d3.select(this.container[0]).append("svg")
+            this.svg = d3.select(this.treeDiv[0]).append("svg")
                     .attr("width", this.width + this.options.margin.right + this.options.margin.left)
                     .attr("height", this.height + this.options.margin.top + this.options.margin.bottom)
                 .append("g")
@@ -70,10 +76,17 @@
                 this.set_current_mapping_item();
             }
 
+            this.jsonDivIn = $('<div class="jsonDiv panel panel-default panel-body"></div>');
+            this.treeDiv.append(this.jsonDivIn);
+            var j = this.syntaxHighlightJson(this.data);
+            this.jsonDivIn.html(j);
             if (this.options.interaction) {
-                //var result = new $.proxyMapper(this.instructions, this.treeData, {});
                 this.treeDivResult = $('<div class="resultTree"></div>');
-                this.container.append(this.treeDivResult);
+                this.jsonDivOut = $('<div class="jsonDiv"></div>');
+                this.treeDivResult.append(this.jsonDivOut);
+                this.container.children().append(
+                    this.treeDivResult
+                );
                 this.update_result_tree();
             }
 
@@ -90,8 +103,25 @@
                 var nodes = this.tree.nodes(this.root).reverse(),
                     links = this.tree.links(nodes);
 
-                // Normalize for fixed-depth.
-                nodes.forEach(function(d) { d.y = d.depth * 100; });
+                // Compute depth size based on the link name
+                var maxSizePerDepth = [];
+                nodes.forEach(function(d) {
+                    let m = maxSizePerDepth[d.depth] !== undefined ? maxSizePerDepth[d.depth] : 0;
+                    let text = that.adjust_text_length(d.linkname).length;
+                    let size = d.linkname !== undefined ? text : 0;
+                    maxSizePerDepth[d.depth] = size > m ? size : m;
+                });
+                // add previous level together
+                for (var i=1; i<maxSizePerDepth.length; i++) {
+                    maxSizePerDepth[i] += maxSizePerDepth[i-1];
+                }
+
+                // Normalize for fixed-depth. (+ consider linkname)
+                //nodes.forEach(function(d) { d.y = d.depth * 100; });
+                nodes.forEach(function(d) { 
+                    let offset = maxSizePerDepth[d.depth]*(that.options.maxCharDisplay-2);
+                    d.y = d.depth * 100 + offset;
+                });
 
                 // Update the nodes…
                 var node = this.svg.selectAll("g.node")
@@ -165,12 +195,16 @@
 
                 linkEnter.append('rect')
                     .attr("class", "rectText")
+                    .attr("rx", 5)
+                    .attr("ry", 5)
                     .attr("transform", function(d) {
+                        let xoffset = d.target.linkname !== undefined ? that.letterWidth*that.adjust_text_length(d.target.linkname).length/2 : 0;
+                        let yoffset = 10;
                         return "translate(" +
-                            d.source.y + "," + 
-                            d.source.x + ")";
+                            (d.source.y-xoffset) + "," + 
+                            (d.source.x-yoffset) + ")";
                         })
-                    .style("fill-opacity", 1e-6);
+                    .style("opacity", 1e-6);
                 linkEnter.append('text')
                     .attr("class", "linkText")
                     .attr("font-family", "Arial, Helvetica, sans-serif")
@@ -183,13 +217,13 @@
                     .attr("dy", ".35em")
                     .attr("text-anchor", "middle")
                     .text(function(d) {
-                        return d.target.linkname;
+                        return that.adjust_text_length(d.target.linkname);
                      })
                     .style("fill-opacity", 1e-6);
 
                 // update rectangle size based on text
                 linkEnter.selectAll("rect")
-                    .attr("width", function(d) { return d.target.linkname !== undefined ? that.letterWidth*d.target.linkname.length : 0; })
+                    .attr("width", function(d) { return d.target.linkname !== undefined ? that.letterWidth*that.adjust_text_length(d.target.linkname).length : 0; })
                     .attr("height", 22)
 
 
@@ -201,10 +235,10 @@
 
                 linkUpdate.select('rect').transition()
                     .duration(this.options.duration)
-                    .style("fill-opacity", 1)
+                    .style("opacity", 0.85)
                     .attr("d", this.diagonal)
                     .attr("transform", function(d){
-                        let xoffset = d.target.linkname !== undefined ? that.letterWidth*d.target.linkname.length/2 : 0;
+                        let xoffset = d.target.linkname !== undefined ? that.letterWidth*that.adjust_text_length(d.target.linkname).length/2 : 0;
                         let yoffset = 10;
                         return "translate(" +
                             ((d.source.y + d.target.y)/2-xoffset) + "," + 
@@ -476,7 +510,7 @@
 
                 //var result = new $.proxyMapper(this.instructions, this.data, {});
                 var pm_options = {
-                    fillValue: this.fillValueDomInput.val() ? this.fillValueDomInput.val() : 0
+                    fillValue: this.fillValueDomInput.val()
                 };
                 var result = new $.proxyMapper(adjusted_instructions, this.data, pm_options);
                 this.treeDivResult[0].innerHTML = '';
@@ -485,6 +519,17 @@
 
             isObject: function(v) {
                 return v !== null && typeof v === 'object';
+            },
+
+            adjust_text_length: function(text) {
+                if (text === undefined || text === '') {
+                    return '';
+                }
+                text = text.slice(0, this.options.maxCharDisplay);
+                if (text.length > this.options.maxCharDisplay) {
+                    text += '...';
+                }
+                return text;
             },
 
             create_tree: function(root, linkname, depth, maxDepth, maxWidth) {
@@ -522,7 +567,7 @@
                         child.children.push(this.create_tree(node, k, depth-1, maxDepth, maxWidth));
                         i++;
                     }
-                    if (root.length > maxWidth) {
+                    if (Object.keys(root).length > maxWidth) {
                         var addNode = {};
                         addNode.name = '...';
                         addNode.parent = null;
@@ -534,7 +579,31 @@
                     child.name = root;
                 }
                 return child;
+            },
+
+            syntaxHighlightJson: function(json) {
+                if (typeof json == 'string') {
+                    json = JSON.parse(json);
+                }
+                json = JSON.stringify(json, undefined, 2);
+                json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(?:\r\n|\r|\n)/g, '<br>').replace(/ /g, '&nbsp;');
+                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                        var cls = 'json_number';
+                        if (/^"/.test(match)) {
+                            if (/:$/.test(match)) {
+                                cls = 'json_key';
+                            } else {
+                                cls = 'json_string';
+                            }
+                        } else if (/true|false/.test(match)) {
+                            cls = 'json_boolean';
+                        } else if (/null/.test(match)) {
+                            cls = 'json_null';
+                        }
+                        return '<span class="' + cls + '">' + match + '</span>';
+                });
             }
+
 
         }
 
