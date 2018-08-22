@@ -20,7 +20,7 @@
 
             this.result.dates = [];
 
-            this.mappingDate = {};
+            this.mappingI2 = {};
             this.perform_mapping();
             return this.result;
         };
@@ -36,7 +36,7 @@
                     this.c_labels(this.data, this.mapping.labels); // probe and fetch all labels
                 }
                 if (this.mapping.labels.length > 0 && this.mapping.values.length > 0) {
-                    this.c_values(this.data, this.mapping.labels); // fetch values and overwrite default values
+                    this.c_values(this.data, this.mapping.values); // fetch values and overwrite default values
                     for (var k in this.result) {
                         this.result[k] = this.result[k].filter(function(n){ return n != undefined });
                     }
@@ -48,8 +48,10 @@
                 var matchingFun = function (intermediate, instructions, additionalData) {
                     let index = instructions;
                     let val = intermediate[index];
-                    that.mappingDate[val] = that.result['dates'].length;
-                    that.result['dates'].push(val);
+                    if (that.mappingI2[val] === undefined) {
+                        that.mappingI2[val] = that.result['dates'].length;
+                        that.result['dates'].push(val);
+                    }
                 };
                 this.iter(intermediate, instructions, matchingFun, {});
             },
@@ -58,14 +60,26 @@
                 var that = this;
                 var matchingFun = function (intermediate, instructions, additionalData) {
                     let index = instructions;
-                    let label = intermediate[index];
-                    let val = [];
-                    for (var i=0; i<additionalData.valueLength; i++) {
-                        if ((that.options.fillValue !== undefined && that.options.fillValue != '')) {
-                            val.push(that.options.fillValue);
+                    if (index == 'l') { // labels are the key themself
+                        for (let label in intermediate) {
+                            let val = [];
+                            for (var i=0; i<additionalData.valueLength; i++) {
+                                if ((that.options.fillValue !== undefined && that.options.fillValue != '')) {
+                                    val.push(that.options.fillValue);
+                                }
+                            }
+                            that.result[label] = val;
                         }
+                    } else {
+                        let label = intermediate[index];
+                        let val = [];
+                        for (var i=0; i<additionalData.valueLength; i++) {
+                            if ((that.options.fillValue !== undefined && that.options.fillValue != '')) {
+                                val.push(that.options.fillValue);
+                            }
+                        }
+                        that.result[label] = val;
                     }
-                    that.result[label] = val;
                 };
                 this.iter(intermediate, instructions, matchingFun, {valueLength: this.result.dates.length});
             },
@@ -74,10 +88,11 @@
                 var that = this;
                 var matchingFun = function (intermediate, instructions, additionalData) {
                     let index = instructions;
-                    let label = intermediate[index];
-                    let val = that.fetch_value(intermediate, additionalData.mapping.values);
-                    let curDateIndex = that.mappingDate[additionalData.curDate];
-                    that.result[label][curDateIndex] = val;
+                    let val = intermediate[index];
+                    let i1 = additionalData.i1;
+                    let i2 = additionalData.i2;
+                    let i2_adjusted = that.mappingI2[i2];
+                    that.result[i1][i2_adjusted] = val;
                 };
                 this.iter(intermediate, instructions, matchingFun, {mapping: this.mapping});
             },
@@ -97,14 +112,22 @@
                     return;
                 }
         
-                var flag_register_date = false;
+                var flag_register_i = false;
+                var i_type;
                 if (instructions.length == 1) {
                     matchingFun(intermediate, instructions[0], additionalData);
                 } else {
                     switch (instructions[0]) {
-                        case 'd':
+                        case 'i1':
                             if (additionalData.mapping) {
-                                flag_register_date = true;
+                                flag_register_i = true;
+                                i_type = 'i1';
+                            }
+                            break;
+                        case 'i2':
+                            if (additionalData.mapping) {
+                                flag_register_i = true;
+                                i_type = 'i2';
                             }
                             break;
                         case 'l':
@@ -122,19 +145,31 @@
         
                 if (Array.isArray(intermediate)) {
                     for (var node of intermediate) {
-                        if (flag_register_date) {
-                            let curDate = this.fetch_value(node, additionalData.mapping.dateFromNode);
-                            additionalData.curDate = curDate;
+                        if (flag_register_i) {
+                            let sub_instructions = additionalData.mapping.index[i_type]
+                            let curI;
+                            if (sub_instructions.length > 0) {
+                                curI = this.fetch_value(node, sub_instructions);
+                            } else {
+                                console.log('Should never happend');
+                            }
+                            additionalData[i_type] = curI;
                         }
                         this.iter(node, instructions.slice(1), matchingFun, additionalData);
                     }
                 } else if (this.isObject(intermediate)) {
                     for (var k in intermediate) {
-                        if (flag_register_date) {
-                            let curDate = this.fetch_value(node, additionalData.mapping.dateFromNode);
-                            additionalData.curDate = curDate;
-                        }
                         var node = intermediate[k];
+                        if (flag_register_i) {
+                            let sub_instructions = additionalData.mapping.index[i_type]
+                            let curI;
+                            if (sub_instructions.length > 0) {
+                                curI = this.fetch_value(node, sub_instructions);
+                            } else {
+                                curI = k;
+                            }
+                            additionalData[i_type] = curI;
+                        }
                         this.iter(node, instructions.slice(1), matchingFun, additionalData);
                     }
                 }

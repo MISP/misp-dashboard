@@ -411,7 +411,7 @@
                 tbody.append(row2);
                 this.mappingDomTable.append(thead);
                 this.mappingDomTable.append(tbody);
-                this.fillValueDomInput = $('<input class="form-control" placeholder="0" value=0>');
+                this.fillValueDomInput = $('<input class="form-control" placeholder="0" value="empty">');
                 var configDiv = $('<div class="form-group mappingTableDivConfig"></div>')
                     .append($('<label>Fill value</label>'))
                     .append(this.fillValueDomInput);
@@ -482,38 +482,51 @@
                     interaction: false
                 };
 
-                var adjusted_instructions = $.extend(true, {}, this.instructions);
-                var res=[];
-                var l = adjusted_instructions.labels;
-                var v = adjusted_instructions.values;
-                for (var i=0; i<v.length; i++) {
-                    if (l[i] != v[i]) { res.push(v[i]); }
-                }
-                adjusted_instructions.values = res;
-
-                var res=[];
-                var matchingIndex;
-                var l = adjusted_instructions.labels;
-                var v = adjusted_instructions.dates;
-                for (var i=0; i<v.length; i++) {
-                    if (l[i] != v[i]) { 
-                        if (matchingIndex === undefined) {
-                            matchingIndex = i-1;
-                        }
-                        res.push(v[i]);
-                    }
-                }
-                adjusted_instructions.dateFromNode = res;
-                adjusted_instructions.labels[matchingIndex] = 'd';
-
-
                 //var result = new $.proxyMapper(this.instructions, this.data, {});
                 var pm_options = {
                     fillValue: this.fillValueDomInput.val()
                 };
-                var result = new $.proxyMapper(adjusted_instructions, this.data, pm_options);
+                var adjustedInstructions = this.adjust_instruction();
+                var result = new $.proxyMapper(adjustedInstructions, this.data, pm_options);
                 this.treeDivResult[0].innerHTML = '';
                 new TreeFromJson(this.treeDivResult, result, options);
+            },
+
+            adjust_instruction: function() {
+                var adjustedInstructions = $.extend(true, {}, this.instructions);
+                adjustedInstructions.index = {};
+                var matchingIndex = 0;
+                var l = this.instructions.labels;
+                var v = this.instructions.values;
+                var d = this.instructions.dates;
+                // label & value
+                if (l.length != 0 && v.length != 0) {
+                    var smaller_array = v.length < l.length ? v : l;
+                    for (var i=0; i<smaller_array.length; i++) {
+                        if (v[i] != l[i]) { 
+                            matchingIndex = i-1;
+                            break;
+                        }
+                    }
+                    adjustedInstructions.values[matchingIndex] = 'i1';
+                    adjustedInstructions.index['i1'] = adjustedInstructions.labels.slice(matchingIndex+1);
+                }
+
+                var matchingIndex = 0;
+                // date & value
+                if (d.length != 0 && v.length != 0) {
+                    smaller_array = v.length < d.length ? v : d;
+                    for (var i=0; i<smaller_array.length; i++) {
+                        if (v[i] != d[i]) { 
+                            matchingIndex = i-1;
+                            break;
+                        }
+                    }
+                    adjustedInstructions.values[matchingIndex] = 'i2';
+                    adjustedInstructions.index['i2'] = adjustedInstructions.dates.slice(matchingIndex+1);
+                }
+
+                return adjustedInstructions;
             },
 
             isObject: function(v) {
