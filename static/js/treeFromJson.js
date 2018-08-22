@@ -234,7 +234,7 @@
                 // setup onclick on link label
                 if (this.options.interaction) {
                     linkEnter.on("click", function(d, i) { 
-                        that.clickLabel(d, i, this);
+                        that.clickLabel(d);
                     });
                 }
 
@@ -334,10 +334,24 @@
                             return c1 && c2;
                         });
                 } else {
-                    res = d3.selectAll(".node circle")
-                        .filter(function(d) {
-                            return d.parent !== null && d.parent.id == clicked.data()[0].id;
+                    // check if children is leaf
+                    var child = clicked.data()[0].children[0];
+                    if (that.isObject(child) || Array.isArray(child)) {
+                        // First child is not a node, should highlight the label instead
+                        // --> simulate label click
+                        let source = clicked.data()[0];
+                        let target = clicked.data()[0].children[0];
+                        var resL = this.svg.selectAll("path.link").filter(function(d) {
+                            return d.source.id == source.id && d.target.id == target.id;
                         });
+                        that.clickLabel(resL.data()[0]);
+                        return;
+                    } else {
+                        res = d3.selectAll(".node circle")
+                            .filter(function(d) {
+                                return d.parent !== null && d.parent.id == clicked.data()[0].id;
+                            });
+                    }
                 }
 
                 res.data().forEach(function(elem) {
@@ -364,18 +378,15 @@
                 this.add_instruction(instructions);
             },
 
-            clickLabel: function(d, i, clickedContext) {
+            clickLabel: function(d) {
                 var u_id = d.source.id + '-' + d.target.id;
                 var l_id = '#'+u_id;
-                var link_html = d3.select($(l_id));
-                console.log(clickedContext);
 
                 var that = this;
                 var o_depth = d.source.depth;
                 var dest_depth = d.target.depth;
                 var c_id = d.source.id;
                 var c_index; // no index as the index is the label itself
-                var clicked = d3.select(clickedContext);
                 var itemColor = this.itemColors.get(this.currentPicking);
 
                 this.reset_selected();
