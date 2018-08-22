@@ -11,7 +11,6 @@
 
         var TreeFromJson = function(container, data, options) {
             this.container = container;
-            console.log(container.width());
             this._default_options = {
                 margin: {top: 20, right: 20, bottom: 20, left: 20},
                 width: container.width() > 800 ? container.width()/2 : 800,

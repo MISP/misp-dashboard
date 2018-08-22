@@ -16,14 +16,8 @@
                 fillValue: 0
             };
             this.options = $.extend({}, this._default_options, options);
-            //this.result = {
-            //    dates: [],
-            //};
             this.result = {};
 
-            //for (var k in this.mapping) {
-            //    this.result[k] = [];
-            //}
             this.result.dates = [];
 
             this.mappingDate = {};
@@ -43,6 +37,9 @@
                 }
                 if (this.mapping.labels.length > 0 && this.mapping.values.length > 0) {
                     this.c_values(this.data, this.mapping.labels); // fetch values and overwrite default values
+                    for (var k in this.result) {
+                        this.result[k] = this.result[k].filter(function(n){ return n != undefined });
+                    }
                 }
             },
         
