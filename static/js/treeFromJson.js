@@ -140,11 +140,26 @@
                     nodeEnter.attr("class", "node nodeNoInteraction");
                 }
 
-                nodeEnter.filter(function(d) {
-		    return d.additionalNode === undefined || !d.additionalNode;
-		})
+                var nodeEnterNotArray = nodeEnter.filter(function(d) {
+                    var not_add = d.additionalNode === undefined || !d.additionalNode;
+                    var not_arr = d.children === undefined || d.children[0].linkname === undefined;
+		    return  not_add && not_arr;
+		});
+                nodeEnterNotArray
 		    .append("circle")
                     .attr("r", 1e-6)
+                    .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+                var nodeEnterArray = nodeEnter.filter(function(d) {
+                    var not_add = d.additionalNode === undefined || !d.additionalNode;
+                    var is_arr = d.children !== undefined && d.children[0].linkname !== undefined;
+		    return  not_add && is_arr;
+                });
+                nodeEnterArray
+		    .append("rect")
+                    .attr("width", 0)
+                    .attr("height", 0)
+                    .attr("y", 0)
                     .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
 
                 nodeEnter.append("text")
@@ -164,6 +179,11 @@
                     .attr("r", 10)
                     .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
 
+                nodeUpdate.select("rect")
+                    .attr("width", 20)
+                    .attr("height", 20)
+                    .attr("y", -10)
+
                 nodeUpdate.select("text")
                     .style("fill-opacity", 1);
 
@@ -175,6 +195,11 @@
 
                 nodeExit.select("circle")
                     .attr("r", 1e-6);
+
+                nodeExit.select("rect")
+                    .attr("width", 0)
+                    .attr("height", 0)
+                    .attr("y", 0)
 
                 nodeExit.select("text")
                     .style("fill-opacity", 1e-6);
@@ -322,9 +347,10 @@
                 this.reset_selected();
 
                 // select all nodes matching the clicked element
-                var res;
+                var resCircle;
+                var resRect;
                 if (clicked.data()[0].children === undefined) { // is leaf
-                    res = d3.selectAll(".node circle")
+                    resCircle = that.svg.selectAll(".node circle")
                         .filter(function(d) {
                             if (d.depth == 0) {
                                 return false;
@@ -335,44 +361,66 @@
                             return c1 && c2;
                         });
                 } else {
-                    // check if children is leaf
+                    // check if children are leaf
                     var child = clicked.data()[0].children[0];
-                    if (that.isObject(child) || Array.isArray(child)) {
+                    if (that.isObject(child) || Array.isArray(child)) { // children are not leaves
                         // First child is not a node, should highlight the label instead
                         // --> simulate label click
                         let source = clicked.data()[0];
-                        let target = clicked.data()[0].children[0];
-                        var resL = this.svg.selectAll("path.link").filter(function(d) {
-                            return d.source.id == source.id && d.target.id == target.id;
-                        });
-                        that.clickLabel(resL.data()[0]);
+                        let target = child;
+                        if (target.linkname !== undefined && target.linkname !== '') {
+                            var resL = this.svg.selectAll("path.link").filter(function(d) {
+                                return d.source.id == source.id && d.target.id == target.id;
+                            });
+                            that.clickLabel(resL.data()[0]);
+                        }
                         return;
-                    } else {
-                        res = d3.selectAll(".node circle")
+                    } else { // children are leaves
+                        resCircle = that.svg.selectAll(".node circle")
+                            .filter(function(d) {
+                                return d.parent !== null && d.parent.id == clicked.data()[0].id;
+                            });
+                        resRect = that.svg.selectAll(".node rect")
                             .filter(function(d) {
                                 return d.parent !== null && d.parent.id == clicked.data()[0].id;
                             });
                     }
                 }
 
-                res.data().forEach(function(elem) {
-                    if (elem.picked !== undefined  && elem.picked != '') {
-                        // alert || repick conflicting ????
-                        console.log('Possible collision with '+elem.picked);
-                        //alert('Possible collision with '+elem.picked);
-                    }
-                    elem.picked = that.currentPicking;
-                });
+                var nodesData = [];
+                if(resCircle !== undefined) {
+                    resCircle.data().forEach(function(elem) {
+                        if (elem.picked !== undefined  && elem.picked != '') {
+                            // alert || repick conflicting ????
+                            console.log('Possible collision with '+elem.picked);
+                            //alert('Possible collision with '+elem.picked);
+                        }
+                        elem.picked = that.currentPicking;
+                        nodesData.push(elem);
+                    });
 
-                res.style('fill', itemColor)
-                    .style('fill-opacity', 1.0);
+                    resCircle.style('fill', itemColor)
+                        .style('fill-opacity', 1.0);
+                }
+                if(resRect !== undefined) {
+                    resRect.data().forEach(function(elem) {
+                        if (elem.picked !== undefined  && elem.picked != '') {
+                            // alert || repick conflicting ????
+                            console.log('Possible collision with '+elem.picked);
+                            //alert('Possible collision with '+elem.picked);
+                        }
+                        elem.picked = that.currentPicking;
+                        nodesData.push(elem);
+                    });
+
+                    resRect.style('fill', itemColor)
+                        .style('fill-opacity', 1.0);
+
+                }
 
                 // find all paths
                 var paths = [];
-                var nodes = d3.selectAll(".node circle").filter(
-                        function(d) { return d.picked == that.currentPicking;}
-                );
-                nodes.data().forEach(function(d, i) {
+                nodesData.forEach(function(d, i) {
                     paths[i] = that.find_full_path(d, []);
                 });
                 var instructions = this.compute_mapping_instructions(paths);
@@ -682,12 +730,14 @@
                         );
                         var x = nodes.data()[0].name;
                         funXInput.text('"'+that.adjust_text_length(x)+'"');
+                        funXInput[0].innerHTML = '"'+that.adjust_text_length(x)+'"';
                         funXOuput[0].innerHTML = that.adjust_text_length('"'+f(x)+'"');
                     } catch(err) { // Error
                         if (err.name == 'SyntaxError') {
                             flag_continue = false;
                             funXOuput[0].innerHTML = $('<span class="funOutputError">'+err.name+'</span>')[0].outerHTML;
                         } else if (err.name == 'TypeError') {
+                            funXInput[0].innerHTML = $('<span class="funOutputError">'+'Not picked yet'+'</span>')[0].outerHTML;
                             var html = $('<span></span>');
                             html.append($('<span class="funOutputError">'+'Not picked yet'+'</span>'));
                             html.append($('<span class="funOutputError">'+err.name+'</span>'));
