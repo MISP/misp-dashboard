@@ -12,8 +12,14 @@
         var ProxyMapper = function(mapping, data, options) {
             this.mapping = mapping;
             this.data = data;
+            console.log(options);
             this._default_options = {
-                fillValue: 0
+                fillValue: 0,
+                functions: {
+                    dates: function (value) {return value;},
+                    labels: function (value) {return value;},
+                    values: function (value) {return value;}
+                }
             };
             this.options = $.extend({}, this._default_options, options);
             this.result = {};
@@ -50,7 +56,8 @@
                     let val = intermediate[index];
                     if (that.mappingI2[val] === undefined) {
                         that.mappingI2[val] = that.result['dates'].length;
-                        that.result['dates'].push(val);
+                        let nval = that.options.functions.dates(val);
+                        that.result['dates'].push(nval);
                     }
                 };
                 this.iter(intermediate, instructions, matchingFun, {});
@@ -68,7 +75,8 @@
                                     val.push(that.options.fillValue);
                                 }
                             }
-                            that.result[label] = val;
+                            let nval = that.options.functions.dates(val);
+                            that.result[label] = nval;
                         }
                     } else {
                         let label = intermediate[index];
@@ -78,7 +86,8 @@
                                 val.push(that.options.fillValue);
                             }
                         }
-                        that.result[label] = val;
+                        let nlabel = that.options.functions.labels(label);
+                        that.result[nlabel] = val;
                     }
                 };
                 this.iter(intermediate, instructions, matchingFun, {valueLength: this.result.dates.length});
@@ -92,7 +101,9 @@
                     let i1 = additionalData.i1;
                     let i2 = additionalData.i2;
                     let i2_adjusted = that.mappingI2[i2];
-                    that.result[i1][i2_adjusted] = val;
+                    let ni1 = that.options.functions.labels(i1);
+                    let nval = that.options.functions.values(val);
+                    that.result[ni1][i2_adjusted] = nval;
                 };
                 this.iter(intermediate, instructions, matchingFun, {mapping: this.mapping});
             },

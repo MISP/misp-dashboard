@@ -40,7 +40,12 @@
     }
     .node circle {
         fill: #fff;
-        stroke: steelblue;
+        stroke: lightgrey;
+        stroke-width: 3px;
+    }
+    .node rect {
+        fill: #fff;
+        stroke: lightgrey;
         stroke-width: 3px;
     }
     .node text {
@@ -55,7 +60,8 @@
     .mappingTable {
         display: inline-table !important;
         cursor: pointer;
-        width: 50%;
+        min-width: 50%;
+        max-width: 75%;
     }
 
     .mappingTableDivConfig {
@@ -73,7 +79,36 @@
     }
 
     td.grey {
-        background-color: grey !important;
+        filter: opacity(60%) grayscale(30%);
+    }
+    th.grey {
+        filter: opacity(60%) grayscale(30%);
+    }
+
+    .mappingTable td.cellFunInput {
+        padding: 0px;
+        font-family: Consolas,"courier new";
+    }
+    
+    .cellFunInput textarea {
+        color: black;
+        width: 100%;
+    }
+
+    .cellFunInput > span {
+        display: block;
+    }
+
+    .funOutputError {
+        color: red;
+        background: white;
+        padding: 3px;
+        border-radius: 4px;
+        margin-right: 5px;
+    }
+
+    .funResText {
+        font-size: 12px;
     }
 
     .linkText {
@@ -84,6 +119,9 @@
         fill: #f5f5f5;
         stroke: #ddd;
         stroke-width: 2;
+    }
+    .linkLabel {
+        cursor: pointer;
     }
 
     .json_key {
@@ -131,6 +169,8 @@
         var endpoint = [];
         var tfj;
         $.getJSON('{{ url_for("testData") }}', function(data) {
+        //$.getJSON('{{ url_for("getTrendingSightings") }}', function(data) {
+        //$.getJSON('{{ url_for("getUserLoginsAndContribOvertime") }}', function(data) {
             var depth = 5;
             var width = 3;
 

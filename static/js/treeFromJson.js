@@ -20,9 +20,10 @@
                     depth: 5
                 },
                 maxCharDisplay: 20,
-                itemColors: ['#fc440f', '#a5e12e', '#5d2e8c', '#2ec4b6', '#65524d', '#adcad6', '#99c24d'],
+                itemColors: ['#337ab7', '#5cb85c', '#d9534f', '#f0ad4e', '#d9edf7', '#dff0d8', '#f2dede', '#fcf8e3'],
                 duration: 500,
                 interaction: true,
+                default_function: '    return value;',
                 toBeMapped: []
             };
             this.options = $.extend({}, this._default_options, options);
@@ -364,7 +365,7 @@
                 });
 
                 res.style('fill', itemColor)
-                    .style('fill-opacity', 0.85);
+                    .style('fill-opacity', 1.0);
 
                 // find all paths
                 var paths = [];
@@ -492,22 +493,37 @@
                 var that = this;
                 this.mappingDomTable = $('<table class="table mappingTable"></table>');
                 var thead = $('<thead></thead>')
-                var tbody = $('<thead></thead>')
+                var tbody = $('<tbody></tbody>')
                 var row1 = $('<tr></tr>');
                 var row2 = $('<tr style="height: 20px;"></tr>');
+                var row3 = $('<tr style="height: 20px;"></tr>');
                 this.options.toBeMapped.forEach(function(item, index) {
                     var itemColor = that.options.itemColors[index];
-                    var cellH = $('<th>'+item+'</th>');
-                    var cellB = $('<td id="'+item+'Cell"></td>');
+                    var cellH = $('<th data-map="'+item+'">'+item+'</th>');
+                    var cellB = $('<td id="'+item+'Cell" data-map="'+item+'"></td>');
+                    var cellB2 = $('<td id="'+item+'CellFun" class="cellFunInput" data-map="'+item+'"></td>');
+                    var fun_head = $('<span><span style="color: mediumblue;">function</span> (value, datum) {</span>');
+                    var fun_foot = $('<span>}</span>');
+                    var fun_foot_res = $('<span class="funResText">&gt <span style="color: mediumblue;">function</span> (<span id="funXInput-'+item+'">x</span>, d) = <span id="funXOuput-'+item+'">x</span></span>');
+                    var fun_input = $('<textarea id="'+item+'" rows="1"></textarea>');
+                    fun_input.val(that.options.default_function);
+                    cellB2.append(fun_head);
+                    cellB2.append(fun_input);
+                    cellB2.append(fun_foot);
+                    cellB2.append(fun_foot_res);
                     cellH.click(function() { that.set_current_mapping_item(item); });
                     cellB.click(function() { that.set_current_mapping_item(item); });
+                    cellB2.click(function() { that.set_current_mapping_item(item); });
                     that.set_color(cellH, itemColor);
                     that.set_color(cellB, itemColor);
+                    that.set_color(cellB2, itemColor);
                     row1.append(cellH);
                     row2.append(cellB);
+                    row3.append(cellB2);
                 });
                 thead.append(row1);
                 tbody.append(row2);
+                tbody.append(row3);
                 this.mappingDomTable.append(thead);
                 this.mappingDomTable.append(tbody);
                 this.fillValueDomInput = $('<input class="form-control" placeholder="0" value="empty">');
@@ -520,6 +536,9 @@
                 this.container.prepend(div);
 
                 this.fillValueDomInput.on('input', function() {
+                    that.update_result_tree();
+                });
+                $('.mappingTable textarea').on('input', function() {
                     that.update_result_tree();
                 });
             },
@@ -560,11 +579,14 @@
                     }
                 }
                 this.mappingDomTable.find('td').addClass('grey');
+                this.mappingDomTable.find('th').addClass('grey');
                 this.mappingDomTable.find('td').removeClass('picking');
-                var cell = this.mappingDomTable.find('#'+name+'Cell');
+                this.mappingDomTable.find('th').removeClass('picking');
+                //var cell = this.mappingDomTable.find('#'+name+'Cell');
+                var cells = this.mappingDomTable.find('[data-map="'+name+'"]');
                 var itemColor = this.itemColors.get(name);
-                cell.removeClass('grey');
-                this.currentPickingCell = cell;
+                cells.removeClass('grey');
+                this.currentPickingCell = this.mappingDomTable.find('#'+name+'Cell');
                 this.currentPicking = name;
             },
 
@@ -581,12 +603,28 @@
                     interaction: false
                 };
 
-                //var result = new $.proxyMapper(this.instructions, this.data, {});
+                var continue_update = this.render_functions_output();
+                if (!continue_update) {
+                    return
+                }
+
+                // collect functions
+                var functions = {};
+                $('.mappingTable textarea').each(function() {
+                    var dom = $(this);
+                    var f_body = dom.val();
+                    functions[dom[0].id] = new Function('value', 'd', f_body);
+                });
+
+                // perform mapping
                 var pm_options = {
-                    fillValue: this.fillValueDomInput.val()
+                    fillValue: this.fillValueDomInput.val(),
+                    functions: functions
                 };
                 var adjustedInstructions = this.adjust_instruction();
                 var result = new $.proxyMapper(adjustedInstructions, this.data, pm_options);
+
+                // destroy and redraw
                 this.treeDivResult[0].innerHTML = '';
                 new TreeFromJson(this.treeDivResult, result, options);
             },
@@ -628,6 +666,40 @@
                 return adjustedInstructions;
             },
 
+            render_functions_output: function() {
+                var that = this;
+                var flag_continue = true;
+                $('.mappingTable textarea').each(function() {
+                    var c_id = $(this).attr('id');
+                    var f_body = $(this).val();
+                    var funXInput = $('#funXInput-'+c_id);
+                    var funXOuput = $('#funXOuput-'+c_id);
+                    // check if valid function
+                    try {
+                        var f = new Function('value', 'd', f_body);
+                        var nodes = that.svg.selectAll(".node circle").filter(
+                            function(d) { return d.picked === c_id;}
+                        );
+                        var x = nodes.data()[0].name;
+                        funXInput.text('"'+that.adjust_text_length(x)+'"');
+                        funXOuput[0].innerHTML = that.adjust_text_length('"'+f(x)+'"');
+                    } catch(err) { // Error
+                        if (err.name == 'SyntaxError') {
+                            flag_continue = false;
+                            funXOuput[0].innerHTML = $('<span class="funOutputError">'+err.name+'</span>')[0].outerHTML;
+                        } else if (err.name == 'TypeError') {
+                            var html = $('<span></span>');
+                            html.append($('<span class="funOutputError">'+'Not picked yet'+'</span>'));
+                            html.append($('<span class="funOutputError">'+err.name+'</span>'));
+                            funXOuput[0].innerHTML = html[0].outerHTML;
+                        } else {
+                            funXOuput[0].innerHTML = $('<span class="funOutputError">'+err.name+'</span>')[0].outerHTML;
+                        }
+                    }
+                });
+                return flag_continue;
+            },
+
             isObject: function(v) {
                 return v !== null && typeof v === 'object';
             },
@@ -636,11 +708,12 @@
                 if (text === undefined || text === '') {
                     return '';
                 }
-                text = text.slice(0, this.options.maxCharDisplay);
+                text = new String(text);
+                var textSliced = text.slice(0, this.options.maxCharDisplay);
                 if (text.length > this.options.maxCharDisplay) {
-                    text += '...';
+                    textSliced += '...';
                 }
-                return text;
+                return textSliced;
             },
 
             create_tree: function(root, linkname, depth, maxDepth, maxWidth) {
