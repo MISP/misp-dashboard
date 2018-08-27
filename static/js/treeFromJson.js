@@ -65,9 +65,11 @@
 
             if (this.options.toBeMapped.length > 0 ) {
                 this.instructions = {};
+                this.prefillData = {};
                 var that = this;
                 this.options.toBeMapped.forEach(function(item, index) {
                     that.instructions[item] = [];
+                    that.prefillData[item] = [];
                     that.itemColors.set(item, that.options.itemColors[index]);
                 });
 
@@ -142,7 +144,7 @@
 
                 var nodeEnterNotArray = nodeEnter.filter(function(d) {
                     var not_add = d.additionalNode === undefined || !d.additionalNode;
-                    var not_arr = d.children === undefined || d.children[0].linkname === undefined;
+                    var not_arr = d.children === undefined || d.children[0].linkname === undefined || d.children[0].linkname !== '';
 		    return  not_add && not_arr;
 		});
                 nodeEnterNotArray
@@ -152,8 +154,8 @@
 
                 var nodeEnterArray = nodeEnter.filter(function(d) {
                     var not_add = d.additionalNode === undefined || !d.additionalNode;
-                    var is_arr = d.children !== undefined && d.children[0].linkname !== undefined;
-		    return  not_add && is_arr;
+                    var not_arr = d.children === undefined || d.children[0].linkname === undefined || d.children[0].linkname !== '';
+		    return  not_add && !not_arr;
                 });
                 nodeEnterArray
 		    .append("rect")
@@ -319,8 +321,8 @@
                 var children = par.children;
                 for (var i=0; i<children.length; i++) {
                     if (children[i].id == c_id) {
-                        return i;
-                        break;
+                        var isObj = child.linkname !== undefined && child.linkname !== '';
+                        return isObj ? child.linkname : i;
                     }
                 }
             },
@@ -356,7 +358,18 @@
                                 return false;
                             }
                             var c1 = d.depth == o_depth;
-                            var c2 = d.parent.id - c_index -1 == d.id;
+                            //var c2 = d.parent.id - c_index -1 == d.id;
+                            var c21 = d.parent.id - c_index -1 == d.id 
+                            
+                            // consider linkname if label has been picked manually
+                            let il_last = that.instructions.labels.length-1;
+                            var labelIsManual = that.instructions.labels[il_last] != 'l';
+                            var c22 = true;
+                            if (labelIsManual) {
+                                c22 = d.linkname === c_index; 
+                            } else {
+                            }
+                            var c2 = c21 || c22;
                             var notClicked = d.id != c_id;
                             return c1 && c2;
                         });
@@ -364,17 +377,73 @@
                     // check if children are leaf
                     var child = clicked.data()[0].children[0];
                     if (that.isObject(child) || Array.isArray(child)) { // children are not leaves
-                        // First child is not a node, should highlight the label instead
-                        // --> simulate label click
-                        let source = clicked.data()[0];
-                        let target = child;
-                        if (target.linkname !== undefined && target.linkname !== '') {
-                            var resL = this.svg.selectAll("path.link").filter(function(d) {
-                                return d.source.id == source.id && d.target.id == target.id;
+                        // First child is not a node, should highlight all labels instead
+
+                        var itemColor = this.itemColors.get(this.currentPicking);
+                        var resRect = this.svg.selectAll(".rectText")
+                            .filter(function(d) {
+                                if (d.depth == 0) {
+                                    return false;
+                                }
+                                var c1 = d.source.depth == o_depth;
+                                return c1;
                             });
-                            that.clickLabel(resL.data()[0]);
+                        var resText = this.svg.selectAll(".linkText")
+                            .filter(function(d) {
+                                if (d.depth == 0) {
+                                    return false;
+                                }
+                                var c1 = d.source.depth == o_depth;
+                                return c1;
+                            });
+                        resRect.data().forEach(function(elem) {
+                            if (elem.picked !== undefined  && elem.picked != '') {
+                                console.log('Possible collision with '+elem.picked);
+                            }
+                            elem.picked = that.currentPicking;
+                        });
+
+
+                        resRect.style('fill', itemColor)
+                        resText.style('fill', that.should_invert_text_color(itemColor) ? 'white' : 'black');
+
+
+                        resCircle = that.svg.selectAll(".node circle")
+                            .filter(function(d) {
+                                return d.parent.depth == clicked.data()[0].depth;
+                                //return d.parent !== null && d.parent.id == clicked.data()[0].id;
+                            });
+                        var nodesData = [];
+                        if(resCircle !== undefined) {
+                            resCircle.data().forEach(function(elem) {
+                                if (elem.picked !== undefined  && elem.picked != '') {
+                                    // alert || repick conflicting ????
+                                    console.log('Possible collision with '+elem.picked);
+                                    //alert('Possible collision with '+elem.picked);
+                                }
+                                elem.picked = that.currentPicking;
+                                nodesData.push(elem);
+                            });
                         }
+
+                        // find all paths
+                        var paths = [];
+                        nodesData.forEach(function(d, i) {
+                            paths[i] = that.find_full_path(d, []);
+                        });
+                        var instructions = this.compute_mapping_instructions(paths);
+                        this.add_instruction(instructions);
                         return;
+
+                        //let source = clicked.data()[0];
+                        //let target = child;
+                        //if (target.linkname !== undefined && target.linkname !== '') {
+                        //    var resL = this.svg.selectAll("path.link").filter(function(d) {
+                        //        return d.source.id == source.id && d.target.id == target.id;
+                        //    });
+                        //    that.clickLabel(resL.data()[0]);
+                        //}
+                        //return;
                     } else { // children are leaves
                         resCircle = that.svg.selectAll(".node circle")
                             .filter(function(d) {
@@ -434,6 +503,7 @@
                 var that = this;
                 var o_depth = d.source.depth;
                 var dest_depth = d.target.depth;
+                var c_label = d.target.linkname;
                 var c_id = d.source.id;
                 var c_index; // no index as the index is the label itself
                 var itemColor = this.itemColors.get(this.currentPicking);
@@ -447,7 +517,8 @@
                             return false;
                         }
                         var c1 = d.source.depth == o_depth;
-                        return c1;
+                        var c2 = d.target.linkname === c_label;
+                        return c1 && c2;
                     });
                 var resText = this.svg.selectAll(".linkText")
                     .filter(function(d) {
@@ -455,7 +526,8 @@
                             return false;
                         }
                         var c1 = d.source.depth == o_depth;
-                        return c1;
+                        var c2 = d.target.linkname === c_label;
+                        return c1 && c2;
                     });
 
 
@@ -473,15 +545,28 @@
 
                 // find all paths
                 var paths = [];
-                var nodes = that.svg.selectAll(".node circle").filter(
-                        function(d) { return d.depth == dest_depth;}
+                var nodesCircle = that.svg.selectAll(".node circle").filter(
+                        function(d) { 
+                            return d.depth == dest_depth && d.linkname == c_label;
+                            //return d.depth == dest_depth;
+                        }
                 );
-
-                nodes.data().forEach(function(d, i) {
+                nodesCircle.data().forEach(function(d, i) {
                     paths[i] = that.find_full_path(d, []);
                 });
-                var instructions = this.compute_mapping_instructions(paths);
-                this.add_instruction(instructions);
+                var nodesRect = that.svg.selectAll(".node rect").filter(
+                        function(d) {
+                            return d.depth == dest_depth && d.linkname == c_label;
+                            //return d.depth == dest_depth;
+                        }
+                );
+                nodesRect.data().forEach(function(d, i) {
+                    paths[i] = that.find_full_path(d, []);
+                });
+
+                //var instructions = this.compute_mapping_instructions(paths);
+                //this.add_instruction(instructions);
+                this.add_prefill_data([c_label]);
 
             },
 
@@ -510,7 +595,7 @@
                     elem.picked = '';
                 });
 
-                this.add_instruction('');
+                this.add_instruction([]);
             },
 
 
@@ -524,7 +609,7 @@
                         if (prevVal === null) {
                             prevVal = arr[i];
                         } else {
-                            if (prevVal != arr[i]) { // value different, nood to loop over them
+                            if (prevVal != arr[i]) { // value different, need to loop over them
                                 instruction = 'l'
                                 break;
                             }
@@ -617,7 +702,7 @@
             set_current_mapping_item: function(name) {
                 if (name === undefined) {
                     for (var entry of this.options.toBeMapped) {
-                        if (this.instructions[entry].length == 0) {
+                        if (this.instructions[entry].length == 0 && this.prefillData[entry].length == 0) {
                             name = entry;
                             break;
                         }
@@ -645,6 +730,13 @@
                 this.update_result_tree();
             },
 
+            add_prefill_data: function(data) {
+                this.prefillData[this.currentPicking] = data;
+                this.currentPickingCell.text(data.toString());
+                this.set_current_mapping_item();
+                this.update_result_tree();
+            },
+
             // destroy and redraw
             update_result_tree: function() {
                 var options = {
@@ -661,13 +753,15 @@
                 $('.mappingTable textarea').each(function() {
                     var dom = $(this);
                     var f_body = dom.val();
-                    functions[dom[0].id] = new Function('value', 'd', f_body);
+                    functions[dom[0].id] = new Function('value', 'datum', f_body);
                 });
 
                 // perform mapping
                 var pm_options = {
                     fillValue: this.fillValueDomInput.val(),
-                    functions: functions
+                    functions: functions,
+                    datum: this.root,
+                    prefillData: this.prefillData
                 };
                 var adjustedInstructions = this.adjust_instruction();
                 var result = new $.proxyMapper(adjustedInstructions, this.data, pm_options);
@@ -687,13 +781,21 @@
                 // label & value
                 if (l.length != 0 && v.length != 0) {
                     var smaller_array = v.length < l.length ? v : l;
+                    var has_matched = false;
                     for (var i=0; i<smaller_array.length; i++) {
                         if (v[i] != l[i]) { 
                             matchingIndex = i-1;
+                            has_matched = true;
                             break;
                         }
                     }
-                    adjustedInstructions.values[matchingIndex] = 'i1';
+                    // in case no match, last one should be registered
+                    matchingIndex = has_matched ? matchingIndex : smaller_array.length-1;
+                    //adjustedInstructions.values[matchingIndex] = 'i1,l';
+                    //adjustedInstructions.values[matchingIndex] = 'i1,'+adjustedInstructions.values[matchingIndex];
+                    let inst = adjustedInstructions.values[matchingIndex];
+                    inst = inst == 'l' ? 'l' : '{'+inst+'}';
+                    adjustedInstructions.values[matchingIndex] = 'i1,'+inst;
                     adjustedInstructions.index['i1'] = adjustedInstructions.labels.slice(matchingIndex+1);
                 }
 
@@ -707,8 +809,18 @@
                             break;
                         }
                     }
-                    adjustedInstructions.values[matchingIndex] = 'i2';
+                    //adjustedInstructions.values[matchingIndex] = 'i2,l';
+                    adjustedInstructions.values[matchingIndex] = 'i2,'+adjustedInstructions.values[matchingIndex];
                     adjustedInstructions.index['i2'] = adjustedInstructions.dates.slice(matchingIndex+1);
+
+                    // add '' at the end for value only
+                    var end_i = adjustedInstructions.values.length-1;
+                    var last_i = adjustedInstructions.values[end_i];
+                    last_i = last_i.split(',');
+                    last_i = last_i.length == 2 ? last_i[1] : last_i[0];
+                    if (last_i == 'l') {
+                        adjustedInstructions.values[end_i+1] = '';
+                    }
                 }
 
                 return adjustedInstructions;
@@ -724,14 +836,21 @@
                     var funXOuput = $('#funXOuput-'+c_id);
                     // check if valid function
                     try {
-                        var f = new Function('value', 'd', f_body);
-                        var nodes = that.svg.selectAll(".node circle").filter(
+                        var f = new Function('value', 'datum', f_body);
+                        var nodes = that.svg.selectAll(".node, .rectText").filter(
                             function(d) { return d.picked === c_id;}
                         );
-                        var x = nodes.data()[0].name;
+                        // fetch first name occurence
+                        var d = nodes.data()[0];
+                        var x;
+                        if (d.source !== undefined && d.target !== undefined) { // is a link label
+                            x = d.target.linkname;
+                        } else {
+                            x = d.name;
+                        }
                         funXInput.text('"'+that.adjust_text_length(x)+'"');
                         funXInput[0].innerHTML = '"'+that.adjust_text_length(x)+'"';
-                        funXOuput[0].innerHTML = that.adjust_text_length('"'+f(x)+'"');
+                        funXOuput[0].innerHTML = that.adjust_text_length('"'+f(x, d)+'"');
                     } catch(err) { // Error
                         if (err.name == 'SyntaxError') {
                             flag_continue = false;
@@ -784,7 +903,8 @@
                     if (root.length > maxWidth) {
                         var addNode = {};
                         var remaining = root.length - maxWidth;
-                        addNode.name = ''+remaining+'...';
+                        //addNode.name = ''+remaining+'...';
+                        addNode.name = '['+remaining+' more]';
                         addNode.parent = null;
                         addNode.additionalNode = true;
                         child['children'].push(addNode);
@@ -805,7 +925,8 @@
                     if (Object.keys(root).length > maxWidth) {
                         var addNode = {};
                         var remaining = root.length - maxWidth;
-                        addNode.name = ''+remaining+' ...';
+                        //addNode.name = ''+remaining+' ...';
+                        addNode.name = '['+remaining+' more]';
                         addNode.parent = null;
                         addNode.additionalNode = true;
                         child.children.push(addNode);
