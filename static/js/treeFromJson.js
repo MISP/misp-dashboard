@@ -119,7 +119,6 @@
                 }
 
                 // Normalize for fixed-depth. (+ consider linkname)
-                //nodes.forEach(function(d) { d.y = d.depth * 100; });
                 nodes.forEach(function(d) { 
                     let offset = maxSizePerDepth[d.depth]*(that.options.maxCharDisplay-2);
                     d.y = d.depth * 100 + offset;
@@ -142,23 +141,36 @@
                     nodeEnter.attr("class", "node nodeNoInteraction");
                 }
 
-                var nodeEnterNotArray = nodeEnter.filter(function(d) {
+                var nodeEnterLeaf = nodeEnter.filter(function(d) {
+                    var not_add = d.additionalNode === undefined || !d.additionalNode;
+                    var is_leaf = d.children === undefined || d.children.length == 0;
+                    return  not_add && is_leaf;
+                });
+                var nodeEnterObject = nodeEnter.filter(function(d) {
                     var not_add = d.additionalNode === undefined || !d.additionalNode;
                     var not_arr = d.children === undefined || d.children[0].linkname === undefined || d.children[0].linkname !== '';
-		    return  not_add && not_arr;
-		});
-                nodeEnterNotArray
-		    .append("circle")
-                    .attr("r", 1e-6)
-                    .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
-
+                    var is_obj = d.children !== undefined && d.children[0].linkname !== undefined && d.children[0].linkname !== '';
+                    return  not_add && not_arr && is_obj;
+                });
                 var nodeEnterArray = nodeEnter.filter(function(d) {
                     var not_add = d.additionalNode === undefined || !d.additionalNode;
                     var not_arr = d.children === undefined || d.children[0].linkname === undefined || d.children[0].linkname !== '';
-		    return  not_add && !not_arr;
+                    return  not_add && !not_arr;
                 });
+                
+                // svg style
+                nodeEnterLeaf
+                    .append("circle")
+                    .attr("r", 1e-6)
+                    .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+                nodeEnterObject
+                    .append("polygon")
+                    .attr("points", this.getPointsHexagon(0))
+                    .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
                 nodeEnterArray
-		    .append("rect")
+                    .append("rect")
                     .attr("width", 0)
                     .attr("height", 0)
                     .attr("y", 0)
@@ -181,6 +193,9 @@
                     .attr("r", 10)
                     .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
 
+                nodeUpdate.select("polygon")
+                    .attr("points", this.getPointsHexagon(11.5))
+
                 nodeUpdate.select("rect")
                     .attr("width", 20)
                     .attr("height", 20)
@@ -197,6 +212,9 @@
 
                 nodeExit.select("circle")
                     .attr("r", 1e-6);
+
+                nodeExit.select("polygon")
+                    .attr("points", this.getPointsHexagon(0));
 
                 nodeExit.select("rect")
                     .attr("width", 0)
@@ -351,6 +369,7 @@
                 // select all nodes matching the clicked element
                 var resCircle;
                 var resRect;
+                var resHexa;
                 if (clicked.data()[0].children === undefined) { // is leaf
                     resCircle = that.svg.selectAll(".node circle")
                         .filter(function(d) {
@@ -358,22 +377,27 @@
                                 return false;
                             }
                             var c1 = d.depth == o_depth;
-                            //var c2 = d.parent.id - c_index -1 == d.id;
-                            var c21 = d.parent.id - c_index -1 == d.id 
+                            var c2_childIndexMatch = d.parent.id - c_index -1 == d.id 
                             
+                            // is label
+                            var c2_isLabel = !Number.isInteger(c_index) && (typeof c_index === 'string');
+
                             // consider linkname if label has been picked manually
                             let il_last = that.instructions.labels.length-1;
                             var labelIsManual = that.instructions.labels[il_last] != 'l';
-                            var c22 = true;
+                            var c2_manualLabelMatch = true;
                             if (labelIsManual) {
-                                c22 = d.linkname === c_index; 
+                                c2_manualLabelMatch = d.linkname === c_index; 
                             } else {
+                                //c2_manualLabelMatch = false;
                             }
-                            var c2 = c21 || c22;
+
+                            var c2 = (c2_childIndexMatch && !c2_isLabel) || (c2_manualLabelMatch && c2_isLabel);
                             var notClicked = d.id != c_id;
                             return c1 && c2;
                         });
-                } else {
+
+                } else { // children may be leaves
                     // check if children are leaf
                     var child = clicked.data()[0].children[0];
                     if (that.isObject(child) || Array.isArray(child)) { // children are not leaves
@@ -408,10 +432,13 @@
                         resText.style('fill', that.should_invert_text_color(itemColor) ? 'white' : 'black');
 
 
-                        resCircle = that.svg.selectAll(".node circle")
+                        resCircle = that.svg.selectAll(".node polygon, .node circle")
                             .filter(function(d) {
-                                return d.parent.depth == clicked.data()[0].depth;
-                                //return d.parent !== null && d.parent.id == clicked.data()[0].id;
+                                if (d.parent === undefined || d.parent === null) {
+                                    return d.id == clicked.data()[0].id;
+                                } else {
+                                    return d.parent.depth == clicked.data()[0].depth;
+                                }
                             });
                         var nodesData = [];
                         if(resCircle !== undefined) {
@@ -435,15 +462,6 @@
                         this.add_instruction(instructions);
                         return;
 
-                        //let source = clicked.data()[0];
-                        //let target = child;
-                        //if (target.linkname !== undefined && target.linkname !== '') {
-                        //    var resL = this.svg.selectAll("path.link").filter(function(d) {
-                        //        return d.source.id == source.id && d.target.id == target.id;
-                        //    });
-                        //    that.clickLabel(resL.data()[0]);
-                        //}
-                        //return;
                     } else { // children are leaves
                         resCircle = that.svg.selectAll(".node circle")
                             .filter(function(d) {
@@ -618,6 +636,12 @@
                     instruction = instruction !== null ? instruction : prevVal;
                     mapping.unshift(instruction);
                 }
+
+                // if no path found, we are at the root -> need to iterate
+                if (mapping.length == 0) {
+                    mapping.push('l');
+                }
+
                 return mapping;
             },
             
@@ -778,6 +802,14 @@
                 var l = this.instructions.labels;
                 var v = this.instructions.values;
                 var d = this.instructions.dates;
+
+                // convert integer index into {index}
+                for (var i=0; i<v.length; i++) {
+                    if (Number.isInteger(v[i])) {
+                        adjustedInstructions.values[i] = '{'+v[i]+'}';
+                    }
+                }
+
                 // label & value
                 if (l.length != 0 && v.length != 0) {
                     var smaller_array = v.length < l.length ? v : l;
@@ -789,10 +821,9 @@
                             break;
                         }
                     }
+
                     // in case no match, last one should be registered
                     matchingIndex = has_matched ? matchingIndex : smaller_array.length-1;
-                    //adjustedInstructions.values[matchingIndex] = 'i1,l';
-                    //adjustedInstructions.values[matchingIndex] = 'i1,'+adjustedInstructions.values[matchingIndex];
                     let inst = adjustedInstructions.values[matchingIndex];
                     inst = inst == 'l' ? 'l' : '{'+inst+'}';
                     adjustedInstructions.values[matchingIndex] = 'i1,'+inst;
@@ -809,7 +840,6 @@
                             break;
                         }
                     }
-                    //adjustedInstructions.values[matchingIndex] = 'i2,l';
                     adjustedInstructions.values[matchingIndex] = 'i2,'+adjustedInstructions.values[matchingIndex];
                     adjustedInstructions.index['i2'] = adjustedInstructions.dates.slice(matchingIndex+1);
 
@@ -903,7 +933,6 @@
                     if (root.length > maxWidth) {
                         var addNode = {};
                         var remaining = root.length - maxWidth;
-                        //addNode.name = ''+remaining+'...';
                         addNode.name = '['+remaining+' more]';
                         addNode.parent = null;
                         addNode.additionalNode = true;
@@ -924,8 +953,7 @@
                     }
                     if (Object.keys(root).length > maxWidth) {
                         var addNode = {};
-                        var remaining = root.length - maxWidth;
-                        //addNode.name = ''+remaining+' ...';
+                        var remaining = Object.keys(root).length - maxWidth;
                         addNode.name = '['+remaining+' more]';
                         addNode.parent = null;
                         addNode.additionalNode = true;
@@ -936,6 +964,18 @@
                     child.name = root;
                 }
                 return child;
+            },
+
+            getPointsHexagon: function(size) {
+                let pts = [
+                    0+','+size,
+                    size*0.87 + ',' + size*0.5,
+                    size*0.87 + ',' + -size*0.5,
+                    0 + ',' + -size,
+                    -size*0.87 + ',' + -size*0.5,
+                    -size*0.87 + ',' + size*0.5,
+                ];
+                return pts.join(', ');
             },
 
             syntaxHighlightJson: function(json) {
