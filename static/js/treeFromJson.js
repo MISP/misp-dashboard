@@ -31,19 +31,20 @@
             this.data = data;
             this.treeData = [this.create_tree(data, '', this.options.treeNodes.depth, this.options.treeNodes.depth, this.options.treeNodes.width)];
 
-            this.letterWidth = 8;
+            this._letterWidth = 8; // width to estimate the width space taken by a letter
             this.treeDiv = $('<div class="treeDiv panel panel-default panel-body"></div>');
             this.treeDiv.css('max-width', this.options.width+this.options.margin.left+this.options.margin.right+'px');
             this.container.append(
                 $('<div></div>').append(this.treeDiv)
             );
+
             this.width = this.options.width - this.options.margin.right - this.options.margin.left,
             this.height = this.options.height - this.options.margin.top - this.options.margin.bottom;
 
-            this.itemColors = new Map();
-            this.mappingDomTable;
-            this.currentPicking;
-            this.currentPickingCell;
+            this.itemColors = new Map(); // the map from item to color
+            this.mappingDomTable; // link to the jquery object of the mapping table
+            this.currentPicking; // the selected entry to be picked
+            this.currentPickingCell; // link th the jquery object of the table's cell being picked
 
             this.i = 0
             this.root;
@@ -83,6 +84,8 @@
             this.treeDiv.append(this.jsonDivIn);
             var j = this.syntaxHighlightJson(this.data);
             this.jsonDivIn.html(j);
+
+            // append result tree if interaction mode is on
             if (this.options.interaction) {
                 this.treeDivResult = $('<div class="resultTree"></div>');
                 this.jsonDivOut = $('<div class="jsonDiv"></div>');
@@ -92,7 +95,6 @@
                 );
                 this.update_result_tree();
             }
-
             this.update(this.root);
         }
 
@@ -251,7 +253,7 @@
                     .attr("rx", 5)
                     .attr("ry", 5)
                     .attr("transform", function(d) {
-                        let xoffset = d.target.linkname !== undefined ? that.letterWidth*that.adjust_text_length(d.target.linkname).length/2 : 0;
+                        let xoffset = d.target.linkname !== undefined ? that._letterWidth*that.adjust_text_length(d.target.linkname).length/2 : 0;
                         let yoffset = 10;
                         return "translate(" +
                             (d.source.y-xoffset) + "," + 
@@ -276,7 +278,7 @@
 
                 // update rectangle size based on text
                 linkEnter.selectAll("rect")
-                    .attr("width", function(d) { return d.target.linkname !== undefined ? that.letterWidth*that.adjust_text_length(d.target.linkname).length : 0; })
+                    .attr("width", function(d) { return d.target.linkname !== undefined ? that._letterWidth*that.adjust_text_length(d.target.linkname).length : 0; })
                     .attr("height", 22)
 
                 // setup onclick on link label
@@ -298,7 +300,7 @@
                     .style("opacity", 0.85)
                     .attr("d", this.diagonal)
                     .attr("transform", function(d){
-                        let xoffset = d.target.linkname !== undefined ? that.letterWidth*that.adjust_text_length(d.target.linkname).length/2 : 0;
+                        let xoffset = d.target.linkname !== undefined ? that._letterWidth*that.adjust_text_length(d.target.linkname).length/2 : 0;
                         let yoffset = 10;
                         return "translate(" +
                             ((d.source.y + d.target.y)/2-xoffset) + "," + 
@@ -741,7 +743,6 @@
                 this.mappingDomTable.find('th').addClass('grey');
                 this.mappingDomTable.find('td').removeClass('picking');
                 this.mappingDomTable.find('th').removeClass('picking');
-                //var cell = this.mappingDomTable.find('#'+name+'Cell');
                 var cells = this.mappingDomTable.find('[data-map="'+name+'"]');
                 var itemColor = this.itemColors.get(name);
                 cells.removeClass('grey');
