@@ -1,0 +1,132 @@
+.treeDiv {
+    display: inline-block;
+}
+
+.resultTree {
+    vertical-align: top;
+    display: inline-block;
+}
+
+.node {
+    cursor: pointer;
+}
+
+.node.nodeNoInteraction {
+    cursor: default;
+}
+
+.node circle {
+    fill: #fff;
+    stroke: lightgrey;
+    stroke-width: 3px;
+}
+
+.node rect {
+    fill: #fff;
+    stroke: lightgrey;
+    stroke-width: 3px;
+}
+
+.node polygon {
+    fill: #fff;
+    stroke: lightgrey;
+    stroke-width: 3px;
+}
+
+.node text {
+    font: 12px sans-serif;
+}
+
+.link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 2px;
+}
+
+.mappingTable {
+    display: inline-table !important;
+    cursor: pointer;
+    min-width: 50%;
+    max-width: 75%;
+}
+
+.mappingTableDivConfig {
+    display: inline-block;
+    position: absolute;
+    margin-left: 10px;
+    margin-top: 10px;
+}
+
+
+.mappingTable td {
+    height: 37px;
+    font-size: medium;
+    border-left: 1px solid #ddd;
+}
+
+td.grey {
+    filter: opacity(60%) grayscale(30%);
+}
+
+th.grey {
+    filter: opacity(60%) grayscale(30%);
+}
+
+.mappingTable td.cellFunInput {
+    padding: 0px;
+    font-family: Consolas,"courier new";
+}
+
+.cellFunInput textarea {
+    color: black;
+    width: 100%;
+}
+
+.cellFunInput > span {
+    display: block;
+}
+
+.funOutputError {
+    color: red;
+    background: white;
+    padding: 3px;
+    border-radius: 4px;
+    margin-right: 5px;
+}
+
+.funResText {
+    font-size: 12px;
+}
+
+.linkText {
+    /*font-size: 18px;*/
+    fill: #000;
+}
+
+.rectText {
+    fill: #f5f5f5;
+    stroke: #ddd;
+    stroke-width: 2;
+}
+
+.linkLabel {
+    cursor: pointer;
+}
+
+.json_key {
+    color: #690;
+    font-weight: bold;
+}
+
+.json_string, .json_boolean, .json_number {
+    color: #905;
+}
+
+.json_null {
+    color: #a8a8a8;
+}
+
+.jsonDiv {
+    overflow: scroll;
+}
+
