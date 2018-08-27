@@ -13,7 +13,7 @@
             this.container = container;
             this._default_options = {
                 margin: {top: 20, right: 20, bottom: 20, left: 20},
-                width: container.width() > 800 ? container.width()/2 : 800,
+                width: container.width() > 800 ? container.width()/2-24 : 800,
                 height: container.height() > 800 ? container.height()/2 : 800,
                 treeNodes : {
                     width: 3,
@@ -33,6 +33,7 @@
 
             this.letterWidth = 8;
             this.treeDiv = $('<div class="treeDiv panel panel-default panel-body"></div>');
+            this.treeDiv.css('max-width', this.options.width+this.options.margin.left+this.options.margin.right+'px');
             this.container.append(
                 $('<div></div>').append(this.treeDiv)
             );
@@ -119,9 +120,10 @@
                 }
 
                 // Normalize for fixed-depth. (+ consider linkname)
+                var depthSepa = maxSizePerDepth.length*100 < this.options.width ? 100 : this.options.width / maxSizePerDepth.length;
                 nodes.forEach(function(d) { 
                     let offset = maxSizePerDepth[d.depth]*(that.options.maxCharDisplay-2);
-                    d.y = d.depth * 100 + offset;
+                    d.y = d.depth * depthSepa + offset;
                 });
 
                 // Update the nodes…
@@ -764,7 +766,9 @@
             // destroy and redraw
             update_result_tree: function() {
                 var options = {
-                    interaction: false
+                    interaction: false,
+                    width: this.width,
+                    height: this.height
                 };
 
                 var continue_update = this.render_functions_output();
