@@ -13,7 +13,7 @@
             this.container = container;
             this._default_options = {
                 margin: {top: 20, right: 20, bottom: 20, left: 20},
-                width: container.width() > 800 ? container.width()/2-24 : 800,
+                width: container.width() > 800 ? container.width()/2-32 : 800,
                 height: container.height() > 800 ? container.height()/2 : 800,
                 treeNodes : {
                     width: 3,
@@ -29,17 +29,17 @@
             this.options = $.extend({}, this._default_options, options);
 
             this.data = data;
-            this.treeData = [this.create_tree(data, '', this.options.treeNodes.depth, this.options.treeNodes.depth, this.options.treeNodes.width)];
+            this.treeData = [this.generate_d3_tree_from_json(data, '', this.options.treeNodes.depth, this.options.treeNodes.depth, this.options.treeNodes.width)];
 
             this._letterWidth = 8; // width to estimate the width space taken by a letter
+            this.width = this.options.width - this.options.margin.right - this.options.margin.left,
+            this.height = this.options.height - this.options.margin.top - this.options.margin.bottom;
+
             this.treeDiv = $('<div class="treeDiv panel panel-default panel-body"></div>');
             this.treeDiv.css('max-width', this.options.width+this.options.margin.left+this.options.margin.right+'px');
             this.container.append(
-                $('<div></div>').append(this.treeDiv)
+                $('<div class="treeContainer"></div>').append(this.treeDiv)
             );
-
-            this.width = this.options.width - this.options.margin.right - this.options.margin.left,
-            this.height = this.options.height - this.options.margin.top - this.options.margin.bottom;
 
             this.itemColors = new Map(); // the map from item to color
             this.mappingDomTable; // link to the jquery object of the mapping table
@@ -82,7 +82,7 @@
 
             this.jsonDivIn = $('<div class="jsonDiv panel panel-default panel-body"></div>');
             this.treeDiv.append(this.jsonDivIn);
-            var j = this.syntaxHighlightJson(this.data);
+            var j = this.util.syntaxHighlightJson(this.data);
             this.jsonDivIn.html(j);
 
             // append result tree if interaction mode is on
@@ -90,7 +90,8 @@
                 this.treeDivResult = $('<div class="resultTree"></div>');
                 this.jsonDivOut = $('<div class="jsonDiv"></div>');
                 this.treeDivResult.append(this.jsonDivOut);
-                this.container.children().append(
+                var child = this.container.find('.treeContainer');
+                child.append(
                     this.treeDivResult
                 );
                 this.update_result_tree();
@@ -142,7 +143,7 @@
                     })
                     .on("click", function(d, i) { that.click(d, i, this); });
                 } else {
-                    nodeEnter.attr("class", "node nodeNoInteraction");
+                    nodeEnter.attr("class", "node noInteraction");
                 }
 
                 var nodeEnterLeaf = nodeEnter.filter(function(d) {
@@ -170,7 +171,7 @@
 
                 nodeEnterObject
                     .append("polygon")
-                    .attr("points", this.getPointsHexagon(0))
+                    .attr("points", this.util.getPointsHexagon(0))
                     .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
 
                 nodeEnterArray
@@ -184,7 +185,7 @@
                     .attr("x", function(d) { return d.children || d._children ? -13 : 13; })
                     .attr("dy", ".35em")
                     .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
-                    .text(function(d) { return d.name; })
+                    .text(function(d) { return that.adjust_text_length(d.name); })
                     .style("fill-opacity", 1e-6);
 
 
@@ -198,7 +199,7 @@
                     .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
 
                 nodeUpdate.select("polygon")
-                    .attr("points", this.getPointsHexagon(11.5))
+                    .attr("points", this.util.getPointsHexagon(11.5))
 
                 nodeUpdate.select("rect")
                     .attr("width", 20)
@@ -218,7 +219,7 @@
                     .attr("r", 1e-6);
 
                 nodeExit.select("polygon")
-                    .attr("points", this.getPointsHexagon(0));
+                    .attr("points", this.util.getPointsHexagon(0));
 
                 nodeExit.select("rect")
                     .attr("width", 0)
@@ -240,13 +241,13 @@
                         let u_id = d.source.id + '-' + d.target.id;
                         return u_id;
                     });
+
                 linkEnter.append("path")
                     .attr("class", "link")
                     .attr("d", function(d) {
                         var o = {x: source.x0, y: source.y0};
                         return that.diagonal({source: o, target: o});
                     });
-
 
                 linkEnter.append('rect')
                     .attr("class", "rectText linkLabel")
@@ -404,7 +405,7 @@
                 } else { // children may be leaves
                     // check if children are leaf
                     var child = clicked.data()[0].children[0];
-                    if (that.isObject(child) || Array.isArray(child)) { // children are not leaves
+                    if (that.is_object(child) || Array.isArray(child)) { // children are not leaves
                         // First child is not a node, should highlight all labels instead
 
                         var itemColor = this.itemColors.get(this.currentPicking);
@@ -904,7 +905,7 @@
                 return flag_continue;
             },
 
-            isObject: function(v) {
+            is_object: function(v) {
                 return v !== null && typeof v === 'object';
             },
 
@@ -920,7 +921,7 @@
                 return textSliced;
             },
 
-            create_tree: function(root, linkname, depth, maxDepth, maxWidth) {
+            generate_d3_tree_from_json: function(root, linkname, depth, maxDepth, maxWidth) {
                 if (depth == 0) {
                     return;
                 }
@@ -929,22 +930,16 @@
                     linkname: linkname
                 };
 
+                var remaining = 0;
                 if (Array.isArray(root)) {
                     child.children = [];
 
                     for (var node of root.slice(0, maxWidth)) {
-                        child.children.push(this.create_tree(node, '', depth-1, maxDepth, maxWidth));
+                        child.children.push(this.generate_d3_tree_from_json(node, '', depth-1, maxDepth, maxWidth));
                     }
-                    if (root.length > maxWidth) {
-                        var addNode = {};
-                        var remaining = root.length - maxWidth;
-                        addNode.name = '['+remaining+' more]';
-                        addNode.parent = null;
-                        addNode.additionalNode = true;
-                        child['children'].push(addNode);
-                    }
+                    remaining = root.length - maxWidth;
 
-                } else if (this.isObject(root)) {
+                } else if (this.is_object(root)) {
                     child.children = [];
 
                     var i = 0;
@@ -953,57 +948,67 @@
                             break;
                         }
                         var node = root[k];
-                        child.children.push(this.create_tree(node, k, depth-1, maxDepth, maxWidth));
+                        child.children.push(this.generate_d3_tree_from_json(node, k, depth-1, maxDepth, maxWidth));
                         i++;
                     }
-                    if (Object.keys(root).length > maxWidth) {
-                        var addNode = {};
-                        var remaining = Object.keys(root).length - maxWidth;
-                        addNode.name = '['+remaining+' more]';
-                        addNode.parent = null;
-                        addNode.additionalNode = true;
-                        child.children.push(addNode);
-                    }
+                    remaining = Object.keys(root).length - maxWidth;
 
                 } else {
                     child.name = root;
                 }
+
+                // add false remaining node
+                if (remaining > 0) {
+                    var addNode = {};
+                    addNode.parent = null;
+                    addNode.additionalNode = true;
+                    var remaining = root.length - maxWidth;
+                    addNode.name = '['+remaining+' more]';
+                    child.children.push(addNode);
+                }
                 return child;
             },
 
-            getPointsHexagon: function(size) {
-                let pts = [
-                    0+','+size,
-                    size*0.87 + ',' + size*0.5,
-                    size*0.87 + ',' + -size*0.5,
-                    0 + ',' + -size,
-                    -size*0.87 + ',' + -size*0.5,
-                    -size*0.87 + ',' + size*0.5,
-                ];
-                return pts.join(', ');
-            },
+            util: {
 
-            syntaxHighlightJson: function(json) {
-                if (typeof json == 'string') {
-                    json = JSON.parse(json);
-                }
-                json = JSON.stringify(json, undefined, 2);
-                json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(?:\r\n|\r|\n)/g, '<br>').replace(/ /g, '&nbsp;');
-                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-                        var cls = 'json_number';
-                        if (/^"/.test(match)) {
-                            if (/:$/.test(match)) {
-                                cls = 'json_key';
-                            } else {
-                                cls = 'json_string';
+                syntaxHighlightJson: function(json) {
+                    if (typeof json == 'string') {
+                        json = JSON.parse(json);
+                    }
+                    json = JSON.stringify(json, undefined, 2);
+                    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(?:\r\n|\r|\n)/g, '<br>').replace(/ /g, '&nbsp;');
+                    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                            var cls = 'json_number';
+                            if (/^"/.test(match)) {
+                                if (/:$/.test(match)) {
+                                    cls = 'json_key';
+                                } else {
+                                    cls = 'json_string';
+                                }
+                            } else if (/true|false/.test(match)) {
+                                cls = 'json_boolean';
+                            } else if (/null/.test(match)) {
+                                cls = 'json_null';
                             }
-                        } else if (/true|false/.test(match)) {
-                            cls = 'json_boolean';
-                        } else if (/null/.test(match)) {
-                            cls = 'json_null';
-                        }
-                        return '<span class="' + cls + '">' + match + '</span>';
-                });
+                            return '<span class="' + cls + '">' + match + '</span>';
+                    });
+                },
+
+                getPointsHexagon: function(size) {
+                    // sin(pi/6) = 0.87, cos(pi/6) ~= 0.5
+                    let pts = [
+                        0+','+size,
+                        size*0.87 + ',' + size*0.5,
+                        size*0.87 + ',' + -size*0.5,
+                        0 + ',' + -size,
+                        -size*0.87 + ',' + -size*0.5,
+                        -size*0.87 + ',' + size*0.5,
+                    ];
+                    return pts.join(', ');
+                },
+
+
+
             }
 
 

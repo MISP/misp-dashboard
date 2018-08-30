@@ -11,7 +11,7 @@
     cursor: pointer;
 }
 
-.node.nodeNoInteraction {
+.noInteraction {
     cursor: default;
 }
 
@@ -43,9 +43,10 @@
     stroke-width: 2px;
 }
 
-.mappingTable {
+table.mappingTable {
     display: inline-table !important;
     cursor: pointer;
+    margin-bottom: 5px;
     min-width: 50%;
     max-width: 75%;
 }
