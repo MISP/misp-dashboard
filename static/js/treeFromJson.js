@@ -65,6 +65,7 @@
             this.root.x0 = this.height / 2;
             this.root.y0 = 0;
 
+            // mapping table related
             if (this.options.toBeMapped.length > 0 ) {
                 this.instructions = {};
                 this.prefillData = {};
@@ -117,7 +118,7 @@
                     let size = d.linkname !== undefined ? text : 0;
                     maxSizePerDepth[d.depth] = size > m ? size : m;
                 });
-                // add previous level together
+                // add incrementally previous level together
                 for (var i=1; i<maxSizePerDepth.length; i++) {
                     maxSizePerDepth[i] += maxSizePerDepth[i-1];
                 }
@@ -133,10 +134,12 @@
                 var node = this.svg.selectAll("g.node")
                         .data(nodes, function(d) { return d.id || (d.id = ++that.i); });
 
+                /* NODE ENTER */
                 // Enter any new nodes at the parent's previous 
                 var nodeEnter = node.enter().append("g")
                     .attr("class", "node")
                     .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; });
+                // register on click and set correct css class
                 if (this.options.interaction) {
                     nodeEnter.filter(function(d) {
                         return d.additionalNode === undefined || !d.additionalNode;
@@ -163,7 +166,6 @@
                     return  not_add && !not_arr;
                 });
                 
-                // svg style
                 nodeEnterLeaf
                     .append("circle")
                     .attr("r", 1e-6)
@@ -189,6 +191,7 @@
                     .style("fill-opacity", 1e-6);
 
 
+                /* NODE UPDATE */
                 // Transition nodes to their new position.
                 var nodeUpdate = node.transition()
                     .duration(this.options.duration)
@@ -209,6 +212,7 @@
                 nodeUpdate.select("text")
                     .style("fill-opacity", 1);
 
+                /* NODE EXIT */
                 // Transition exiting nodes to the parent's new position.
                 var nodeExit = node.exit().transition()
                     .duration(this.options.duration)
@@ -229,10 +233,11 @@
                 nodeExit.select("text")
                     .style("fill-opacity", 1e-6);
 
-                // Update the links...
+                // Update the links
                 var link = this.svg.selectAll("path.link")
                     .data(links, function(d) { return d.target.id; });
 
+                /* LINK ENTER */
                 // Enter any new links at the parent's previous position.
                 var linkEnter = link.enter()
                     .insert("g", "g")
@@ -261,6 +266,7 @@
                             (d.source.x-yoffset) + ")";
                         })
                     .style("opacity", 1e-6);
+
                 linkEnter.append('text')
                     .attr("class", "linkText linkLabel")
                     .attr("font-family", "Arial, Helvetica, sans-serif")
@@ -289,7 +295,7 @@
                     });
                 }
 
-
+                /* LINK UPDATE */
                 // Transition links to their new position.
                 var linkUpdate = link;
                 linkUpdate.select('path').transition()
@@ -319,6 +325,7 @@
                         }
                     );
                     
+                /* LINK EXIT */
                 // Transition exiting nodes to the parent's new position.
                 link.exit().select('path').transition()
                     .duration(this.options.duration)
@@ -335,6 +342,7 @@
                 });
             },
 
+            // Given a child, find its index in its parent array (or object key)
             find_child_index: function(child) {
                 var c_id = child.id;
                 var par = child.parent;
@@ -350,6 +358,7 @@
                 }
             },
 
+            // Given a node, find its path to the root
             find_full_path: function(d, res) {
                 if (d.parent) {
                     var index = this.find_child_index(d);
@@ -372,9 +381,11 @@
                 this.reset_selected();
 
                 // select all nodes matching the clicked element
+                // the selection is based on depth/index/object key
                 var resCircle;
                 var resRect;
                 var resHexa;
+
                 if (clicked.data()[0].children === undefined) { // is leaf
                     resCircle = that.svg.selectAll(".node circle")
                         .filter(function(d) {
@@ -393,8 +404,6 @@
                             var c2_manualLabelMatch = true;
                             if (labelIsManual) {
                                 c2_manualLabelMatch = d.linkname === c_index; 
-                            } else {
-                                //c2_manualLabelMatch = false;
                             }
 
                             var c2 = (c2_childIndexMatch && !c2_isLabel) || (c2_manualLabelMatch && c2_isLabel);
@@ -402,22 +411,15 @@
                             return c1 && c2;
                         });
 
-                } else { // children may be leaves
-                    // check if children are leaf
+                } else { // not leaf but children may be leaves
+
                     var child = clicked.data()[0].children[0];
-                    if (that.is_object(child) || Array.isArray(child)) { // children are not leaves
+                    var children_are_in_array = Array.isArray(child.children);
+                    var children_are_in_obj = that.is_object(child.children);
+                    if (children_are_in_obj || children_are_in_array) { // children are not leaves
                         // First child is not a node, should highlight all labels instead
 
-                        var itemColor = this.itemColors.get(this.currentPicking);
                         var resRect = this.svg.selectAll(".rectText")
-                            .filter(function(d) {
-                                if (d.depth == 0) {
-                                    return false;
-                                }
-                                var c1 = d.source.depth == o_depth;
-                                return c1;
-                            });
-                        var resText = this.svg.selectAll(".linkText")
                             .filter(function(d) {
                                 if (d.depth == 0) {
                                     return false;
@@ -432,11 +434,6 @@
                             elem.picked = that.currentPicking;
                         });
 
-
-                        resRect.style('fill', itemColor)
-                        resText.style('fill', that.should_invert_text_color(itemColor) ? 'white' : 'black');
-
-
                         resCircle = that.svg.selectAll(".node polygon, .node circle")
                             .filter(function(d) {
                                 if (d.parent === undefined || d.parent === null) {
@@ -449,13 +446,29 @@
                         if(resCircle !== undefined) {
                             resCircle.data().forEach(function(elem) {
                                 if (elem.picked !== undefined  && elem.picked != '') {
-                                    // alert || repick conflicting ????
                                     console.log('Possible collision with '+elem.picked);
-                                    //alert('Possible collision with '+elem.picked);
                                 }
                                 elem.picked = that.currentPicking;
                                 nodesData.push(elem);
                             });
+                        }
+
+                        // apply coloring
+                        if (children_are_in_obj) { // on labels
+                            var itemColor = this.itemColors.get(this.currentPicking);
+                            var resText = this.svg.selectAll(".linkText")
+                                .filter(function(d) {
+                                    if (d.depth == 0) {
+                                        return false;
+                                    }
+                                    var c1 = d.source.depth == o_depth;
+                                    return c1;
+                                });
+                            resRect.style('fill', itemColor)
+                            resText.style('fill', that.should_invert_text_color(itemColor) ? 'white' : 'black');
+                        } else { // on child nodes
+                            resCircle.style('fill', itemColor);
+                            resCircle.style('fill', that.should_invert_text_color(itemColor) ? 'white' : 'black');
                         }
 
                         // find all paths
@@ -463,7 +476,15 @@
                         nodesData.forEach(function(d, i) {
                             paths[i] = that.find_full_path(d, []);
                         });
-                        var instructions = this.compute_mapping_instructions(paths);
+
+                        try {
+                            var instructions = this.compute_mapping_instructions(paths);
+                        } catch(err) {
+                            console.log('Not valid input');
+                            var n = clicked.selectAll(".node circle, .node rect, .node polygon");
+                            n.style('fill', 'red');
+                            return;
+                        }
                         this.add_instruction(instructions);
                         return;
 
@@ -595,7 +616,7 @@
 
             reset_selected: function() {
                 var that = this;
-                var resNode = that.svg.selectAll(".node circle")
+                var resNode = that.svg.selectAll(".node circle, .node rect, .node polygon")
                     .filter(function(d) {
                         return d.picked == that.currentPicking;
                     });
@@ -905,8 +926,9 @@
                 return flag_continue;
             },
 
+            // return true if the supplied value is an object and not an array
             is_object: function(v) {
-                return v !== null && typeof v === 'object';
+                return v !== null && typeof v === 'object' && !Array.isArray(v);
             },
 
             adjust_text_length: function(text) {
@@ -962,7 +984,6 @@
                     var addNode = {};
                     addNode.parent = null;
                     addNode.additionalNode = true;
-                    var remaining = root.length - maxWidth;
                     addNode.name = '['+remaining+' more]';
                     child.children.push(addNode);
                 }
