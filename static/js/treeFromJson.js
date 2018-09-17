@@ -36,7 +36,7 @@
             this.height = this.options.height - this.options.margin.top - this.options.margin.bottom;
 
             this.treeDiv = $('<div class="treeDiv panel panel-default panel-body"></div>');
-            this.treeDiv.css('max-width', this.options.width+this.options.margin.left+this.options.margin.right+'px');
+            this.treeDiv.css('max-width', this.options.width+this.options.margin.left+this.options.margin.right-10+'px');
             this.container.append(
                 $('<div class="treeContainer"></div>').append(this.treeDiv)
             );
@@ -82,6 +82,7 @@
             }
 
             this.jsonDivIn = $('<div class="jsonDiv panel panel-default panel-body"></div>');
+            this.jsonDivIn.css('height', this.options.height/2);
             this.treeDiv.append(this.jsonDivIn);
             var j = this.util.syntaxHighlightJson(this.data);
             this.jsonDivIn.html(j);
@@ -126,7 +127,8 @@
                 // Normalize for fixed-depth. (+ consider linkname)
                 var depthSepa = maxSizePerDepth.length*100 < this.options.width ? 100 : this.options.width / maxSizePerDepth.length;
                 nodes.forEach(function(d) { 
-                    let offset = maxSizePerDepth[d.depth]*(that.options.maxCharDisplay-2);
+                    //let offset = maxSizePerDepth[d.depth]*(that.options.maxCharDisplay-2);
+                    let offset = maxSizePerDepth[d.depth]*(10);
                     d.y = d.depth * depthSepa + offset;
                 });
 
@@ -415,7 +417,7 @@
 
                     var child = clicked.data()[0].children[0];
                     var children_are_in_array = Array.isArray(child.children);
-                    var children_are_in_obj = that.is_object(child.children);
+                    var children_are_in_obj = child.linkname !== undefined && child.linkname !== '';
                     if (children_are_in_obj || children_are_in_array) { // children are not leaves
                         // First child is not a node, should highlight all labels instead
 
@@ -679,11 +681,10 @@
                 var tbody = $('<tbody></tbody>')
                 var row1 = $('<tr></tr>');
                 var row2 = $('<tr style="height: 20px;"></tr>');
-                var row3 = $('<tr style="height: 20px;"></tr>');
+                var valueHeader;
                 this.options.toBeMapped.forEach(function(item, index) {
                     var itemColor = that.options.itemColors[index];
-                    var cellH = $('<th data-map="'+item+'">'+item+'</th>');
-                    var cellB = $('<td id="'+item+'Cell" data-map="'+item+'"></td>');
+                    var cellH = $('<th data-map="'+item+'">'+item+': <span id="'+item+'Cell" data-map="'+item+'" style="font-weight: normal; font-style: italic;"></span> </th>');
                     var cellB2 = $('<td id="'+item+'CellFun" class="cellFunInput" data-map="'+item+'"></td>');
                     var fun_head = $('<span><span style="color: mediumblue;">function</span> (value, datum) {</span>');
                     var fun_foot = $('<span>}</span>');
@@ -695,27 +696,28 @@
                     cellB2.append(fun_foot);
                     cellB2.append(fun_foot_res);
                     cellH.click(function() { that.set_current_mapping_item(item); });
-                    cellB.click(function() { that.set_current_mapping_item(item); });
                     cellB2.click(function() { that.set_current_mapping_item(item); });
                     that.set_color(cellH, itemColor);
-                    that.set_color(cellB, itemColor);
                     that.set_color(cellB2, itemColor);
                     row1.append(cellH);
-                    row2.append(cellB);
-                    row3.append(cellB2);
+                    row2.append(cellB2);
+                    if (item == 'values') {
+                        valueHeader = cellH
+                    }
                 });
                 thead.append(row1);
                 tbody.append(row2);
-                tbody.append(row3);
                 this.mappingDomTable.append(thead);
                 this.mappingDomTable.append(tbody);
-                this.fillValueDomInput = $('<input class="form-control" placeholder="0" value="empty">');
+                this.fillValueDomInput = $('<input class="form-control fillValue" placeholder="0" value="empty">');
                 var configDiv = $('<div class="form-group mappingTableDivConfig"></div>')
-                    .append($('<label>Fill value</label>'))
+                    .append($('<label class="fillValue">Fill value</label>'))
                     .append(this.fillValueDomInput);
                 var div = $('<div></div>');
                 div.append(this.mappingDomTable);
-                div.append(configDiv);
+                if (valueHeader !== undefined) {
+                    valueHeader.append(configDiv);
+                }
                 this.container.prepend(div);
 
                 this.fillValueDomInput.on('input', function() {
@@ -770,6 +772,9 @@
                 cells.removeClass('grey');
                 this.currentPickingCell = this.mappingDomTable.find('#'+name+'Cell');
                 this.currentPicking = name;
+
+                //this.mappingDomTable.find('cellFunInput').collapse('hide')
+                //this.mappingDomTable.find('#'+name+'CellFun').collapse('show')
             },
 
             add_instruction: function(instructions) {
@@ -790,8 +795,10 @@
             update_result_tree: function() {
                 var options = {
                     interaction: false,
-                    width: this.width,
-                    height: this.height
+                    //width: this.width,
+                    //height: this.height
+                    width: this.options.width-30,
+                    height: this.options.height
                 };
 
                 var continue_update = this.render_functions_output();

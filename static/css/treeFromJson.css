@@ -51,11 +51,27 @@ table.mappingTable {
     max-width: 75%;
 }
 
-.mappingTableDivConfig {
+div.mappingTableDivConfig {
+    border-left: 2px solid lightgrey;
     display: inline-block;
-    position: absolute;
+    margin-bottom: 0px;
     margin-left: 10px;
-    margin-top: 10px;
+}
+
+.mappingTableDivConfig label.fillValue {
+    margin-bottom: 0px;
+    font-size: small;
+    margin-left: 10px;
+}
+
+.mappingTableDivConfig input.fillValue {
+    padding: 3px 6px;
+    height: 26px;
+    font-size: small;
+    margin-top: -3px;
+    display: inline-block;
+    width: 200px;
+    margin-left: 5px;
 }
 
 
@@ -129,5 +145,6 @@ th.grey {
 
 .jsonDiv {
     overflow: scroll;
+    margin-bottom: 0px !important;
 }
 
