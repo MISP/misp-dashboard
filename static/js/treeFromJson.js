@@ -24,7 +24,8 @@
                 duration: 500,
                 interaction: true,
                 default_function: '    return value;',
-                toBeMapped: []
+                toBeMapped: {},
+                toBeMappedList: []
             };
             this.options = $.extend({}, this._default_options, options);
 
@@ -66,13 +67,14 @@
             this.root.y0 = 0;
 
             // mapping table related
-            if (this.options.toBeMapped.length > 0 ) {
+            this.options.toBeMappedList = Object.keys(this.options.toBeMapped);
+            if (this.options.toBeMappedList.length > 0 ) {
                 this.instructions = {};
                 this.prefillData = {};
                 var that = this;
-                this.options.toBeMapped.forEach(function(item, index) {
+                this.options.toBeMappedList.forEach(function(item, index) {
                     that.instructions[item] = [];
-                    that.prefillData[item] = [];
+                    //that.prefillData[item] = [];
                     that.itemColors.set(item, that.options.itemColors[index]);
                 });
 
@@ -612,8 +614,27 @@
 
                 //var instructions = this.compute_mapping_instructions(paths);
                 //this.add_instruction(instructions);
+                this.unset_related();
                 this.add_prefill_data([c_label]);
 
+            },
+
+            unset_related: function() {
+                var that = this;
+                let curPickingBackup = this.currentPicking;
+                let refKey = '@'+this.currentPicking;
+                this.options.toBeMappedList.forEach(function(itemName) {
+                    if (itemName == curPickingBackup) {
+                        return true;
+                    }
+                    let inst = that.options.toBeMapped[itemName].instructions;
+                    let instS = inst.split('.');
+                    if (instS.indexOf(refKey) > -1) {
+                        that.set_current_mapping_item(itemName);
+                        that.reset_selected();
+                    }
+                });
+                this.set_current_mapping_item(curPickingBackup);
             },
 
             reset_selected: function() {
@@ -682,7 +703,7 @@
                 var row1 = $('<tr></tr>');
                 var row2 = $('<tr style="height: 20px;"></tr>');
                 var valueHeader;
-                this.options.toBeMapped.forEach(function(item, index) {
+                this.options.toBeMappedList.forEach(function(item, index) {
                     var itemColor = that.options.itemColors[index];
                     var cellH = $('<th data-map="'+item+'">'+item+': <span id="'+item+'Cell" data-map="'+item+'" style="font-weight: normal; font-style: italic;"></span> </th>');
                     var cellB2 = $('<td id="'+item+'CellFun" class="cellFunInput" data-map="'+item+'"></td>');
@@ -753,8 +774,9 @@
             // if name is empty, select first item not having instructions
             set_current_mapping_item: function(name) {
                 if (name === undefined) {
-                    for (var entry of this.options.toBeMapped) {
-                        if (this.instructions[entry].length == 0 && this.prefillData[entry].length == 0) {
+                    for (var entry of this.options.toBeMappedList) {
+                        let prefillLength = this.prefillData[entry] !== undefined ? this.prefillData[entry].length : 0;
+                        if (this.instructions[entry].length == 0 && prefillLength == 0) {
                             name = entry;
                             break;
                         }
@@ -780,8 +802,10 @@
             add_instruction: function(instructions) {
                 this.instructions[this.currentPicking] = instructions;
                 this.currentPickingCell.text(instructions.toString());
-                this.set_current_mapping_item();
-                this.update_result_tree();
+                if (instructions.length != 0) {
+                    this.set_current_mapping_item();
+                    this.update_result_tree();
+                }
             },
 
             add_prefill_data: function(data) {
@@ -819,10 +843,11 @@
                     fillValue: this.fillValueDomInput.val(),
                     functions: functions,
                     datum: this.root,
-                    prefillData: this.prefillData
+                    prefillData: this.prefillData,
                 };
                 var adjustedInstructions = this.adjust_instruction();
-                var result = new $.proxyMapper(adjustedInstructions, this.data, pm_options);
+                var constructionInstruction = this.options.toBeMapped;
+                var result = new $.proxyMapper(adjustedInstructions, constructionInstruction, this.data, pm_options);
 
                 // destroy and redraw
                 this.treeDivResult[0].innerHTML = '';
@@ -830,22 +855,69 @@
             },
 
             adjust_instruction: function() {
+                var that = this;
                 var adjustedInstructions = $.extend(true, {}, this.instructions);
                 adjustedInstructions.index = {};
                 var matchingIndex = 0;
-                var l = this.instructions.labels;
-                var v = this.instructions.values;
-                var d = this.instructions.dates;
 
                 // convert integer index into {index}
-                for (var i=0; i<v.length; i++) {
-                    if (Number.isInteger(v[i])) {
-                        adjustedInstructions.values[i] = '{'+v[i]+'}';
+                this.options.toBeMappedList.forEach(function(item) {
+                    if (that.options.toBeMapped[item].strategy === 'value') {
+                        let arr = adjustedInstructions[item];
+                        for (let i=0; i<arr.length; i++) {
+                            if (Number.isInteger(arr[i])) {
+                                arr[i] = '{'+arr[i]+'}';
+                            }
+                        }
+                        return false;
                     }
+
+                });
+
+                // add labels and values tracking for value strategy only
+                var subkeys = {}
+                var v, l, d;
+                var v_keyname, l_keyname, d_keyname;
+                this.options.toBeMappedList.forEach(function(keyname) {
+                    var item = that.options.toBeMapped[keyname];
+                    if (item.strategy === 'value') {
+                        v = that.instructions[keyname];
+                        v_keyname = keyname;
+                        let s = item.instructions.split('.');
+                        if (s.length >= 2 && s[0] === '' && s[1] !== '') {
+                            s.slice(1).forEach(function(k) {
+                                if (k.substring(0, 2) === '@@') {
+                                    let k_sliced = k.slice(2);
+                                    subkeys[k_sliced] = that.instructions[k_sliced];
+                                } else if (k[0] === '@') {
+                                    let k_sliced = k.slice(1);
+                                    subkeys[k_sliced] = that.instructions[k_sliced];
+                                }
+                            });
+                        }
+                        return false;
+                    }
+                });
+
+                for (let keyname in subkeys) {
+                    if (this.options.toBeMapped[keyname].strategy === 'date') {
+                        var d = this.instructions[keyname];
+                        var d_keyname = keyname;
+                    } else if (this.options.toBeMapped[keyname].strategy === 'label') {
+                        var l = this.instructions[keyname];
+                        var l_keyname = keyname;
+                    } else {
+                        return false;
+                    }
+
                 }
 
+                //var l = this.instructions.labels;
+                //var v = this.instructions.values;
+                //var d = this.instructions.dates;
+
                 // label & value
-                if (l.length != 0 && v.length != 0) {
+                if (l !== undefined && l.length != 0 && v.length != 0) {
                     var smaller_array = v.length < l.length ? v : l;
                     var has_matched = false;
                     for (var i=0; i<smaller_array.length; i++) {
@@ -858,15 +930,19 @@
 
                     // in case no match, last one should be registered
                     matchingIndex = has_matched ? matchingIndex : smaller_array.length-1;
-                    let inst = adjustedInstructions.values[matchingIndex];
+                    //let inst = adjustedInstructions.values[matchingIndex];
+                    let inst = adjustedInstructions[v_keyname][matchingIndex];
                     inst = inst == 'l' ? 'l' : '{'+inst+'}';
-                    adjustedInstructions.values[matchingIndex] = 'i1,'+inst;
-                    adjustedInstructions.index['i1'] = adjustedInstructions.labels.slice(matchingIndex+1);
+                    //adjustedInstructions.values[matchingIndex] = 'i1,'+inst;
+                    let kref = '@'+l_keyname;
+                    adjustedInstructions[v_keyname][matchingIndex] = kref + ',' + inst;
+                    //adjustedInstructions.index['i1'] = adjustedInstructions.labels.slice(matchingIndex+1);
+                    adjustedInstructions.index[kref] = adjustedInstructions[l_keyname].slice(matchingIndex+1);
                 }
 
                 var matchingIndex = 0;
                 // date & value
-                if (d.length != 0 && v.length != 0) {
+                if (d !== undefined && d.length != 0 && v.length != 0) {
                     smaller_array = v.length < d.length ? v : d;
                     for (var i=0; i<smaller_array.length; i++) {
                         if (v[i] != d[i]) { 
@@ -874,16 +950,22 @@
                             break;
                         }
                     }
-                    adjustedInstructions.values[matchingIndex] = 'i2,'+adjustedInstructions.values[matchingIndex];
-                    adjustedInstructions.index['i2'] = adjustedInstructions.dates.slice(matchingIndex+1);
+                    //adjustedInstructions.values[matchingIndex] = 'i2,'+adjustedInstructions.values[matchingIndex];
+                    let kref = '@'+d_keyname;
+                    adjustedInstructions[v_keyname][matchingIndex] = kref + ',' + adjustedInstructions[v_keyname][matchingIndex];
+                    //adjustedInstructions.index['i2'] = adjustedInstructions.dates.slice(matchingIndex+1);
+                    adjustedInstructions.index[kref] = adjustedInstructions[d_keyname].slice(matchingIndex+1);
 
                     // add '' at the end for value only
-                    var end_i = adjustedInstructions.values.length-1;
-                    var last_i = adjustedInstructions.values[end_i];
+                    //var end_i = adjustedInstructions.values.length-1;
+                    //var last_i = adjustedInstructions.values[end_i];
+                    var end_i = adjustedInstructions[v_keyname].length-1;
+                    var last_i = adjustedInstructions[v_keyname][end_i];
                     last_i = last_i.split(',');
                     last_i = last_i.length == 2 ? last_i[1] : last_i[0];
                     if (last_i == 'l') {
-                        adjustedInstructions.values[end_i+1] = '';
+                        //adjustedInstructions.values[end_i+1] = '';
+                        adjustedInstructions[v_keyname][end_i+1] = '';
                     }
                 }
 
@@ -1034,6 +1116,10 @@
                     ];
                     return pts.join(', ');
                 },
+
+                objkeyToList: function(obj) {
+
+                }
 
 
 
