@@ -74,7 +74,6 @@
                 var that = this;
                 this.options.toBeMappedList.forEach(function(item, index) {
                     that.instructions[item] = [];
-                    //that.prefillData[item] = [];
                     that.itemColors.set(item, that.options.itemColors[index]);
                 });
 
@@ -129,7 +128,6 @@
                 // Normalize for fixed-depth. (+ consider linkname)
                 var depthSepa = maxSizePerDepth.length*100 < this.options.width ? 100 : this.options.width / maxSizePerDepth.length;
                 nodes.forEach(function(d) { 
-                    //let offset = maxSizePerDepth[d.depth]*(that.options.maxCharDisplay-2);
                     let offset = maxSizePerDepth[d.depth]*(10);
                     d.y = d.depth * depthSepa + offset;
                 });
@@ -508,9 +506,7 @@
                 if(resCircle !== undefined) {
                     resCircle.data().forEach(function(elem) {
                         if (elem.picked !== undefined  && elem.picked != '') {
-                            // alert || repick conflicting ????
-                            console.log('Possible collision with '+elem.picked);
-                            //alert('Possible collision with '+elem.picked);
+                            //console.log('Possible collision with '+elem.picked);
                         }
                         elem.picked = that.currentPicking;
                         nodesData.push(elem);
@@ -522,9 +518,7 @@
                 if(resRect !== undefined) {
                     resRect.data().forEach(function(elem) {
                         if (elem.picked !== undefined  && elem.picked != '') {
-                            // alert || repick conflicting ????
-                            console.log('Possible collision with '+elem.picked);
-                            //alert('Possible collision with '+elem.picked);
+                            //console.log('Possible collision with '+elem.picked);
                         }
                         elem.picked = that.currentPicking;
                         nodesData.push(elem);
@@ -582,9 +576,7 @@
 
                 resRect.data().forEach(function(elem) {
                     if (elem.picked !== undefined  && elem.picked != '') {
-                        // alert || repick conflicting ????
-                        console.log('Possible collision with '+elem.picked);
-                        //alert('Possible collision with '+elem.picked);
+                        //console.log('Possible collision with '+elem.picked);
                     }
                     elem.picked = that.currentPicking;
                 });
@@ -597,7 +589,6 @@
                 var nodesCircle = that.svg.selectAll(".node circle").filter(
                         function(d) { 
                             return d.depth == dest_depth && d.linkname == c_label;
-                            //return d.depth == dest_depth;
                         }
                 );
                 nodesCircle.data().forEach(function(d, i) {
@@ -606,15 +597,12 @@
                 var nodesRect = that.svg.selectAll(".node rect").filter(
                         function(d) {
                             return d.depth == dest_depth && d.linkname == c_label;
-                            //return d.depth == dest_depth;
                         }
                 );
                 nodesRect.data().forEach(function(d, i) {
                     paths[i] = that.find_full_path(d, []);
                 });
 
-                //var instructions = this.compute_mapping_instructions(paths);
-                //this.add_instruction(instructions);
                 this.unset_related();
                 this.add_prefill_data([c_label]);
 
@@ -828,8 +816,6 @@
             update_result_tree: function() {
                 var options = {
                     interaction: false,
-                    //width: this.width,
-                    //height: this.height
                     width: this.options.width-30,
                     height: this.options.height
                 };
@@ -921,10 +907,6 @@
 
                 }
 
-                //var l = this.instructions.labels;
-                //var v = this.instructions.values;
-                //var d = this.instructions.dates;
-
                 // label & value
                 if (l !== undefined && l.length != 0 && v.length != 0) {
                     var smaller_array = v.length < l.length ? v : l;
@@ -939,13 +921,10 @@
 
                     // in case no match, last one should be registered
                     matchingIndex = has_matched ? matchingIndex : smaller_array.length-1;
-                    //let inst = adjustedInstructions.values[matchingIndex];
                     let inst = adjustedInstructions[v_keyname][matchingIndex];
                     inst = inst == 'l' ? 'l' : '{'+inst+'}';
-                    //adjustedInstructions.values[matchingIndex] = 'i1,'+inst;
                     let kref = '@'+l_keyname;
                     adjustedInstructions[v_keyname][matchingIndex] = kref + ',' + inst;
-                    //adjustedInstructions.index['i1'] = adjustedInstructions.labels.slice(matchingIndex+1);
                     adjustedInstructions.index[kref] = adjustedInstructions[l_keyname].slice(matchingIndex+1);
                 }
 
@@ -959,23 +938,9 @@
                             break;
                         }
                     }
-                    //adjustedInstructions.values[matchingIndex] = 'i2,'+adjustedInstructions.values[matchingIndex];
                     let kref = '@'+d_keyname;
                     adjustedInstructions[v_keyname][matchingIndex] = kref + ',' + adjustedInstructions[v_keyname][matchingIndex];
-                    //adjustedInstructions.index['i2'] = adjustedInstructions.dates.slice(matchingIndex+1);
                     adjustedInstructions.index[kref] = adjustedInstructions[d_keyname].slice(matchingIndex+1);
-
-                    // add '' at the end for value only
-                    //var end_i = adjustedInstructions.values.length-1;
-                    //var last_i = adjustedInstructions.values[end_i];
-                    //var end_i = adjustedInstructions[v_keyname].length-1;
-                    //var last_i = adjustedInstructions[v_keyname][end_i];
-                    //last_i = last_i.split(',');
-                    //last_i = last_i.length == 2 ? last_i[1] : last_i[0];
-                    //if (last_i == 'l') {
-                    //    //adjustedInstructions.values[end_i+1] = '';
-                    //    adjustedInstructions[v_keyname][end_i+1] = '';
-                    //}
                 }
 
                 // add '' at the end for value only
@@ -1136,12 +1101,6 @@
                     ];
                     return pts.join(', ');
                 },
-
-                objkeyToList: function(obj) {
-
-                }
-
-
 
             }
 

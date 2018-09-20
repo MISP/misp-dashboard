@@ -23,22 +23,7 @@
             this.constructionInstruction = constructionInstruction;
             this.mapping = mapping;
 
-            //this.mapping = {
-            //    dates: ["l", 0],
-            //    index: {
-            //        '@labels': [0],
-            //        '@dates': [0]
-            //    },
-            //    //labels: ["l", 1, "l", 0],
-            //    labels: [],
-            //    //values: ["@dates,l", "{1}", "@labels,l", "{1}"]
-            //    values: ["@dates,l", "{1}", "@labels"]
-            //}
-
-
-
             this.data = data;
-
             this.result = {};
 
             var funcs = {};
@@ -129,24 +114,12 @@
                     //this.i1_prefill = x;
                 }
 
-                // inject prefill data
-                //for (var x of this.options.prefillData.labels) { 
-                //    this.result[x] = fillArray.slice(0);
-                //    this.i1_prefill = x;
-                //}
-
-                //if (this.mapping.labels.length > 0) {
-                //    this.c_labels(this.data, this.mapping.labels); // probe and fetch all labels
-                //}
                 lk.forEach(function(labelK) {
                     if (that.mapping[labelK].length > 0) {
                         that.apply_strategy(labelK);
                     }
                 });
 
-                //if (Object.keys(this.result).length > 1 && this.mapping.values.length > 0) {
-                //if (Object.keys(that.result).length > 0 && that.mapping[vk].length > 0) {
-                //if (Object.keys(that.result).length > 1 && that.mapping[vk].length > 0) {
                 if (Object.keys(that.result).length > 0 && that.mapping[vk].length > 0) {
                     that.apply_strategy(vk);
                     for (var k in that.result) { // filter out undefined value
@@ -179,9 +152,7 @@
                     let index = instructions;
                     let val = intermediate[index];
                     if (that.mappingToIndexes[keyname][val] === undefined) {
-                        //that.mappingToIndexes[keyname][val] = that.result['dates'].length;
                         that.mappingToIndexes[keyname][val] = that.result[keyname].length;
-                        //let nval = that.options.functions.dates(val, additionalData.datum);
                         let nval = that.options.functions[keyname](val, additionalData.datum);
                         that.addFromInstruction(keyname, nval, {}, false);
                     }
@@ -207,7 +178,6 @@
                                 }
                             }
                             let nlabel = that.options.functions[keyname](label, additionalData.datum);
-                            //that.result[nlabel] = val;
                             var subkeys = {};
                             subkeys[keyname] = nlabel;
                             that.addFromInstruction(keyname, val, subkeys, true);
@@ -223,7 +193,6 @@
                         let nlabel = that.options.functions[keyname](label, additionalData.datum);
                         var subkeys = {};
                         subkeys[keyname] = nlabel;
-                        //that.result[nlabel] = val;
                         that.addFromInstruction(keyname, val, subkeys, true);
                     }
                 };
@@ -275,24 +244,6 @@
                         subkeys[kn_strip] = v;
                     });
 
-                    //that.options.functions.labels(i1, additionalData.datum);
-                    //that.options.functions.values(val, additionalData.datum);
-
-                    //let i1 = additionalData.i1;
-                    ////i1 = i1 !== undefined ? i1 : that.i1_prefill;
-                    //let i2 = additionalData.i2;
-                    //// fetch index in array from the key
-                    //let i2_adjusted = that.mappingI2[i2];
-
-                    // fetch index in array from the key
-
-                    // apply transformation function
-                    //let ni1 = that.options.functions.labels(i1, additionalData.datum);
-                    //let nval = that.options.functions.values(val, additionalData.datum);
-
-                    //that.result[ni1][i2_adjusted] = nval;
-                    //var subkeys = { labels: ni1, dates: i2_adjusted};
-
                     let nval = that.options.functions[keyname](val, additionalData.datum);
                     that.addFromInstruction(keyname, nval, subkeys, directValue);
                 };
@@ -331,24 +282,6 @@
                             i_type = record_inst;
                         }
                     }
-                    //switch (record_inst) {
-                    //    case 'i1':
-                    //        if (additionalData.mapping) {
-                    //            flag_register_i = true;
-                    //            i_type = 'i1';
-                    //        }
-                    //        break;
-                    //    case 'i2':
-                    //        if (additionalData.mapping) {
-                    //            flag_register_i = true;
-                    //            i_type = 'i2';
-                    //        }
-                    //        break;
-                    //    case '':
-                    //        break;
-                    //    default:
-                    //        break;
-                    //}
 
                     let inst = ind_inst;
                     let reg = /\{(\w+)\}/;
@@ -368,7 +301,8 @@
                         additionalData.datum = this.update_datum(additionalData.datum, i);
                         return this.iter(intermediate[i], instructions.slice(1), matchingFun, additionalData);
                     }
-                    // fallback to standard loop
+
+                    /* fallback to standard loop */
 
                 }
         
@@ -441,8 +375,6 @@
                     }
                 });
 
-                //cres.push(value);
-                //p_res[p_key].push(value);
                 if (trueValue) {
                     p_res[p_key] = value;
                 } else {
