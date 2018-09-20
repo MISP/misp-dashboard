@@ -9,6 +9,14 @@
     (function($) {
         'use strict';
 
+        /*
+         * constructionInstruction:
+         *      .x -> raw x string
+         *      .@label -> reference to another field
+         *      .@@date -> index reference to another field
+         *      .@>label -> reference to another field but direct set (do not append)
+         */
+
         var ProxyMapper = function(mapping, constructionInstruction, data, options) {
             var that = this;
             this.itemsToBeMapped = Object.keys(constructionInstruction);
@@ -138,11 +146,12 @@
 
                 //if (Object.keys(this.result).length > 1 && this.mapping.values.length > 0) {
                 //if (Object.keys(that.result).length > 0 && that.mapping[vk].length > 0) {
-                if (Object.keys(that.result).length > 1 && that.mapping[vk].length > 0) {
+                //if (Object.keys(that.result).length > 1 && that.mapping[vk].length > 0) {
+                if (Object.keys(that.result).length > 0 && that.mapping[vk].length > 0) {
                     that.apply_strategy(vk);
                     for (var k in that.result) { // filter out undefined value
                         let res = that.result[k];
-                        if (res !== undefined && !that.isObject(res)) { // if object, picking is likely to be incoherent
+                        if (res !== undefined && Array.isArray(res)) { // if object, picking is likely to be incoherent
                             let filtered = res.filter(function(n){ return n != undefined });
                             that.result[k] = filtered;
                         }
@@ -252,6 +261,10 @@
                             v = that.mappingToIndexes[kn_strip][v];
                             directValue = true;
                         } else {
+                            if (kn.substring(0, 2) === '@>') {
+                                kn = '@' + kn.slice(2);
+                                directValue = true;
+                            }
                             kn_strip = kn.slice(1);
                             v = additionalData[kn];
                             v = v !== undefined ? v : instructions;
@@ -409,7 +422,7 @@
                         return false;
                     } else if (inst[0] === '@') {
                         let subkeyName;
-                        if (inst.substring(0, 2) === '@@') {
+                        if (inst.substring(0, 2) === '@@' || inst.substring(0, 2) === '@>' ) {
                             subkeyName = inst.slice(2);
                         } else {
                             subkeyName = inst.slice(1);

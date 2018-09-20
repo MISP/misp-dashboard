@@ -264,7 +264,7 @@
                     .attr("ry", 5)
                     .attr("transform", function(d) {
                         let xoffset = d.target.linkname !== undefined ? that._letterWidth*that.adjust_text_length(d.target.linkname).length/2 : 0;
-                        let yoffset = 10;
+                        let yoffset = that.root.y0;
                         return "translate(" +
                             (d.source.y-xoffset) + "," + 
                             (d.source.x-yoffset) + ")";
@@ -541,6 +541,7 @@
                     paths[i] = that.find_full_path(d, []);
                 });
                 var instructions = this.compute_mapping_instructions(paths);
+                this.unset_related();
                 this.add_instruction(instructions);
             },
 
@@ -628,6 +629,7 @@
                         return true;
                     }
                     let inst = that.options.toBeMapped[itemName].instructions;
+                    inst = inst.replace(/>/g, '')
                     let instS = inst.split('.');
                     if (instS.indexOf(refKey) > -1) {
                         that.set_current_mapping_item(itemName);
@@ -655,13 +657,20 @@
                     .filter(function(d) {
                         return d.picked == that.currentPicking;
                     });
-                resLabel.style('fill', 'white')
-                    .style('fill-opacity', 1.00);
+                var resText = that.svg.selectAll(".linkText")
+                    .filter(function(d) {
+                        return d.picked == that.currentPicking;
+                    });
+
+                resLabel.style('fill', null)
+                    .style('fill-opacity', null);
+                resText.style('fill', 'Black');
 
                 resLabel.data().forEach(function(elem) {
                     elem.picked = '';
                 });
 
+                this.unset_related();
                 this.add_instruction([]);
             },
 
@@ -886,7 +895,7 @@
                         let s = item.instructions.split('.');
                         if (s.length >= 2 && s[0] === '' && s[1] !== '') {
                             s.slice(1).forEach(function(k) {
-                                if (k.substring(0, 2) === '@@') {
+                                if (k.substring(0, 2) === '@@' || k.substring(0, 2) === '@>') {
                                     let k_sliced = k.slice(2);
                                     subkeys[k_sliced] = that.instructions[k_sliced];
                                 } else if (k[0] === '@') {
@@ -959,12 +968,23 @@
                     // add '' at the end for value only
                     //var end_i = adjustedInstructions.values.length-1;
                     //var last_i = adjustedInstructions.values[end_i];
+                    //var end_i = adjustedInstructions[v_keyname].length-1;
+                    //var last_i = adjustedInstructions[v_keyname][end_i];
+                    //last_i = last_i.split(',');
+                    //last_i = last_i.length == 2 ? last_i[1] : last_i[0];
+                    //if (last_i == 'l') {
+                    //    //adjustedInstructions.values[end_i+1] = '';
+                    //    adjustedInstructions[v_keyname][end_i+1] = '';
+                    //}
+                }
+
+                // add '' at the end for value only
+                if (v !== undefined && v.length > 0) {
                     var end_i = adjustedInstructions[v_keyname].length-1;
                     var last_i = adjustedInstructions[v_keyname][end_i];
                     last_i = last_i.split(',');
                     last_i = last_i.length == 2 ? last_i[1] : last_i[0];
                     if (last_i == 'l') {
-                        //adjustedInstructions.values[end_i+1] = '';
                         adjustedInstructions[v_keyname][end_i+1] = '';
                     }
                 }
