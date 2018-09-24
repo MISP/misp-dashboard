@@ -66,6 +66,11 @@
     color: black;
 }
 
+.higlightRowInTable {
+    background-color: #dff0d8 !important;
+    color: black;
+}
+
 .centerInBtn {
     float: left;
     text-align: center;

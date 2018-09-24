@@ -9,6 +9,8 @@ var sec_before_reload = refresh_speed;
 var plotLineChart;
 var source_awards;
 var source_lastContrib;
+var last_added_contrib;
+var timeout_last_added_contrib;
 
 /* CONFIG */
 var maxRank = 16;
@@ -336,39 +338,39 @@ function addLastFromJson(datatable, url) {
 }
 
 function addLastContributor(datatable, data, update) {
-    var date = new Date(data.epoch*1000);
-    date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
-    var to_add = [
-        date,
-        data.pnts,
-        getMonthlyRankIcon(data.rank),
-        getOrgRankIcon(data.orgRank, 60),
-        createHonorImg(data.honorBadge, 20),
-        createImg(data.logo_path, 32),
-        createOrgLink(data.org),
-    ];
-    if (update == undefined || update == false) {
-        datatable.row.add(to_add);
-        datatable.draw();
-    } else if(update == true) {
-        var row_added = false;
-        datatable.rows().every( function() {
-            if($(this.data()[6])[0].text == data.org) {
-                var node = $(datatable.row( this ).node());
-                datatable.row( this ).data( to_add );
-                if(next_effect <= new Date()) {
-                    node.effect("slide", 500);
-                    next_effect.setSeconds((new Date()).getSeconds() + 5);
-                }
-                row_added = true;
-            }
+    var org = data.org;
+    if (org == last_added_contrib) {
+        let node = $('#lastTable > tbody tr:eq(0)');
+        node.addClass('higlightRowInTable');
+        update_timeout_last_added_contrib();
+    } else {
+        last_added_contrib = org;
+        var date = new Date(data.epoch*1000);
+        date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
+        var to_add = [
+            date,
+            data.pnts,
+            getMonthlyRankIcon(data.rank),
+            getOrgRankIcon(data.orgRank, 60),
+            createHonorImg(data.honorBadge, 20),
+            createImg(data.logo_path, 32),
+            createOrgLink(data.org),
+        ];
+        if (update === undefined || update === false) {
+            datatable.row.add(to_add);
             datatable.draw();
-        });
-        if (!row_added) {
-            var node = $(datatable.row.add(to_add).draw().node());
-            node.effect("slide", 700);
+        } else if(update == true) {
+            datatable.rows().every( function() {
+                if($(this.data()[6])[0].text == data.org) {
+                    var node = $(datatable.row( this ).node());
+                    datatable.row( this ).data( to_add );
+                    node.effect("slide", 500);
+                }
+                datatable.draw();
+            });
         }
     }
+
 }
 
 function addAwards(datatableAwards, json, playAnim) {
@@ -547,6 +549,15 @@ function updateProgressHeader(org) {
 
     //update overtake points
     updateOvertakePnts();
+}
+
+function update_timeout_last_added_contrib() {
+    clearTimeout(timeout_last_added_contrib);
+    timeout_last_added_contrib = setTimeout(function() {
+        let node = $('#lastTable > tbody tr:eq(0)');
+        node.removeClass('higlightRowInTable');
+        last_added_contrib = null;
+    }, 5000);
 }
 
 function showOnlyOrg() {
