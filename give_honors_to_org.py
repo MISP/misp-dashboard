@@ -6,7 +6,7 @@ import redis
 import configparser
 
 import util
-import contributor_helper
+from helpers import contributor_helper
 
 ONE_DAY = 60*60*24
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
