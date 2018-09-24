@@ -1,3 +1,4 @@
+from collections import defaultdict
 import datetime, time
 
 ONE_DAY = 60*60*24
@@ -71,3 +72,33 @@ def getDateHoursStrFormat(date):
 
 def getTimestamp(date):
     return int(time.mktime(date.timetuple()))
+
+
+def sortByTrendingScore(toSort, topNum=5):
+    scoredLabels = defaultdict(float)
+    numDay = len(toSort)
+    baseDecay = 1.0
+    decayRate = lambda x: baseDecay*((numDay-x)/numDay)
+
+    for i, arr in enumerate(toSort):
+        timestamp = arr[0]
+        dailyData = arr[1]
+        for item in dailyData:
+            label = item[0]
+            occ = item[1]
+            scoredLabels[label] += occ*decayRate(i)
+
+    topList = [[l, s] for l, s in scoredLabels.items()]
+    topList.sort(key=lambda x: x[1], reverse=True)
+    topSet = [ l for l, v in topList[:topNum]]
+
+    # now that we have the top, filter out poor scored elements
+    topArray = []
+    for arr in toSort:
+        timestamp = arr[0]
+        dailyData = arr[1]
+        topDailyArray = list(filter(lambda item: (item[0] in topSet), dailyData))
+        dailyCombi = [timestamp, topDailyArray]
+        topArray.append(dailyCombi)
+
+    return topArray

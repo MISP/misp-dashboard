@@ -76,15 +76,16 @@ class Trendings_helper:
 
     ''' GETTER '''
 
-    def getGenericTrending(self, trendingType, dateS, dateE, topNum=0):
+    def getGenericTrending(self, trendingType, dateS, dateE, topNum=10):
         to_ret = []
         prev_days = (dateE - dateS).days
         for curDate in util.getXPrevDaysSpan(dateE, prev_days):
             keyname = "{}:{}".format(trendingType, util.getDateStrFormat(curDate))
-            data = self.serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
+            data = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=True)
             data = [ [record[0].decode('utf8'), record[1]] for record in data ]
             data = data if data is not None else []
             to_ret.append([util.getTimestamp(curDate), data])
+        to_ret = util.sortByTrendingScore(to_ret, topNum=topNum)
         return to_ret
 
     def getSpecificTrending(self, trendingType, dateS, dateE, specificLabel=''):
@@ -97,9 +98,9 @@ class Trendings_helper:
             to_ret.append([util.getTimestamp(curDate), data])
         return to_ret
 
-    def getTrendingEvents(self, dateS, dateE, specificLabel=None):
+    def getTrendingEvents(self, dateS, dateE, specificLabel=None, topNum=None):
         if specificLabel is None:
-            return self.getGenericTrending(self.keyEvent, dateS, dateE)
+            return self.getGenericTrending(self.keyEvent, dateS, dateE, topNum=topNum)
         else:
             specificLabel = specificLabel.replace('\\n', '\n'); # reset correctly label with their \n (CR) instead of their char value
             return self.getSpecificTrending(self.keyEvent, dateS, dateE, specificLabel)
