@@ -105,8 +105,8 @@ class Trendings_helper:
             specificLabel = specificLabel.replace('\\n', '\n'); # reset correctly label with their \n (CR) instead of their char value
             return self.getSpecificTrending(self.keyEvent, dateS, dateE, specificLabel)
 
-    def getTrendingCategs(self, dateS, dateE):
-        return self.getGenericTrending(self.keyCateg, dateS, dateE)
+    def getTrendingCategs(self, dateS, dateE, topNum=None):
+        return self.getGenericTrending(self.keyCateg, dateS, dateE, topNum=topNum)
 
     # FIXME: Construct this when getting data
     def getTrendingTags(self, dateS, dateE, topNum=12):
@@ -137,8 +137,8 @@ class Trendings_helper:
             to_ret.append([util.getTimestamp(curDate), { 'sightings': sight, 'false_positive': fp}])
         return to_ret
 
-    def getTrendingDisc(self, dateS, dateE):
-        return self.getGenericTrending(self.keyDisc, dateS, dateE)
+    def getTrendingDisc(self, dateS, dateE, topNum=None):
+        return self.getGenericTrending(self.keyDisc, dateS, dateE, topNum=topNum)
 
     def getTypeaheadData(self, dateS, dateE):
         to_ret = {}

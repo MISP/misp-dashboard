@@ -78,7 +78,7 @@ def sortByTrendingScore(toSort, topNum=5):
     scoredLabels = defaultdict(float)
     numDay = len(toSort)
     baseDecay = 1.0
-    decayRate = lambda x: baseDecay*((numDay-x)/numDay)
+    decayRate = lambda x: baseDecay*((numDay-x**2)/numDay)
 
     for i, arr in enumerate(toSort):
         timestamp = arr[0]
