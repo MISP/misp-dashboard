@@ -48,6 +48,7 @@ class Contributor_helper:
             self.org_honor_badge_title[badgeNum] = self.cfg_org_rank.get('HonorBadge', str(badgeNum))
 
         self.trophyMapping = json.loads(self.cfg_org_rank.get('TrophyDifficulty', 'trophyMapping'))
+        self.trophyMappingIncremental = [sum(self.trophyMapping[:i]) for i in range(len(self.trophyMapping)+1)]
         self.trophyNum = len(self.cfg_org_rank.options('HonorTrophy'))-1 #0 is not a trophy
         self.categories_in_trophy = json.loads(self.cfg_org_rank.get('HonorTrophyCateg', 'categ'))
         self.trophy_title = {}
@@ -352,7 +353,6 @@ class Contributor_helper:
 
     ''' TROPHIES '''
     def getOrgTrophies(self, org):
-        self.getAllOrgsTrophyRanking()
         keyname = '{mainKey}:{orgCateg}'
         trophy = []
         for categ in self.categories_in_trophy:
@@ -360,12 +360,13 @@ class Contributor_helper:
             totNum = self.serv_redis_db.zcard(key)
             if totNum == 0:
                 continue
-            pos = self.serv_redis_db.zrank(key, org)
+            pos = self.serv_redis_db.zrevrank(key, org)
             if pos is None:
                 continue
+
             trophy_rank = self.posToRankMapping(pos, totNum)
             trophy_Pnts = self.serv_redis_db.zscore(key, org)
-            trophy.append({ 'categ': categ, 'trophy_points': trophy_Pnts, 'trophy_rank': trophy_rank, 'trophy_true_rank': trophy_rank, 'trophy_title': self.trophy_title[trophy_rank]})
+            trophy.append({ 'categ': categ, 'trophy_points': trophy_Pnts, 'trophy_rank': trophy_rank, 'trophy_true_rank': self.trophyNum-trophy_rank, 'trophy_title': self.trophy_title[trophy_rank]})
         return trophy
 
     def getOrgsTrophyRanking(self, categ):
@@ -374,27 +375,29 @@ class Contributor_helper:
         res = [[org.decode('utf8'), score] for org, score in res]
         return res
 
-    def getAllOrgsTrophyRanking(self):
+    def getAllOrgsTrophyRanking(self, category=None):
+        concerned_categ = self.categories_in_trophy if category is None else category
         dico_categ = {}
-        for categ in self.categories_in_trophy:
+        for categ in [concerned_categ]:
             res = self.getOrgsTrophyRanking(categ)
+            # add ranking info
+            tot = len(res)
+            for pos in range(tot):
+                res[pos].append(self.trophyNum-self.posToRankMapping(pos, tot))
             dico_categ[categ] = res
+        toret = dico_categ if category is None else dico_categ.get(category, [])
+        return toret
 
     def posToRankMapping(self, pos, totNum):
-        mapping = self.trophyMapping
-        mapping_num = [math.ceil(float(float(totNum*i)/float(100))) for i in mapping]
-        if pos == 0: #first
-            position = 1
+        ratio = pos/totNum*100
+        rank = 0
+        if pos == totNum:
+            return 0
         else:
-            temp_pos = pos
-            counter = 1
-            for num in mapping_num:
-                if temp_pos < num:
-                    position = counter
-                else:
-                    temp_pos -= num
-                    counter += 1
-        return self.trophyNum+1 - position
+            for i in range(len(self.trophyMappingIncremental)):
+                if self.trophyMappingIncremental[i] < ratio <= self.trophyMappingIncremental[i+1]:
+                    rank = i+1
+        return rank
 
     def giveTrophyPointsToOrg(self, org, categ, points):
         keyname = '{mainKey}:{orgCateg}'

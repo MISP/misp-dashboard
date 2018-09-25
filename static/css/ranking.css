@@ -3,6 +3,13 @@
     height: auto;
 }
 
+@media (min-width: 768px) {
+    .modal-xl {
+        width: 90%;
+        max-width:1500px;
+    }
+}
+
 .successCell {
     background-color: #dff0d8 !important
 }
@@ -189,6 +196,19 @@
   display:block;
   margin-left:auto;
   margin-right:auto;
+}
+
+.allOrgRankingDiv {
+    overflow: scroll;
+    max-height: 600px;
+    background-color: #fff;
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    border: 1px solid #ccc;
+    border: 1px solid rgba(0,0,0,.2);
+    border-radius: 6px;
+    -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+    box-shadow: 0 5px 10px rgba(0,0,0,.2);
 }
 
 small {

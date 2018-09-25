@@ -551,6 +551,27 @@ function updateProgressHeader(org) {
     updateOvertakePnts();
 }
 
+function generate_table_ranking_on_category(categ) {
+    $.getJSON( url_getAllOrgsTrophyRanking+'/'+categ, function( data ) {
+        var body = $('#bodyTableThropyAllOrgRankingModal');
+        body.empty();
+        data.forEach(function(arr, i) {
+            var org = arr[0];
+            var points = arr[1];
+            var rank = arr[2];
+            var tr = $('<tr></tr>');
+            tr.append($('<td style="width: 100px;">'+i+'</td>'));
+            tr.append($('<td style="width: 100px;"><img src="'+url_baseTrophyLogo+rank+'.png" width="30" height="30"></td>'));
+            tr.append($('<td style="width: 200px;">'+points+'</td>'));
+            tr.append($('<td><a href="?org='+org+'">'+org+'</a></td>'));
+            if (currOrg == org) {
+                tr.addClass('selectedOrgInTable');
+            }
+            body.append(tr);
+        });
+    })
+}
+
 function update_timeout_last_added_contrib() {
     clearTimeout(timeout_last_added_contrib);
     timeout_last_added_contrib = setTimeout(function() {
@@ -661,4 +682,13 @@ $(document).ready(function() {
         addAwards(datatableAwards, json, true);
         updateProgressHeader(currOrg);
     };
+
+
+    $('#bodyTableTrophyModalOrg input').off('click').on('click', function(e) {
+        var categ = $(this).data('category');
+        var tds = $('#bodyTableTrophyModalOrg td');
+        tds.removeClass('success');
+        $(this).parent().addClass('success');
+        generate_table_ranking_on_category(categ);
+    });
 });

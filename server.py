@@ -429,6 +429,11 @@ def getTrophies():
         org = ''
     return jsonify(contributor_helper.getOrgTrophies(org))
 
+@app.route("/_getAllOrgsTrophyRanking")
+@app.route("/_getAllOrgsTrophyRanking/<string:categ>")
+def getAllOrgsTrophyRanking(categ=None):
+    return jsonify(contributor_helper.getAllOrgsTrophyRanking(categ))
+
 
 ''' USERS '''
 
