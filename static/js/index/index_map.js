@@ -23,7 +23,17 @@ class MapEvent {
         this.specifName = json.specifName;
         this.cityName = json.cityName;
         this.text = this.categ + ": " + this.value;
-        this.textMarker = "<b>{1}</b><br>{2}".replace("{1}", this.country).replace("{2}", this.specifName+", "+this.cityName);
+        let underText = ""; 
+        if (this.specifName !== null && this.cityName !== null) {
+            underText = this.specifName+", "+this.cityName;
+        } else if (this.specifName !== null) {
+            underText = this.specifName;
+        } else if (this.cityName !== null) {
+            underText = this.cityName;
+        } else {
+            underText = "";
+        }
+        this.textMarker = "<b>{1}</b><br>{2}".replace("{1}", this.country).replace("{2}", underText);
     }
 }
 
@@ -218,7 +228,6 @@ function connect_source_map() {
         setTimeout(function() { connect_source_map(); }, 5000);
     };
 }
-connect_source_map()
 
 $(document).ready(function () {
     $( "#rotation_wait_time_selector" ).change(function() {
@@ -240,4 +249,15 @@ $(document).ready(function () {
         ZOOMLEVEL = sel;
         mapEventManager.directZoom();
     });
+
+    if (!!window.EventSource) {
+        $.getJSON( urlForMaps, function( data ) {
+            data.forEach(function(item) {
+                var marker = L.marker([item.coord.lat, item.coord.lon]).addTo(myOpenStreetMap);
+                var mapEvent = new MapEvent(item, marker);
+                mapEventManager.addMapEvent(mapEvent);
+            });
+            connect_source_map()
+        });
+    }
 });

@@ -184,14 +184,19 @@ function connect_source_log() {
 
     source_log.onmessage = function(event) {
         var json = jQuery.parseJSON( event.data );
-        updateLogTable(json.feedName, json.log, json.zmqName);
+        updateLogTable(json.name, json.log, json.zmqName);
     };
 }
 
 $(document).ready(function () {
     createHead(function() {
         if (!!window.EventSource) {
-            connect_source_log();
+            $.getJSON( urlForLogs, function( data ) {
+                data.forEach(function(item) {
+                    updateLogTable(item.name, item.log, item.zmqName);
+                });
+                connect_source_log();
+            });
         } else {
             console.log("No event source_log");
         }
@@ -202,7 +207,7 @@ $(document).ready(function () {
 
 
 //  LOG TABLE
-function updateLogTable(feedName, log, zmqName) {
+function updateLogTable(name, log, zmqName) {
     if (log.length == 0)
         return;
 
@@ -213,7 +218,7 @@ function updateLogTable(feedName, log, zmqName) {
     tableBody = document.getElementById('table_log_body');
 
     // only add row for attribute
-    if (feedName == "Attribute" ) {
+    if (name == "Attribute" ) {
         var categName = log[toPlotLocationLog];
         sources.addIfNotPresent(categName);
         sources.incCountOnSource(categName);
@@ -226,7 +231,7 @@ function updateLogTable(feedName, log, zmqName) {
             tableBody.deleteRow(0);
         }
 
-    } else if (feedName == "Keepalive") {
+    } else if (name == "Keepalive") {
         // do nothing
     } else {
         // do nothing

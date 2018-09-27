@@ -17,6 +17,7 @@ from helpers import geo_helper
 from helpers import contributor_helper
 from helpers import users_helper
 from helpers import trendings_helper
+from helpers import live_helper
 
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()
@@ -30,7 +31,6 @@ if not os.path.exists(logDir):
 logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
 logger = logging.getLogger('zmq_dispatcher')
 
-CHANNEL = cfg.get('RedisLog', 'channel')
 LISTNAME = cfg.get('RedisLIST', 'listName')
 
 serv_log = redis.StrictRedis(
@@ -46,16 +46,12 @@ serv_list = redis.StrictRedis(
         port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisLIST', 'db'))
 
+live_helper = live_helper.Live_helper(serv_redis_db, cfg)
 geo_helper = geo_helper.Geo_helper(serv_redis_db, cfg)
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
 users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
 
-
-def publish_log(zmq_name, name, content, channel=CHANNEL):
-    to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
-    serv_log.publish(channel, json.dumps(to_send))
-    logger.debug('Published: {}'.format(json.dumps(to_send)))
 
 def getFields(obj, fields):
     jsonWalker = fields.split('.')
@@ -68,6 +64,8 @@ def getFields(obj, fields):
         if type(itemToExplore) is list:
             return { 'name': lastName , 'data': itemToExplore }
         else:
+            if i == 'timestamp':
+                itemToExplore = datetime.datetime.utcfromtimestamp(int(itemToExplore)).strftime('%Y-%m-%d %H:%M:%S')
             return itemToExplore
     except KeyError as e:
         return ""
@@ -87,7 +85,7 @@ def handler_dispatcher(zmq_name, jsonObj):
 def handler_keepalive(zmq_name, jsonevent):
     logger.info('Handling keepalive')
     to_push = [ jsonevent['uptime'] ]
-    publish_log(zmq_name, 'Keepalive', to_push)
+    live_helper.publish_log(zmq_name, 'Keepalive', to_push)
 
 def handler_user(zmq_name, jsondata):
     logger.info('Handling user')
@@ -226,7 +224,7 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
                             action,
                             isLabeled=eventLabeled)
     # Push to log
-    publish_log(zmq_name, 'Attribute', to_push)
+    live_helper.publish_log(zmq_name, 'Attribute', to_push)
 
 
 ###############

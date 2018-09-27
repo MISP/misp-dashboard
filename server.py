@@ -15,6 +15,7 @@ from helpers import geo_helper
 from helpers import contributor_helper
 from helpers import users_helper
 from helpers import trendings_helper
+from helpers import live_helper
 
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()
@@ -41,6 +42,10 @@ serv_redis_db = redis.StrictRedis(
         port=cfg.getint('RedisGlobal', 'port'),
         db=cfg.getint('RedisDB', 'db'))
 
+streamLogCacheKey = cfg.get('RedisLog', 'streamLogCacheKey')
+streamMapCacheKey = cfg.get('RedisLog', 'streamMapCacheKey')
+
+live_helper = live_helper.Live_helper(serv_redis_db, cfg)
 geo_helper = geo_helper.Geo_helper(serv_redis_db, cfg)
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
 users_helper = users_helper.Users_helper(serv_redis_db, cfg)
@@ -56,8 +61,6 @@ class LogItem():
 
     FIELDNAME_ORDER = []
     FIELDNAME_ORDER_HEADER = []
-    FIELDNAME_ORDER.append("Time")
-    FIELDNAME_ORDER_HEADER.append("Time")
     for item in json.loads(cfg.get('Dashboard', 'fieldname_order')):
         if type(item) is list:
             FIELDNAME_ORDER_HEADER.append(" | ".join(item))
@@ -66,10 +69,7 @@ class LogItem():
         FIELDNAME_ORDER.append(item)
 
     def __init__(self, feed):
-        self.time = strftime("%H:%M:%S", now())
-        #FIXME Parse feed message?
         self.fields = []
-        self.fields.append(self.time)
         for f in feed:
             self.fields.append(f)
 
@@ -100,14 +100,18 @@ class EventMessage():
             logger.error(e)
             jsonMsg = { 'name': "undefined" ,'log': json.loads(msg) }
 
-        self.feedName = jsonMsg['name']
+        self.name = jsonMsg['name']
         self.zmqName = jsonMsg['zmqName']
         self.feed = json.loads(jsonMsg['log'])
         self.feed = LogItem(self.feed).get_row()
 
-    def to_json(self):
-        to_ret = { 'log': self.feed, 'feedName': self.feedName, 'zmqName': self.zmqName }
+    def to_json_ev(self):
+        to_ret = { 'log': self.feed, 'name': self.name, 'zmqName': self.zmqName }
         return 'data: {}\n\n'.format(json.dumps(to_ret))
+
+    def to_json(self):
+        to_ret = { 'log': self.feed, 'name': self.name, 'zmqName': self.zmqName }
+        return json.dumps(to_ret)
 
 ###########
 ## ROUTE ##
@@ -219,11 +223,21 @@ def trendings():
 
 @app.route("/_logs")
 def logs():
-    return Response(event_stream_log(), mimetype="text/event-stream")
+    if request.accept_mimetypes.accept_json or request.method == 'POST':
+        key = 'Attribute'
+        j = live_helper.get_stream_log_cache(key)
+        return jsonify(j)
+    else:
+        return Response(event_stream_log(), mimetype="text/event-stream")
 
 @app.route("/_maps")
 def maps():
-    return Response(event_stream_maps(), mimetype="text/event-stream")
+    if request.accept_mimetypes.accept_json or request.method == 'POST':
+        key = 'Map'
+        j = live_helper.get_stream_log_cache(key)
+        return jsonify(j)
+    else:
+        return Response(event_stream_maps(), mimetype="text/event-stream")
 
 @app.route("/_get_log_head")
 def getLogHead():
@@ -231,11 +245,12 @@ def getLogHead():
 
 def event_stream_log():
     subscriber_log = redis_server_log.pubsub(ignore_subscribe_messages=True)
-    subscriber_log.subscribe(cfg.get('RedisLog', 'channel'))
+    subscriber_log.subscribe(live_helper.CHANNEL)
     try:
         for msg in subscriber_log.listen():
             content = msg['data']
-            yield EventMessage(content).to_json()
+            ev = EventMessage(content)
+            yield ev.to_json_ev()
     except GeneratorExit:
         subscriber_log.unsubscribe()
 
@@ -245,7 +260,8 @@ def event_stream_maps():
     try:
         for msg in subscriber_map.listen():
             content = msg['data'].decode('utf8')
-            yield 'data: {}\n\n'.format(content)
+            to_ret = 'data: {}\n\n'.format(content)
+            yield to_ret
     except GeneratorExit:
         subscriber_map.unsubscribe()
 

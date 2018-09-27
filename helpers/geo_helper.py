@@ -12,6 +12,7 @@ import phonenumbers, pycountry
 from phonenumbers import geocoder
 
 import util
+from helpers import live_helper
 
 class InvalidCoordinate(Exception):
     pass
@@ -24,6 +25,7 @@ class Geo_helper:
                 host=cfg.get('RedisGlobal', 'host'),
                 port=cfg.getint('RedisGlobal', 'port'),
                 db=cfg.getint('RedisMap', 'db'))
+        self.live_helper = live_helper.Live_helper(serv_redis_db, cfg)
 
         #logger
         logDir = cfg.get('Log', 'directory')
@@ -118,7 +120,9 @@ class Geo_helper:
                     "cityName": rep['full_rep'].city.name,
                     "regionCode": rep['full_rep'].country.iso_code,
                     }
-            self.serv_coord.publish(self.CHANNELDISP, json.dumps(to_send))
+            j_to_send = json.dumps(to_send)
+            self.serv_coord.publish(self.CHANNELDISP, j_to_send)
+            self.live_helper.add_to_stream_log_cache('Map', j_to_send)
             self.logger.info('Published: {}'.format(json.dumps(to_send)))
         except ValueError:
             self.logger.warning("can't resolve ip")
@@ -163,7 +167,9 @@ class Geo_helper:
                     "cityName": "",
                     "regionCode": country_code,
                     }
-            self.serv_coord.publish(self.CHANNELDISP, json.dumps(to_send))
+            j_to_send = json.dumps(to_send)
+            self.serv_coord.publish(self.CHANNELDISP, j_to_send)
+            self.live_helper.add_to_stream_log_cache('Map', j_to_send)
             self.logger.info('Published: {}'.format(json.dumps(to_send)))
         except phonenumbers.NumberParseException:
             self.logger.warning("Can't resolve phone number country")
