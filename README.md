@@ -1,5 +1,60 @@
-# MISP-Dashboard
-An experimental dashboard showing live data and statistics from the ZMQ of one or more MISP instances.
+# misp-dashboard
+
+A dashboard showing live data and statistics from the ZMQ feeds of one or more [MISP](https://www.misp-project/) instances. The dashboard
+can be used as a real-time situational awareness tool to gather threat intelligence information. The misp-dashboard includes
+a gamification tool to show the contributions of each organisations and how they are ranked over time. The dashboard can be used for
+SOC (Security Operation Center), security team or during cyber exercise to keep track of what's going on your various MISP instances.
+
+# Features
+
+## Live Dashboard
+
+- Possibility to subscribe to multiple ZMQ feeds
+- Shows direct contribution made by organisations
+- Shows live resolvable posted locations
+
+![Dashboard live](./screenshots/dashboard-live.png)
+
+## Geolocalisation Dashboard
+
+- Provides historical geolocalised information to support security teams, CSIRTs or SOC finding threats in their constituency
+- Possibility to get geospatial information from specific regions
+
+![Dashbaord geo](./screenshots/dashboard-geo.png)
+
+## Contributors Dashboard
+
+__Shows__:
+- The monthly rank of all organisation
+- The last organisation that contributed (dynamic updates)
+- The contribution level of all organisation
+- Each category of contribution per organisation
+- The current ranking of the selected organisation (dynamic updates)
+
+__Includes__:
+
+- Gamification of the platform:
+  - Two different levels of ranking with unique icons
+  - Exclusive obtainable badges for source code contributors and donator
+
+![Dashboard contributor](./screenshots/dashboard-contributors2.png)
+![Dashboard contributor2](./screenshots/dashboard-contributors3.png)
+
+## Users Dashboard
+
+- Shows when and how the platform is used:
+    - Login punchcard and overtime
+    - Contribution vs login
+
+![Dashboard users](./screenshots/dashboard-users.png)
+
+## Trendings Dashboard
+
+- Provides real time information to support security teams, CSIRTs or SOC showing current threats and activity
+    - Shows most active events, categories and tags
+    - Shows sightings and discussion overtime
+
+![Dashboard users](./screenshots/dashboard-trendings.png)
 
 # Installation
 - Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory
@@ -64,55 +119,6 @@ OR, just toggle the debug flag in start_all.sh script.
 
 Happy hacking ;)
 
-# Features
-
-## Live Dashboard
-- Possibility to subscribe to multiple ZMQ feeds
-- Shows direct contribution made by organisations
-- Shows live resolvable posted locations
-
-![Dashboard live](./screenshots/dashboard-live.png)
-
-## Geolocalisation Dashboard
-
-- Provides historical geolocalised information to support security teams, CSIRTs or SOC finding threats in their constituency
-- Possibility to get geospatial information from specific regions
-
-![Dashbaord geo](./screenshots/dashboard-geo.png)
-
-## Contributors Dashboard
-
-__Shows__:
-- The monthly rank of all organisation
-- The last organisation that contributed (dynamic updates)
-- The contribution level of all organisation
-- Each category of contribution per organisation
-- The current ranking of the selected organisation (dynamic updates)
-
-__Includes__:
-
-- Gamification of the platform:
-  - Two different levels of ranking with unique icons
-  - Exclusive obtainable badges for source code contributors and donator
-
-![Dashboard contributor](./screenshots/dashboard-contributors2.png)
-![Dashboard contributor2](./screenshots/dashboard-contributors3.png)
-
-## Users Dashboard
-
-- Shows when and how the platform is used:
-    - Login punchcard and overtime
-    - Contribution vs login
-
-![Dashboard users](./screenshots/dashboard-users.png)
-
-## Trendings Dashboard
-
-- Provides real time information to support security teams, CSIRTs or SOC showing current threats and activity
-    - Shows most active events, categories and tags
-    - Shows sightings and discussion overtime
-
-![Dashboard users](./screenshots/dashboard-trendings.png)
 
 # zmq_subscriber options
 ```usage: zmq_subscriber.py [-h] [-n ZMQNAME] [-u ZMQURL]
@@ -191,6 +197,7 @@ Configuration file `/etc/apache2/sites-available/misp-dashboard.conf` assumes th
 ```
 
 # License
+
 Images and logos are handmade for:
 - rankingMISPOrg/
 - rankingMISPMonthly/
@@ -204,8 +211,8 @@ Note that:
 - Part of ```MISPHonorableIcons/5.svg``` comes from [Zeptozephyr](https://zeptozephyr.deviantart.com/art/Vectored-Portal-Icons-207347804) & [octicons.github.com](https://octicons.github.com/icon/git-pull-request/) (CC0 - No Rights Reserved)
 
 ```
-Copyright (C) 2017 CIRCL - Computer Incident Response Center Luxembourg (c/o smile, security made in Lëtzebuerg, Groupement d'Intérêt Economique)
-Copyright (c) 2017 Sami Mokaddem
+Copyright (C) 2017-2018 CIRCL - Computer Incident Response Center Luxembourg (c/o smile, security made in Lëtzebuerg, Groupement d'Intérêt Economique)
+Copyright (c) 2017-2018 Sami Mokaddem
 
 
 This program is free software: you can redistribute it and/or modify
