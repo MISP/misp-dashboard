@@ -10,6 +10,7 @@ rotation_wait_time = 30
 max_img_rotation = 10
 hours_spanned = 48
 zoomlevel = 15
+maxCacheHistory = 30
 # [1->12]
 size_dashboard_left_width = 5
 size_openStreet_pannel_perc = 55
@@ -48,6 +49,8 @@ listName=bufferList
 
 [RedisLog]
 db=0
+streamLogCacheKey = streamLogCache
+streamMapCacheKey = streamMapsCache
 channel=1
 channelLastContributor = lastContributor
 channelLastAwards = lastAwards
