@@ -74,9 +74,27 @@ def getFields(obj, fields):
 ## HANDLERS ##
 ##############
 
-def handler_log(zmq_name, jsonevent):
+def handler_skip(zmq_name, jsonevent):
     logger.info('Log not processed')
     return
+
+def handler_audit(zmq_name, jsondata):
+    action = jsondata.get('action', None)
+    jsonlog = jsondata.get('Log', None)
+
+    if action is None or jsonlog is None:
+        return
+
+    # consider login operations
+    if action == 'log': # audit is related to log
+        logAction = jsonlog.get('action', None)
+        if logAction == 'login': # only consider user login
+            timestamp = int(time.time())
+            email = jsonlog.get('email', '')
+            org = jsonlog.get('org', '')
+            users_helper.add_user_login(timestamp, org, email)
+    else:
+        pass
 
 def handler_dispatcher(zmq_name, jsonObj):
     if "Event" in jsonObj:
@@ -87,15 +105,15 @@ def handler_keepalive(zmq_name, jsonevent):
     to_push = [ jsonevent['uptime'] ]
     live_helper.publish_log(zmq_name, 'Keepalive', to_push)
 
+# Login are no longer pushed by `misp_json_user`, but by `misp_json_audit`
 def handler_user(zmq_name, jsondata):
     logger.info('Handling user')
     action = jsondata['action']
     json_user = jsondata['User']
     json_org = jsondata['Organisation']
     org = json_org['name']
-    if action == 'login': #only consider user login
-        timestamp = int(time.time())
-        users_helper.add_user_login(timestamp, org)
+    if action == 'edit': #only consider user login
+        pass
     else:
         pass
 
@@ -264,10 +282,11 @@ dico_action = {
         "misp_json_attribute":      handler_attribute,
         "misp_json_object":         handler_object,
         "misp_json_sighting":       handler_sighting,
-        "misp_json_organisation":   handler_log,
+        "misp_json_organisation":   handler_skip,
         "misp_json_user":           handler_user,
         "misp_json_conversation":   handler_conversation,
-        "misp_json_object_reference": handler_log,
+        "misp_json_object_reference": handler_skip,
+        "misp_json_audit": handler_audit,
         }
 
 

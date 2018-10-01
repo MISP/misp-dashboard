@@ -27,7 +27,7 @@ class Users_helper:
         logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
         self.logger = logging.getLogger(__name__)
 
-    def add_user_login(self, timestamp, org):
+    def add_user_login(self, timestamp, org, email=''):
         timestampDate = datetime.datetime.fromtimestamp(float(timestamp))
         timestampDate_str = util.getDateStrFormat(timestampDate)
 

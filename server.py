@@ -464,6 +464,10 @@ def getUserLogins():
     data = users_helper.getUserLoginsForPunchCard(date, org)
     return jsonify(data)
 
+@app.route("/_getAllLoggedOrg")
+def getAllLoggedOrg():
+    return jsonify(users_helper.getAllOrg())
+
 @app.route("/_getTopOrglogin")
 def getTopOrglogin():
     try:
