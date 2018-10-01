@@ -1,6 +1,6 @@
 # misp-dashboard
 
-A dashboard showing live data and statistics from the ZMQ feeds of one or more [MISP](https://www.misp-project/) instances. The dashboard
+A dashboard showing live data and statistics from the ZMQ feeds of one or more [MISP](https://www.misp-project.org/) instances. The dashboard
 can be used as a real-time situational awareness tool to gather threat intelligence information. The misp-dashboard includes
 a gamification tool to show the contributions of each organisations and how they are ranked over time. The dashboard can be used for
 SOC (Security Operation Center), security team or during cyber exercise to keep track of what's going on your various MISP instances.
