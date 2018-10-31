@@ -120,6 +120,11 @@ OR, just toggle the debug flag in start_all.sh script.
 Happy hacking ;)
 
 
+## Restart from scratch
+
+To restart from scratch and empty all data from your dashboard you can use the [FLUSHDB](https://redis.io/commands/flushdb) or [FLUSHALL](https://redis.io/commands/flushall) command on your redis instance on port `6250`.
+
+
 # zmq_subscriber options
 ```usage: zmq_subscriber.py [-h] [-n ZMQNAME] [-u ZMQURL]
 
