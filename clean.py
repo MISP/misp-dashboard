@@ -25,11 +25,11 @@ def clean(brutal=False):
 
     if brutal:
         print(RED+'Brutal mode'+DEFAULT+' selected')
-        print('Cleaning data...')
+        print('[%s:%s] Cleaning data...' % (host, port))
         cleanBrutal(servers[0])
     else:
         print(GREEN+'Soft mode'+DEFAULT+' selected')
-        print('Cleaning data...')
+        print('[%s:%s] Cleaning data...' % (host, port))
         cleanSoft(servers)
 
 
@@ -77,8 +77,8 @@ def cleanSoft(servers):
                 serv.delete(*tuple(key_to_del))
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--brutal", help="Brutal mode: basic FLUSHALL", default=False, action="store_true")
+    parser = argparse.ArgumentParser(description='Clean data stored in the redis server specified in the configuration file')
+    parser.add_argument("-b", "--brutal", default=False, action="store_true", help="Perfom a FLUSHALL on the redis database. If not set, will use a soft method to delete only keys used by MISP-Dashboard.")
     args = parser.parse_args()
     clean(args.brutal)
     print(GREEN+'Done.'+DEFAULT)

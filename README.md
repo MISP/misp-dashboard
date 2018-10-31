@@ -123,6 +123,16 @@ Happy hacking ;)
 ## Restart from scratch
 
 To restart from scratch and empty all data from your dashboard you can use the [FLUSHDB](https://redis.io/commands/flushdb) or [FLUSHALL](https://redis.io/commands/flushall) command on your redis instance on port `6250`.
+Or use the dedicated cleaning script ``clean.py``
+```usage: clean.py [-h] [-b]
+
+Clean data stored in the redis server specified in the configuration file
+
+optional arguments:
+  -h, --help    show this help message and exit
+  -b, --brutal  Perfom a FLUSHALL on the redis database. If not set, will use
+                a soft method to delete only keys used by MISP-Dashboard.
+```
 
 
 # zmq_subscriber options
