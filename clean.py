@@ -72,7 +72,9 @@ def cleanSoft(servers):
     for db, keys in prefix_keys_per_db.items():
         serv = servers[db]
         for k in keys:
+            # fetch all keys on the db
             key_to_del = serv.keys(k)
+            # delete all existing keys
             if len(key_to_del) > 0:
                 serv.delete(*tuple(key_to_del))
 

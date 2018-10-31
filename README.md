@@ -122,8 +122,7 @@ Happy hacking ;)
 
 ## Restart from scratch
 
-To restart from scratch and empty all data from your dashboard you can use the [FLUSHDB](https://redis.io/commands/flushdb) or [FLUSHALL](https://redis.io/commands/flushall) command on your redis instance on port `6250`.
-Or use the dedicated cleaning script ``clean.py``
+To restart from scratch and empty all data from your dashboard you can use the dedicated cleaning script ``clean.py``
 ```usage: clean.py [-h] [-b]
 
 Clean data stored in the redis server specified in the configuration file
