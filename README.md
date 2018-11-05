@@ -167,7 +167,7 @@ The following NEW packages will be installed:
 Configuration file `/etc/apache2/sites-available/misp-dashboard.conf` assumes that `misp-dashboard` is cloned into `var/www/misp-dashboard`. It runs as user `misp` in this example. Change the permissions to folder and files accordingly.
 
 ```
-<VirtualHost *:8000>
+<VirtualHost *:8001>
     ServerAdmin admin@misp.local
     ServerName misp.local
 
