@@ -102,6 +102,8 @@ OSError: [Errno 26] Text file busy: '/home/steve/code/misp-dashboard/DASHENV/bin
 - Start the Flask server ```./server.py &```
 - Access the interface at ```http://localhost:8001/```
 
+Alternatively, you can run the ```start_all.sh``` script to run the commands described above.
+
 # Debug
 
 Debug is fun and gives you more details on what is going on when things fail.
