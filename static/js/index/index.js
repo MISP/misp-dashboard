@@ -166,44 +166,10 @@ var sources = new Sources();
 sources.addSource('global');
 var ledmanager = new LedManager();
 
-var curNumLog = 0;
 var curMaxDataNumLog = 0;
-var source_log;
-
-// function connect_source_log() {
-//     source_log = new EventSource(urlForLogs);
-//
-//     source_log.onopen = function(){
-//         //console.log('connection is opened. '+source_log.readyState);
-//     };
-//
-//     source_log.onerror = function(){
-//         console.log('error: '+source_log.readyState);
-//         setTimeout(function() { connect_source_log(); }, 5000);
-//     };
-//
-//     source_log.onmessage = function(event) {
-//         var json = jQuery.parseJSON( event.data );
-//         updateLogTable(json.name, json.log, json.zmqName);
-//     };
-// }
 
 var livelog;
 $(document).ready(function () {
-    // createHead(function() {
-    //     if (!!window.EventSource) {
-    //         $.getJSON( urlForLogs, function( data ) {
-    //             data.forEach(function(item) {
-    //                 updateLogTable(item.name, item.log, item.zmqName);
-    //             });
-    //             connect_source_log();
-    //         });
-    //     } else {
-    //         console.log("No event source_log");
-    //     }
-    //
-    // });
-
     $.getJSON(urlForHead, function(head) {
         livelog = new $.livelog($("#divLogTable"), {
             pollingFrequency: 5000,
@@ -229,9 +195,6 @@ function updateLogTable(name, log, zmqName, ignoreLed) {
         ledmanager.updateKeepAlive(zmqName);
     }
 
-    // Create new row
-    // tableBody = document.getElementById('table_log_body');
-
     // only add row for attribute
     if (name == "Attribute" ) {
         var categName = log[toPlotLocationLog];
@@ -239,13 +202,6 @@ function updateLogTable(name, log, zmqName, ignoreLed) {
         sources.incCountOnSource(categName);
         sources.incCountOnSource('global');
         updateChartDirect();
-        // createRow(tableBody, log);
-
-        // Remove old row
-        // while ($("#table_log").height() >= $("#panelLogTable").height()-26){ //26 for margin
-        //     tableBody.deleteRow(0);
-        // }
-
     } else if (name == "Keepalive") {
         // do nothing
     } else {
@@ -446,7 +402,6 @@ function createHead(callback) {
             if (header.length > 0) { // add in panel header
                 header.append(led_container);
             } else { // add over the map
-                // this._options.container.append(led_container);
                 led.css('display', 'inline-block');
                 led_container.append($('<span>Status</span>')).css('float', 'left');
                 $('.dt-toolbar-led').append(led_container)
@@ -666,12 +621,7 @@ function createHead(callback) {
 
 }));
 
-//    ###    ///
-//    ###    ///
-//    ###    ///
-//    ###    ///
-//    ###    ///
-//    ###    ///
+/* Live log filter */
 
 function recursiveInject(result, rules, isNot) {
     if (rules.rules === undefined) { // add to result
@@ -720,12 +670,6 @@ $(document).ready(function() {
              'bt-tooltip-errors': null,
          },
          allow_empty: true,
-         // lang: {
-         //     operators: {
-         //         equal: 'show',
-         //         in: 'show'
-         //     }
-         // },
          filters: [],
         rules: {
             condition: 'AND',
