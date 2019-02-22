@@ -32,6 +32,7 @@ class Live_helper:
         self.serv_live.publish(channel, j_to_send)
         self.logger.debug('Published: {}'.format(j_to_send))
         if name != 'Keepalive':
+            name = 'Attribute' if 'ObjectAttribute' else name
             self.add_to_stream_log_cache(name, j_to_send_keep)
 
 

@@ -175,7 +175,7 @@ $(document).ready(function () {
             pollingFrequency: 5000,
             tableHeader: head,
             tableMaxEntries: 50,
-            animate: false,
+            // animate: false,
             preDataURL: urlForLogs,
             endpoint: urlForLogs
         });
@@ -333,45 +333,44 @@ function createHead(callback) {
                     { targets: 0, orderable: false },
                     { targets: '_all', searchable: false, orderable: false,
                         render: function ( data, type, row ) {
-                            // return data +' ('+ row[3]+')';
-                                var $toRet;
-                                if (typeof data === 'object') {
-                                    $toRet = $('<span></span>');
-                                    data.data.forEach(function(cur, i) {
-                                        switch (data.name) {
-                                            case 'Tag':
-                                                var $tag = $('<a></a>');
-                                                $tag.addClass('tagElem');
-                                                $tag.css({
-                                                    backgroundColor: cur.colour,
-                                                    color: getTextColour(cur.colour.substring(1,6))
-                                                });
-                                                $tag.text(cur.name)
-                                                $toRet.append($tag);
-                                                break;
-                                            case 'mispObject':
-                                                $toRet.append('MISP Object not supported yet')
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                    });
-                                    $toRet = $toRet[0].outerHTML;
-                                } else if (data === undefined) {
-                                        $toRet = '';
-                                } else {
-                                    var textToAddArray = data.split(char_separator);
+                            var $toRet;
+                            if (typeof data === 'object') {
+                                $toRet = $('<span></span>');
+                                data.data.forEach(function(cur, i) {
+                                    switch (data.name) {
+                                        case 'Tag':
+                                            var $tag = $('<a></a>');
+                                            $tag.addClass('tagElem');
+                                            $tag.css({
+                                                backgroundColor: cur.colour,
+                                                color: getTextColour(cur.colour.substring(1,6))
+                                            });
+                                            $tag.text(cur.name)
+                                            $toRet.append($tag);
+                                            break;
+                                        case 'mispObject':
+                                            $toRet.append('MISP Object not supported yet')
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                });
+                                $toRet = $toRet[0].outerHTML;
+                            } else if (data === undefined) {
                                     $toRet = '';
-                                    textToAddArray.forEach(function(e, i) {
-                                        if (i > 0) {
-                                            $toRet += '<br>' + e;
-                                        } else {
-                                            $toRet += e;
-                                        }
-                                    });
-                                }
-                                return $toRet;
-                           },
+                            } else {
+                                var textToAddArray = data.split(char_separator);
+                                $toRet = '';
+                                textToAddArray.forEach(function(e, i) {
+                                    if (i > 0) {
+                                        $toRet += '<br>' + e;
+                                    } else {
+                                        $toRet += e;
+                                    }
+                                });
+                            }
+                            return $toRet;
+                       },
                     }
                 ],
             };
@@ -474,6 +473,9 @@ function createHead(callback) {
                                     case 'Attribute':
                                         that.add_entry(entry);
                                         break;
+                                    case 'ObjectAttribute':
+                                        that.add_entry(entry, true);
+                                        break;
                                     default:
                                         break;
                                 }
@@ -498,6 +500,9 @@ function createHead(callback) {
                         switch (name) {
                             case 'Attribute':
                                 that.add_entry(entry);
+                                break;
+                            case 'ObjectAttribute':
+                                that.add_entry(entry, true);
                                 break;
                             default:
                                 break;
@@ -577,14 +582,21 @@ function createHead(callback) {
                 }
             },
 
-            add_entry: function(entry) {
+            add_entry: function(entry, isObjectAttribute) {
                 var rowNode = this.dt.row.add(entry).draw().node();
-                if (this.animate) {
+                if (this._options.animate) {
                     $( rowNode )
-                    .css( 'background-color', '#5cb85c' )
-                    .animate( { 'background-color': '', duration: 600 } );
+                    .css( 'background-color', '#5cb85c !important' )
+                    .animate( { 'background-color': '' }, { duration: 1500 } );
                 }
-                // this.dt.row.add(entry).draw( false );
+                if (isObjectAttribute === true) {
+                    console.log(entry);
+                    $( rowNode ).children().last()
+                        .css('position', 'relative')
+                        .append(
+                            $('<it class="fa fa-th rowTableIsObject" title="This attribute belong to an Object"></it>')
+                        );
+                }
                 // remove entries
                 var numRows = this.dt.rows().count();
                 var rowsToRemove = numRows - this._options.tableMaxEntries;

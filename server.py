@@ -121,7 +121,11 @@ class EventMessage():
 
         self.name = jsonMsg['name']
         self.zmqName = jsonMsg['zmqName']
+
         if self.name == 'Attribute':
+            self.feed = jsonMsg['log']
+            self.feed = LogItem(self.feed, filters).get_row()
+        elif self.name == 'ObjectAttribute':
             self.feed = jsonMsg['log']
             self.feed = LogItem(self.feed, filters).get_row()
         else:

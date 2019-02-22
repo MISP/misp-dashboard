@@ -122,7 +122,16 @@ def handler_conversation(zmq_name, jsonevent):
 
 def handler_object(zmq_name, jsondata):
     logger.info('Handling object')
-    return
+    # check if jsonattr is an mispObject object
+    if 'Object' in jsondata:
+        jsonobj = jsondata['Object']
+        soleObject = copy.deepcopy(jsonobj)
+        del soleObject['Attribute']
+        for jsonattr in jsonobj['Attribute']:
+            jsonattrcpy = copy.deepcopy(jsonobj)
+            jsonattrcpy['Event'] = jsondata['Event']
+            jsonattrcpy['Attribute'] = jsonattr
+            handler_attribute(zmq_name, jsonattrcpy, False, parentObject=soleObject)
 
 def handler_sighting(zmq_name, jsondata):
     logger.info('Handling sighting')
@@ -168,6 +177,16 @@ def handler_event(zmq_name, jsonobj):
         else:
             handler_attribute(zmq_name, attributes)
 
+    if 'Object' in jsonevent:
+        objects = jsonevent['Object']
+        if type(objects) is list:
+            for obj in objects:
+                jsoncopy = copy.deepcopy(jsonobj)
+                jsoncopy['Object'] = obj
+                handler_object(zmq_name, jsoncopy)
+        else:
+            handler_object(zmq_name, objects)
+
     action = jsonobj.get('action', None)
     eventLabeled = len(jsonobj.get('EventTag', [])) > 0
     org = jsonobj.get('Orgc', {}).get('name', None)
@@ -179,11 +198,15 @@ def handler_event(zmq_name, jsonobj):
                         action,
                         isLabeled=eventLabeled)
 
-def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
+def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False, parentObject=False):
     logger.info('Handling attribute')
     # check if jsonattr is an attribute object
     if 'Attribute' in jsonobj:
         jsonattr = jsonobj['Attribute']
+    else:
+        jsonattr = jsonobj
+
+    attributeType = 'Attribute' if jsonattr['object_id'] == '0' else 'ObjectAttribute'
 
     #Add trending
     categName = jsonattr['category']
@@ -210,12 +233,12 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
         eventLabeled = len(jsonobj.get('EventTag', [])) > 0
         action = jsonobj.get('action', None)
         contributor_helper.handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'],
-                            'Attribute',
+                            attributeType,
                             jsonattr['category'],
                             action,
                             isLabeled=eventLabeled)
     # Push to log
-    live_helper.publish_log(zmq_name, 'Attribute', jsonobj)
+    live_helper.publish_log(zmq_name, attributeType, jsonobj)
 
 
 ###############
