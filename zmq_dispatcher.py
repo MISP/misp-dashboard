@@ -53,23 +53,6 @@ users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
 
 
-def getFields(obj, fields):
-    jsonWalker = fields.split('.')
-    itemToExplore = obj
-    lastName = ""
-    try:
-        for i in jsonWalker:
-            itemToExplore = itemToExplore[i]
-            lastName = i
-        if type(itemToExplore) is list:
-            return { 'name': lastName , 'data': itemToExplore }
-        else:
-            if i == 'timestamp':
-                itemToExplore = datetime.datetime.utcfromtimestamp(int(itemToExplore)).strftime('%Y-%m-%d %H:%M:%S')
-            return itemToExplore
-    except KeyError as e:
-        return ""
-
 ##############
 ## HANDLERS ##
 ##############
@@ -214,16 +197,6 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
             pass
     trendings_helper.addTrendingTags(tags, timestamp)
 
-    to_push = []
-    for field in json.loads(cfg.get('Dashboard', 'fieldname_order')):
-        if type(field) is list:
-            to_join = []
-            for subField in field:
-                to_join.append(str(getFields(jsonobj, subField)))
-            to_add = cfg.get('Dashboard', 'char_separator').join(to_join)
-        else:
-            to_add = getFields(jsonobj, field)
-        to_push.append(to_add)
 
     #try to get coord from ip
     if jsonattr['category'] == "Network activity":
@@ -242,7 +215,7 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
                             action,
                             isLabeled=eventLabeled)
     # Push to log
-    live_helper.publish_log(zmq_name, 'Attribute', to_push)
+    live_helper.publish_log(zmq_name, 'Attribute', jsonobj)
 
 
 ###############

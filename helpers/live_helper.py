@@ -43,7 +43,7 @@ class Live_helper:
             jentry = json.loads(entry.decode('utf8'))
             to_ret.append(jentry)
         return to_ret
-    
+
 
     def add_to_stream_log_cache(self, cacheKey, item):
         rKey = self.prefix_redis_key+cacheKey

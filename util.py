@@ -102,3 +102,22 @@ def sortByTrendingScore(toSort, topNum=5):
         topArray.append(dailyCombi)
 
     return topArray
+
+
+def getFields(obj, fields):
+    jsonWalker = fields.split('.')
+    itemToExplore = obj
+    lastName = ""
+    try:
+        for i in jsonWalker:
+            itemToExplore = itemToExplore[i]
+            lastName = i
+        if type(itemToExplore) is list:
+            return {'name': lastName, 'data': itemToExplore}
+        else:
+            if i == 'timestamp':
+                itemToExplore = datetime.datetime.utcfromtimestamp(
+                    int(itemToExplore)).strftime('%Y-%m-%d %H:%M:%S')
+            return itemToExplore
+    except KeyError as e:
+        return None
