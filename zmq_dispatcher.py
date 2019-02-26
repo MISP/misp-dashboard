@@ -167,11 +167,8 @@ def handler_event(zmq_name, jsonobj):
     timestamp = jsonevent['timestamp']
     trendings_helper.addTrendingEvent(eventName, timestamp)
     tags = []
-    for tag in jsonobj.get('EventTag', []):
-        try:
-            tags.append(tag['Tag'])
-        except KeyError:
-            pass
+    for tag in jsonevent.get('Tag', []):
+        tags.append(tag)
     trendings_helper.addTrendingTags(tags, timestamp)
 
     #redirect to handler_attribute
@@ -208,10 +205,7 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
     trendings_helper.addTrendingCateg(categName, timestamp)
     tags = []
     for tag in jsonattr.get('Tag', []):
-        try:
-            tags.append(tag)
-        except KeyError:
-            pass
+        tags.append(tag)
     trendings_helper.addTrendingTags(tags, timestamp)
 
     to_push = []
