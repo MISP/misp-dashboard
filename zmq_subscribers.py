@@ -68,7 +68,7 @@ def main():
         sys.exit(1)
     signal.signal(signal.SIGINT, signal_handler)
     forever = threading.Event()
-    forever.wait()
+    forever.wait()  # Wait for SIGINT
 
 if __name__ == "__main__":
     main()
