@@ -135,6 +135,10 @@ optional arguments:
                 a soft method to delete only keys used by MISP-Dashboard.
 ```
 
+## Notes about ZMQ
+The misp-dashboard being stateless in regards to MISP, it can only process data that it received. Meaning that if your MISP is not publishing all notifications to its ZMQ, the misp-dashboard will not have them.
+
+The most revelant example could be the user login punchcard. If your MISP doesn't have the option ``Plugin.ZeroMQ_audit_notifications_enable`` set to ``true``, the punchcard will be empty.
 
 # zmq_subscriber options
 ```usage: zmq_subscriber.py [-h] [-n ZMQNAME] [-u ZMQURL]
