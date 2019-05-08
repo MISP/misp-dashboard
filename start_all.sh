@@ -53,7 +53,7 @@ conf_dir="config/"
 sleep 0.1
 if [ "${check_redis_port}" == "1" ]; then
   echo -e $GREEN"\t* Launching Redis servers"$DEFAULT
-    if [[ -z $REDIS_RUN ]]; then
+    if [[ ! -z $REDIS_RUN ]]; then
       $REDIS_RUN "redis-server ${conf_dir}6250.conf" &
     else
       redis-server ${conf_dir}6250.conf &
