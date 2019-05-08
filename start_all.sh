@@ -22,8 +22,7 @@ fi
 
 if [[ -f "/etc/redhat-release" ]]; then
   echo "You are running a RedHat flavour. Detecting scl potential..."
-  SCL=$(which scl > /dev/null 2>&1)
-  if [[ ! -z $SCL ]]; then
+  if [[ -f "/usr/bin/scl" ]]; then
     echo "scl detected, checking for redis-server"
     SCL_REDIS=$(scl -l|grep rh-redis)
     if [[ ! -z $SCL_REDIS ]]; then
