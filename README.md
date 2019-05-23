@@ -140,6 +140,25 @@ The misp-dashboard being stateless in regards to MISP, it can only process data 
 
 The most revelant example could be the user login punchcard. If your MISP doesn't have the option ``Plugin.ZeroMQ_audit_notifications_enable`` set to ``true``, the punchcard will be empty.
 
+## Dashboard not showing results - No module named zmq
+When the misp-dashboard does not show results then first check if the zmq module within MISP is properly installed. 
+
+In **Administration**, **Plugin Settings**, **ZeroMQ** check that **Plugin.ZeroMQ_enable** is set to **True**.
+
+Publish a test event from MISP to ZMQ via **Event Actions**, **Publish event to ZMQ**.
+
+Verify the logfiles
+```
+${PATH_TO_MISP}/app/tmp/log/mispzmq.error.log
+${PATH_TO_MISP}/app/tmp/log/mispzmq.log
+```
+
+If there's an error **ModuleNotFoundError: No module named 'zmq'** then install pyzmq.
+
+```
+$SUDO_WWW ${PATH_TO_MISP}/venv/bin/pip install pyzmq
+```
+
 # zmq_subscriber options
 ```usage: zmq_subscriber.py [-h] [-n ZMQNAME] [-u ZMQURL]
 
