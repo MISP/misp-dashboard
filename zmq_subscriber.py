@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
-import time, datetime
-import zmq
-import logging
-import redis
-import configparser
 import argparse
+import configparser
+import datetime
+import json
+import logging
 import os
 import sys
-import json
+import time
+
+import redis
+import zmq
 
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()

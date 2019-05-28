@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template, request, Response, jsonify, stream_with_context
-import json
-import redis
-import random, math
 import configparser
+import datetime
+import json
+import logging
+import math
+import os
+import random
 from time import gmtime as now
 from time import sleep, strftime
-import datetime
-import os
-import logging
+
+import redis
 
 import util
-from helpers import geo_helper
-from helpers import contributor_helper
-from helpers import users_helper
-from helpers import trendings_helper
-from helpers import live_helper
+from flask import (Flask, Response, jsonify, render_template, request,
+                   stream_with_context)
+from helpers import (contributor_helper, geo_helper, live_helper,
+                     trendings_helper, users_helper)
 
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()

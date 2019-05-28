@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 
-import time, datetime
-import copy
-import logging
-import zmq
-import redis
-import random
-import configparser
 import argparse
-import os
-import sys
+import configparser
+import copy
+import datetime
 import json
+import logging
+import os
+import random
+import sys
+import time
+
+import redis
+import zmq
 
 import util
-from helpers import geo_helper
-from helpers import contributor_helper
-from helpers import users_helper
-from helpers import trendings_helper
-from helpers import live_helper
+from helpers import (contributor_helper, geo_helper, live_helper,
+                     trendings_helper, users_helper)
 
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()

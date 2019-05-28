@@ -63,11 +63,11 @@ class Users_helper:
                 else:
                     break # timestamps should be sorted, no need to process anymore
         return to_return
-                    
+
 
     # return: All dates for all orgs, if date is not supplied, return for all dates
     def getUserLogins(self, date=None):
-        # get all orgs and retreive their timestamps
+        # get all orgs and retrieve their timestamps
         dates = []
         for org in self.getAllOrg():
             keyname = "{}:{}".format(self.keyOrgLog, org)
@@ -169,7 +169,7 @@ class Users_helper:
         data = [data[6]]+data[:6]
         return data
 
-    # return: a dico of the form {login: [[timestamp, count], ...], contrib: [[timestamp, 1/0], ...]} 
+    # return: a dico of the form {login: [[timestamp, count], ...], contrib: [[timestamp, 1/0], ...]}
     #         either for all orgs or the supplied one
     def getUserLoginsAndContribOvertime(self, date, org=None, prev_days=6):
         dico_hours_contrib = {}
