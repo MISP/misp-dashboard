@@ -1,16 +1,19 @@
-import util
-from util import getZrange
-import math, random
-import time
-import os
 import configparser
-import json
 import datetime
+import json
 import logging
+import math
+import os
+import random
+import time
+
 import redis
 
 import util
+from util import getZrange
+
 from . import users_helper
+
 KEYDAY = "CONTRIB_DAY" # To be used by other module
 KEYALLORG = "CONTRIB_ALL_ORG" # To be used by other module
 
@@ -589,4 +592,3 @@ class Contributor_helper:
                 return { 'remainingPts': i-points, 'stepPts': prev }
             prev = i
         return { 'remainingPts': 0, 'stepPts': self.rankMultiplier**self.levelMax }
-

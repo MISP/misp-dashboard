@@ -1,12 +1,15 @@
-import math, random
-import os
-import json
 import copy
-import datetime, time
+import datetime
+import json
 import logging
+import math
+import os
+import random
+import time
 from collections import OrderedDict
 
 import util
+
 
 class Trendings_helper:
     def __init__(self, serv_redis_db, cfg):
