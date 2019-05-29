@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import configparser
 import datetime
+import errno
 import json
 import logging
 import math
@@ -590,4 +591,12 @@ def getGenericTrendingOvertime():
     return jsonify(data)
 
 if __name__ == '__main__':
-    app.run(host=server_host, port=server_port, threaded=True)
+    try:
+        app.run(host=server_host,
+            port=server_port,
+            threaded=True)
+    except OSError as error:
+        if error.errno == 98:
+            print("\n\n\nAddress already in use, the defined port is: " + str(server_port))
+        else:
+            print(str(error))
