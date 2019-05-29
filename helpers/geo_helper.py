@@ -184,7 +184,12 @@ class Geo_helper:
         now = datetime.datetime.now()
         today_str = util.getDateStrFormat(now)
         keyname = "{}:{}".format(keyCateg, today_str)
-        self.serv_redis_db.geoadd(keyname, lon, lat, content)
+        try:
+            self.serv_redis_db.geoadd(keyname, lon, lat, content)
+        except redis.exceptions.ResponseError as error:
+            print(error)
+            print("Please fix the above, and make sure you use a redis version that supports the GEOADD command.")
+            print("To test for support: echo \"help GEOADD\"| redis-cli")
         self.logger.debug('Added to redis: keyname={}, lon={}, lat={}, content={}'.format(keyname, lon, lat, content))
     def push_to_redis_zset(self, keyCateg, toAdd, endSubkey="", count=1):
         now = datetime.datetime.now()
