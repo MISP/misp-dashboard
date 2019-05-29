@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template, request, Response, jsonify, stream_with_context
-import json
-import redis
-import random, math
 import configparser
+import datetime
+import errno
+import json
+import logging
+import math
+import os
+import random
 from time import gmtime as now
 from time import sleep, strftime
-import datetime
-import os
-import logging
+
+import redis
 
 import util
-from helpers import geo_helper
-from helpers import contributor_helper
-from helpers import users_helper
-from helpers import trendings_helper
-from helpers import live_helper
+from flask import (Flask, Response, jsonify, render_template, request,
+                   stream_with_context)
+from helpers import (contributor_helper, geo_helper, live_helper,
+                     trendings_helper, users_helper)
 
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()
@@ -590,4 +591,12 @@ def getGenericTrendingOvertime():
     return jsonify(data)
 
 if __name__ == '__main__':
-    app.run(host=server_host, port=server_port, threaded=True)
+    try:
+        app.run(host=server_host,
+            port=server_port,
+            threaded=True)
+    except OSError as error:
+        if error.errno == 98:
+            print("\n\n\nAddress already in use, the defined port is: " + str(server_port))
+        else:
+            print(str(error))

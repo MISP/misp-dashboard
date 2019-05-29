@@ -1,5 +1,6 @@
+import datetime
+import time
 from collections import defaultdict
-import datetime, time
 
 ONE_DAY = 60*60*24
 

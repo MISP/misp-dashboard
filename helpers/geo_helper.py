@@ -1,18 +1,21 @@
-import math, random
-import os
+import datetime
 import json
-import datetime, time
 import logging
-import json
-import redis
+import math
+import os
+import random
+import time
 from collections import OrderedDict
 
-import geoip2.database
-import phonenumbers, pycountry
-from phonenumbers import geocoder
+import redis
 
+import geoip2.database
+import phonenumbers
+import pycountry
 import util
 from helpers import live_helper
+from phonenumbers import geocoder
+
 
 class InvalidCoordinate(Exception):
     pass

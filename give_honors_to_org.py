@@ -1,9 +1,13 @@
 #!/usr/bin/env python3.5
 
-import os, sys, json
-import datetime, time
-import redis
 import configparser
+import datetime
+import json
+import os
+import sys
+import time
+
+import redis
 
 import util
 from helpers import contributor_helper
