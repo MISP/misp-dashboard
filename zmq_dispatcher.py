@@ -23,7 +23,7 @@ cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
 logDir = cfg.get('Log', 'directory')
-logfilename = cfg.get('Log', 'filename')
+logfilename = cfg.get('Log', 'dispatcher_filename')
 logPath = os.path.join(logDir, logfilename)
 if not os.path.exists(logDir):
     os.makedirs(logDir)
@@ -296,5 +296,5 @@ if __name__ == "__main__":
 
     try:
         main(args.sleeptime)
-    except redis.exceptions.ResponseError as error:
+    except (redis.exceptions.ResponseError, KeyboardInterrupt) as error:
         print(error)

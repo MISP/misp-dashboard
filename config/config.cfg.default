@@ -33,7 +33,9 @@ additional_help_text = ["Sightings multiplies earned points by 2", "Editing an a
 
 [Log]
 directory=logs
-filename=logs.log
+dispatcher_filename=zmq_dispatcher.log
+subscriber_filename=zmq_subscriber.log
+helpers_filename=helpers.log
 
 [RedisGlobal]
 host=localhost

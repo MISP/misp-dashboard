@@ -16,7 +16,7 @@ configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/c
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 logDir = cfg.get('Log', 'directory')
-logfilename = cfg.get('Log', 'filename')
+logfilename = cfg.get('Log', 'subscriber_filename')
 logPath = os.path.join(logDir, logfilename)
 if not os.path.exists(logDir):
     os.makedirs(logDir)
@@ -64,7 +64,7 @@ def main(zmqName):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='A zmq subscriber. It subscribes to a ZNQ then redispatch it to the misp-dashboard')
+    parser = argparse.ArgumentParser(description='A zmq subscriber. It subscribes to a ZMQ then redispatch it to the misp-dashboard')
     parser.add_argument('-n', '--name', required=False, dest='zmqname', help='The ZMQ feed name', default="MISP Standard ZMQ")
     parser.add_argument('-u', '--url', required=False, dest='zmqurl', help='The URL to connect to', default=ZMQ_URL)
     args = parser.parse_args()
