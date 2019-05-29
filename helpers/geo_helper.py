@@ -133,7 +133,7 @@ class Geo_helper:
             self.live_helper.add_to_stream_log_cache('Map', j_to_send)
             self.logger.info('Published: {}'.format(json.dumps(to_send)))
         except ValueError:
-            self.logger.warning("can't resolve ip")
+            self.logger.warning("Can't resolve IP: " + str(supposed_ip))
         except geoip2.errors.AddressNotFoundError:
             self.logger.warning("Address not in Database")
         except InvalidCoordinate:
