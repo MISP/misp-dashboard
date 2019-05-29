@@ -51,7 +51,12 @@ class Geo_helper:
         self.PATH_TO_JSON = cfg.get('RedisMap', 'path_countrycode_to_coord_JSON')
         self.CHANNELDISP = cfg.get('RedisMap', 'channelDisp')
 
-        self.reader = geoip2.database.Reader(self.PATH_TO_DB)
+        try:
+            self.reader = geoip2.database.Reader(self.PATH_TO_DB)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
         self.country_to_iso = { country.name: country.alpha_2 for country in pycountry.countries}
         with open(self.PATH_TO_JSON) as f:
             self.country_code_to_coord = json.load(f)

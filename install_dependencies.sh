@@ -1,12 +1,21 @@
 #!/bin/bash
 
-set -e
+## disable -e for production systems
+#set -e
+
+## Debug mode
 #set -x
 
 sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip -y
 
 if [ -z "$VIRTUAL_ENV" ]; then
-    virtualenv -p python3 DASHENV
+    virtualenv -p python3 DASHENV ; DASH_VENV=$?
+
+    if [[ "$DASH_VENV" != "0" ]]; then
+      echo "Something went wrong with either the update or install of the virtualenv."
+      echo "Please investigate manually."
+      exit $DASH_VENV
+    fi
 
     . ./DASHENV/bin/activate
 fi
@@ -35,7 +44,13 @@ mkdir -p css fonts js
 popd
 mkdir -p temp
 
-wget https://www.misp-project.org/assets/images/misp-small.png -O static/pics/MISP.png
+NET_WGET=$(wget --no-cache -q https://www.misp-project.org/assets/images/misp-small.png -O static/pics/MISP.png; echo $?)
+
+if [[ "$NET_WGET" != "0" ]]; then
+  echo "The first wget we tried failed, please investigate manually."
+  exit $NET_WGET
+fi
+
 wget https://www.misp-project.org/favicon.ico -O static/favicon.ico
 
 # jquery
