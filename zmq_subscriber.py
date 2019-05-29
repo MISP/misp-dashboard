@@ -20,7 +20,12 @@ logfilename = cfg.get('Log', 'filename')
 logPath = os.path.join(logDir, logfilename)
 if not os.path.exists(logDir):
     os.makedirs(logDir)
-logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+try:
+    logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+except PermissionError as error:
+    print(error)
+    print("Please fix the above and try again.")
+    sys.exit(126)
 logger = logging.getLogger('zmq_subscriber')
 
 ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
@@ -64,4 +69,7 @@ if __name__ == "__main__":
     parser.add_argument('-u', '--url', required=False, dest='zmqurl', help='The URL to connect to', default=ZMQ_URL)
     args = parser.parse_args()
 
-    main(args.zmqname)
+    try:
+        main(args.zmqname)
+    except redis.exceptions.ResponseError as error:
+        print(error)
