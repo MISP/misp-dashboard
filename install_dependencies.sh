@@ -35,7 +35,8 @@ mkdir -p css fonts js
 popd
 mkdir -p temp
 
-wget http://www.misp-project.org/assets/images/misp-small.png -O static/pics/MISP.png
+wget https://www.misp-project.org/assets/images/misp-small.png -O static/pics/MISP.png
+wget https://www.misp-project.org/favicon.ico -O static/favicon.ico
 
 # jquery
 JQVERSION="3.2.1"

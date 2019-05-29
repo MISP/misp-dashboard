@@ -14,7 +14,7 @@ import redis
 
 import util
 from flask import (Flask, Response, jsonify, render_template, request,
-                   stream_with_context)
+                   send_from_directory, stream_with_context)
 from helpers import (contributor_helper, geo_helper, live_helper,
                      trendings_helper, users_helper)
 
@@ -141,6 +141,10 @@ def index():
             zoomlevel=cfg.getint('Dashboard' ,'zoomlevel')
             )
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route("/geo")
 def geo():
