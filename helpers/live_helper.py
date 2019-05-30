@@ -17,11 +17,16 @@ class Live_helper:
 
         # logger
         logDir = cfg.get('Log', 'directory')
-        logfilename = cfg.get('Log', 'filename')
+        logfilename = cfg.get('Log', 'helpers_filename')
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        try:
+            logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
         self.logger = logging.getLogger(__name__)
 
     def publish_log(self, zmq_name, name, content, channel=None):
@@ -44,7 +49,7 @@ class Live_helper:
             jentry = json.loads(entry.decode('utf8'))
             to_ret.append(jentry)
         return to_ret
-    
+
 
     def add_to_stream_log_cache(self, cacheKey, item):
         rKey = self.prefix_redis_key+cacheKey

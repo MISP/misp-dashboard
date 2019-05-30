@@ -33,11 +33,16 @@ class Contributor_helper:
 
         #logger
         logDir = cfg.get('Log', 'directory')
-        logfilename = cfg.get('Log', 'filename')
+        logfilename = cfg.get('Log', 'helpers_filename')
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        try:
+            logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
         self.logger = logging.getLogger(__name__)
 
         #honorBadge
@@ -123,14 +128,14 @@ class Contributor_helper:
         if action in ['edit', None]:
             pass
             #return #not a contribution?
-    
+
         now = datetime.datetime.now()
         nowSec = int(time.time())
         pnts_to_add = self.default_pnts_per_contribution
-    
+
         # Do not consider contribution as login anymore
         #self.users_helper.add_user_login(nowSec, org)
-    
+
         # is a valid contribution
         if categ is not None:
             try:
@@ -138,23 +143,23 @@ class Contributor_helper:
             except KeyError:
                 pnts_to_add = self.default_pnts_per_contribution
             pnts_to_add *= pntMultiplier
-    
+
             util.push_to_redis_zset(self.serv_redis_db, self.keyDay, org, count=pnts_to_add)
             #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
             util.push_to_redis_zset(self.serv_redis_db, self.keyCateg, org, count=1, endSubkey=':'+util.noSpaceLower(categ))
             self.publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=self.CHANNEL_LASTCONTRIB)
         else:
             categ = ""
-    
+
         self.serv_redis_db.sadd(self.keyAllOrg, org)
-    
+
         keyname = "{}:{}".format(self.keyLastContrib, util.getDateStrFormat(now))
         self.serv_redis_db.zadd(keyname, nowSec, org)
         self.logger.debug('Added to redis: keyname={}, nowSec={}, org={}'.format(keyname, nowSec, org))
         self.serv_redis_db.expire(keyname, util.ONE_DAY*7) #expire after 7 day
-    
+
         awards_given = self.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled, categ=util.noSpaceLower(categ))
-    
+
         for award in awards_given:
             # update awards given
             keyname = "{}:{}".format(self.keyLastAward, util.getDateStrFormat(now))

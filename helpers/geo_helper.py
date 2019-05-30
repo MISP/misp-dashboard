@@ -32,11 +32,16 @@ class Geo_helper:
 
         #logger
         logDir = cfg.get('Log', 'directory')
-        logfilename = cfg.get('Log', 'filename')
+        logfilename = cfg.get('Log', 'helpers_filename')
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        try:
+            logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
         self.logger = logging.getLogger(__name__)
 
         self.keyCategCoord = "GEO_COORD"
@@ -46,7 +51,12 @@ class Geo_helper:
         self.PATH_TO_JSON = cfg.get('RedisMap', 'path_countrycode_to_coord_JSON')
         self.CHANNELDISP = cfg.get('RedisMap', 'channelDisp')
 
-        self.reader = geoip2.database.Reader(self.PATH_TO_DB)
+        try:
+            self.reader = geoip2.database.Reader(self.PATH_TO_DB)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
         self.country_to_iso = { country.name: country.alpha_2 for country in pycountry.countries}
         with open(self.PATH_TO_JSON) as f:
             self.country_code_to_coord = json.load(f)
@@ -128,7 +138,7 @@ class Geo_helper:
             self.live_helper.add_to_stream_log_cache('Map', j_to_send)
             self.logger.info('Published: {}'.format(json.dumps(to_send)))
         except ValueError:
-            self.logger.warning("can't resolve ip")
+            self.logger.warning("Can't resolve IP: " + str(supposed_ip))
         except geoip2.errors.AddressNotFoundError:
             self.logger.warning("Address not in Database")
         except InvalidCoordinate:
@@ -184,7 +194,12 @@ class Geo_helper:
         now = datetime.datetime.now()
         today_str = util.getDateStrFormat(now)
         keyname = "{}:{}".format(keyCateg, today_str)
-        self.serv_redis_db.geoadd(keyname, lon, lat, content)
+        try:
+            self.serv_redis_db.geoadd(keyname, lon, lat, content)
+        except redis.exceptions.ResponseError as error:
+            print(error)
+            print("Please fix the above, and make sure you use a redis version that supports the GEOADD command.")
+            print("To test for support: echo \"help GEOADD\"| redis-cli")
         self.logger.debug('Added to redis: keyname={}, lon={}, lat={}, content={}'.format(keyname, lon, lat, content))
     def push_to_redis_zset(self, keyCateg, toAdd, endSubkey="", count=1):
         now = datetime.datetime.now()
