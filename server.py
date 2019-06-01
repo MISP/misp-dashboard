@@ -27,6 +27,7 @@ logger.setLevel(logging.ERROR)
 
 server_host = cfg.get("Server", "host")
 server_port = cfg.getint("Server", "port")
+server_debug = cfg.get("Server", "debug")
 
 app = Flask(__name__)
 
@@ -598,6 +599,7 @@ if __name__ == '__main__':
     try:
         app.run(host=server_host,
             port=server_port,
+            debug=server_debug,
             threaded=True)
     except OSError as error:
         if error.errno == 98:
