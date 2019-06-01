@@ -1,6 +1,7 @@
 [Server]
 host = localhost
 port = 8001
+debug = False
 
 [Dashboard]
 #hours
