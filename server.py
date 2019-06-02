@@ -82,7 +82,7 @@ class LogItem():
 
     def get_row(self):
         to_ret = {}
-        #Number to keep them sorted (jsonify sort keys)
+        # Number to keep them sorted (jsonify sort keys)
         for item in range(len(LogItem.FIELDNAME_ORDER)):
             try:
                 to_ret[item] = self.fields[item]
