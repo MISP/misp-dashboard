@@ -1,23 +1,23 @@
 # misp-dashboard
 
-A dashboard showing live data and statistics from the ZMQ feeds of one or more [MISP](https://www.misp-project.org/) instances. The dashboard
-can be used as a real-time situational awareness tool to gather threat intelligence information. The misp-dashboard includes
-a gamification tool to show the contributions of each organisations and how they are ranked over time. The dashboard can be used for
-SOC (Security Operation Center), security team or during cyber exercise to keep track of what's going on your various MISP instances.
+A dashboard showing live data and statistics from the ZMQ feeds of one or more [MISP](https://www.misp-project.org/) instances.
+The dashboard can be used as a real-time situational awareness tool to gather threat intelligence information.
+The misp-dashboard includes a [gamification](https://en.wikipedia.org/wiki/Gamification#Criticism) tool to show the contributions of each organisation and how they are ranked over time.
+The dashboard can be used for SOCs (Security Operation Centers), security teams or during cyber exercises to keep track of what is being processed on your various MISP instances.
 
 # Features
 
 ## Live Dashboard
 
-- Possibility to subscribe to multiple ZMQ feeds
-- Shows direct contribution made by organisations
-- Shows live resolvable posted locations
+- Possibility to subscribe to multiple ZMQ feeds from different MISP instances
+- Shows immediate contributions made by organisations
+- Displays live resolvable posted geo-locations
 
 ![Dashboard live](./screenshots/dashboard-live.png)
 
 ## Geolocalisation Dashboard
 
-- Provides historical geolocalised information to support security teams, CSIRTs or SOC finding threats in their constituency
+- Provides historical geolocalised information to support security teams, CSIRTs or SOCs in finding threats within their constituency
 - Possibility to get geospatial information from specific regions
 
 ![Dashbaord geo](./screenshots/dashboard-geo.png)
@@ -25,25 +25,25 @@ SOC (Security Operation Center), security team or during cyber exercise to keep 
 ## Contributors Dashboard
 
 __Shows__:
-- The monthly rank of all organisation
+- The monthly rank of all organisations
 - The last organisation that contributed (dynamic updates)
-- The contribution level of all organisation
-- Each category of contribution per organisation
+- The contribution level of all organisations
+- Each category of contributions per organisation
 - The current ranking of the selected organisation (dynamic updates)
 
 __Includes__:
 
-- Gamification of the platform:
+- [Gamification](https://en.wikipedia.org/wiki/Gamification#Criticism) of the platform:
   - Two different levels of ranking with unique icons
   - Exclusive obtainable badges for source code contributors and donator
 
-![Dashboard contributor](./screenshots/dashboard-contributors2.png)
-![Dashboard contributor2](./screenshots/dashboard-contributors3.png)
+![Dashboard contributors](./screenshots/dashboard-contributors2.png)
+![Dashboard contributors2](./screenshots/dashboard-contributors3.png)
 
 ## Users Dashboard
 
 - Shows when and how the platform is used:
-    - Login punchcard and overtime
+    - Login punchcard and contributions over time
     - Contribution vs login
 
 ![Dashboard users](./screenshots/dashboard-users.png)
@@ -57,7 +57,7 @@ __Includes__:
 ![Dashboard users](./screenshots/dashboard-trendings.png)
 
 # Installation
-- Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory
+- Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory ([idempotent-ish](https://en.wikipedia.org/wiki/Idempotence))
 - Update the configuration file ```config.cfg``` so that it matches your system
   - Fields that you may change:
     - RedisGlobal -> host
@@ -68,7 +68,7 @@ __Includes__:
 
 # Updating by pulling
 - Re-launch ```./install_dependencies.sh``` to fetch new required dependencies
-- Re-update your configuration file ```config.cfg```
+- Re-update your configuration file ```config.cfg``` by comparing eventual changes in ```config.cfg.default```
 
 :warning: Make sure no zmq python3 scripts are running. They block the update.
 
@@ -92,7 +92,7 @@ OSError: [Errno 26] Text file busy: '/home/steve/code/misp-dashboard/DASHENV/bin
 ```
 
 # Starting the System
-:warning: You do not need to run it as root. Normal privileges are fine.
+:warning: You should not run it as root. Normal privileges are fine.
 
 - Be sure to have a running redis server
     - e.g. ```redis-server --port 6250```
@@ -102,7 +102,7 @@ OSError: [Errno 26] Text file busy: '/home/steve/code/misp-dashboard/DASHENV/bin
 - Start the Flask server ```./server.py &```
 - Access the interface at ```http://localhost:8001/```
 
-Alternatively, you can run the ```start_all.sh``` script to run the commands described above.
+__Alternatively__, you can run the ```start_all.sh``` script to run the commands described above.
 
 # Debug
 
@@ -117,7 +117,7 @@ export FLASK_APP=server.py
 flask run --host=0.0.0.0 --port=8001 # <- Be careful here, this exposes it on ALL ip addresses. Ideally if run locally --host=127.0.0.1
 ```
 
-OR, just toggle the debug flag in start_all.sh script.
+OR, just toggle the debug flag in start_all.sh or config.cfg.
 
 Happy hacking ;)
 
@@ -174,7 +174,7 @@ optional arguments:
 
 # Deploy in production using mod_wsgi
 
-Install Apache's mod-wsgi for Python3
+Install Apache mod-wsgi for Python3
 
 ```bash
 sudo apt-get install libapache2-mod-wsgi-py3
@@ -189,7 +189,7 @@ The following NEW packages will be installed:
   libapache2-mod-wsgi-py3
 ```
 
-Configuration file `/etc/apache2/sites-available/misp-dashboard.conf` assumes that `misp-dashboard` is cloned into `var/www/misp-dashboard`. It runs as user `misp` in this example. Change the permissions to folder and files accordingly.
+Configuration file `/etc/apache2/sites-available/misp-dashboard.conf` assumes that `misp-dashboard` is cloned into `/var/www/misp-dashboard`. It runs as user `misp` in this example. Change the permissions to your custom folder and files accordingly.
 
 ```
 <VirtualHost *:8001>
@@ -249,21 +249,4 @@ Note that:
 - Part of ```MISPHonorableIcons/4.svg``` comes from [Zeptozephyr](https://zeptozephyr.deviantart.com/art/Vectored-Portal-Icons-207347804) & [octicons.github.com](https://octicons.github.com/icon/git-pull-request/) (CC0 - No Rights Reserved)
 - Part of ```MISPHonorableIcons/5.svg``` comes from [Zeptozephyr](https://zeptozephyr.deviantart.com/art/Vectored-Portal-Icons-207347804) & [octicons.github.com](https://octicons.github.com/icon/git-pull-request/) (CC0 - No Rights Reserved)
 
-```
-Copyright (C) 2017-2018 CIRCL - Computer Incident Response Center Luxembourg (c/o smile, security made in Lëtzebuerg, Groupement d'Intérêt Economique)
-Copyright (c) 2017-2018 Sami Mokaddem
-
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-```
+Please see [LICENSE](https://github.com/MISP/misp-dashboard/blob/master/LICENSE) for a visual overview on how you may use this software.
