@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-from pprint import pprint
-import os
-import redis
-import configparser
 import argparse
+import configparser
+import os
+from pprint import pprint
 
+import redis
 
 RED="\033[91m"
 GREEN="\033[92m"

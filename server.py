@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template, request, Response, jsonify, stream_with_context
-import json
-import redis
-import random, math
 import configparser
+import datetime
+import errno
+import json
+import logging
+import math
+import os
+import random
 from time import gmtime as now
 from time import sleep, strftime
-import datetime
-import os
-import logging
+
+import redis
 
 import util
-from helpers import geo_helper
-from helpers import contributor_helper
-from helpers import users_helper
-from helpers import trendings_helper
-from helpers import live_helper
+from flask import (Flask, Response, jsonify, render_template, request,
+                   send_from_directory, stream_with_context)
+from helpers import (contributor_helper, geo_helper, live_helper,
+                     trendings_helper, users_helper)
 
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()
@@ -26,6 +27,7 @@ logger.setLevel(logging.ERROR)
 
 server_host = cfg.get("Server", "host")
 server_port = cfg.getint("Server", "port")
+server_debug = cfg.get("Server", "debug")
 
 app = Flask(__name__)
 
@@ -94,6 +96,12 @@ class LogItem():
                 to_add = util.getFields(self.feed, field)
             to_ret[i] = to_add if to_add is not None else ''
 
+        # Number to keep them sorted (jsonify sort keys)
+        for item in range(len(LogItem.FIELDNAME_ORDER)):
+            try:
+                to_ret[item] = self.fields[item]
+            except IndexError: # not enough field in rcv item
+                to_ret[item] = ''
         return to_ret
 
 
@@ -176,6 +184,10 @@ def index():
             zoomlevel=cfg.getint('Dashboard' ,'zoomlevel')
             )
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route("/geo")
 def geo():
@@ -640,4 +652,13 @@ def getGenericTrendingOvertime():
     return jsonify(data)
 
 if __name__ == '__main__':
-    app.run(host=server_host, port=server_port, threaded=True)
+    try:
+        app.run(host=server_host,
+            port=server_port,
+            debug=server_debug,
+            threaded=True)
+    except OSError as error:
+        if error.errno == 98:
+            print("\n\n\nAddress already in use, the defined port is: " + str(server_port))
+        else:
+            print(str(error))

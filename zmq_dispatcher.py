@@ -1,34 +1,38 @@
 #!/usr/bin/env python3
 
-import time, datetime
-import copy
-import logging
-import zmq
-import redis
-import random
-import configparser
 import argparse
-import os
-import sys
+import configparser
+import copy
+import datetime
 import json
+import logging
+import os
+import random
+import sys
+import time
+
+import redis
+import zmq
 
 import util
-from helpers import geo_helper
-from helpers import contributor_helper
-from helpers import users_helper
-from helpers import trendings_helper
-from helpers import live_helper
+from helpers import (contributor_helper, geo_helper, live_helper,
+                     trendings_helper, users_helper)
 
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
 logDir = cfg.get('Log', 'directory')
-logfilename = cfg.get('Log', 'filename')
+logfilename = cfg.get('Log', 'dispatcher_filename')
 logPath = os.path.join(logDir, logfilename)
 if not os.path.exists(logDir):
     os.makedirs(logDir)
-logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+try:
+    logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+except PermissionError as error:
+    print(error)
+    print("Please fix the above and try again.")
+    sys.exit(126)
 logger = logging.getLogger('zmq_dispatcher')
 
 LISTNAME = cfg.get('RedisLIST', 'listName')
@@ -286,4 +290,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--sleep', required=False, dest='sleeptime', type=int, help='The number of second to wait before checking redis list size', default=5)
     args = parser.parse_args()
 
-    main(args.sleeptime)
+    try:
+        main(args.sleeptime)
+    except (redis.exceptions.ResponseError, KeyboardInterrupt) as error:
+        print(error)

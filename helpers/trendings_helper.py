@@ -1,12 +1,16 @@
-import math, random
-import os
-import json
 import copy
-import datetime, time
+import datetime
+import json
 import logging
+import math
+import os
+import random
+import sys
+import time
 from collections import OrderedDict
 
 import util
+
 
 class Trendings_helper:
     def __init__(self, serv_redis_db, cfg):
@@ -23,11 +27,16 @@ class Trendings_helper:
 
         #logger
         logDir = cfg.get('Log', 'directory')
-        logfilename = cfg.get('Log', 'filename')
+        logfilename = cfg.get('Log', 'helpers_filename')
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        try:
+            logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
         self.logger = logging.getLogger(__name__)
 
     ''' SETTER '''

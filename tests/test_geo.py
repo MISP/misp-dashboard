@@ -1,8 +1,13 @@
 #!/usr/bin/env python3.5
 import configparser
-import redis
-import sys,os
 import datetime
+import os
+import sys
+
+import redis
+
+from helpers import geo_helper
+
 sys.path.append('..')
 
 configfile = 'test_config.cfg'
@@ -14,7 +19,6 @@ serv_redis_db = redis.StrictRedis(
         port=6260,
         db=1)
 
-from helpers import geo_helper
 geo_helper = geo_helper.Geo_helper(serv_redis_db, cfg)
 
 categ = 'Network Activity'

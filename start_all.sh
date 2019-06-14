@@ -20,7 +20,22 @@ else
     exit 1
 fi
 
-[ ! -f "`which redis-server`" ] && echo "'redis-server' is not installed/not on PATH. Please fix and run again." && exit 1
+if [[ -f "/etc/redhat-release" ]]; then
+  echo "You are running a RedHat flavour. Detecting scl potential..."
+  if [[ -f "/usr/bin/scl" ]]; then
+    echo "scl detected, checking for redis-server"
+    SCL_REDIS=$(scl -l|grep rh-redis)
+    if [[ ! -z $SCL_REDIS ]]; then
+      echo "We detected: ${SCL_REDIS} acting accordingly"
+      REDIS_RUN="/usr/bin/scl enable ${SCL_REDIS}"
+    fi
+  else
+    echo "redis-server seems not to be install in scl, perhaps system-wide, testing."
+    [ ! -f "`which redis-server`" ] && echo "'redis-server' is not installed/not on PATH. Please fix and run again." && exit 1
+  fi
+else
+  [ ! -f "`which redis-server`" ] && echo "'redis-server' is not installed/not on PATH. Please fix and run again." && exit 1
+fi
 
 netstat -an |grep LISTEN |grep 6250 |grep -v tcp6 ; check_redis_port=$?
 netstat -an |grep LISTEN |grep 8001 |grep -v tcp6 ; check_dashboard_port=$?
@@ -37,8 +52,12 @@ conf_dir="config/"
 
 sleep 0.1
 if [ "${check_redis_port}" == "1" ]; then
-    echo -e $GREEN"\t* Launching Redis servers"$DEFAULT
-    redis-server ${conf_dir}6250.conf &
+  echo -e $GREEN"\t* Launching Redis servers"$DEFAULT
+    if [[ ! -z $REDIS_RUN ]]; then
+      $REDIS_RUN "redis-server ${conf_dir}6250.conf" &
+    else
+      redis-server ${conf_dir}6250.conf &
+    fi
 else
     echo -e $RED"\t* NOT starting Redis server, made a very unrealiable check on port 6250, and something seems to be there… please double check if this is good!"$DEFAULT
 fi

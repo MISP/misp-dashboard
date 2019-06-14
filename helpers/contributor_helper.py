@@ -1,16 +1,20 @@
-import util
-from util import getZrange
-import math, random
-import time
-import os
 import configparser
-import json
 import datetime
+import json
 import logging
+import math
+import os
+import random
+import sys
+import time
+
 import redis
 
 import util
+from util import getZrange
+
 from . import users_helper
+
 KEYDAY = "CONTRIB_DAY" # To be used by other module
 KEYALLORG = "CONTRIB_ALL_ORG" # To be used by other module
 
@@ -30,11 +34,16 @@ class Contributor_helper:
 
         #logger
         logDir = cfg.get('Log', 'directory')
-        logfilename = cfg.get('Log', 'filename')
+        logfilename = cfg.get('Log', 'helpers_filename')
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        try:
+            logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
         self.logger = logging.getLogger(__name__)
 
         #honorBadge
