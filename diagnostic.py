@@ -8,6 +8,7 @@ import configparser
 import diagnostic_util
 import redis
 import zmq
+import json
 from halo import Halo
 from pprint import pprint
 
@@ -174,12 +175,25 @@ def check_buffer_queue(spinner):
 
 
 @add_spinner
-def check_subscriber_status(spinner):
-    return (False, '')
+def check_subscriber_dispatcher_status(spinner):
+    redis_server = redis.StrictRedis(
+        host=configuration_file.get('RedisGlobal', 'host'),
+        port=configuration_file.getint('RedisGlobal', 'port'),
+        db=configuration_file.getint('RedisLIST', 'db'))
+    redis_server.rpush(configuration_file.get('RedisLIST', 'listName'),
+        json.dumps({'zmq_name': 'diagnostic_channel', 'content': time.time()})
+    )
+    counter = 0
+    while True:
+        reply = redis_server.get('diagnostic_tool_response')
+        elements_in_list = redis_server.llen(configuration_file.get('RedisLIST', 'listName'))
+        if reply is None:
+            time.sleep(0.2)
+            spinner.text = f'No response yet. Element in queue {elements_in_list}'
+            counter += 1
+        else:
+            return (True, f'Took {reply} to complete.')
 
-
-@add_spinner
-def check_dispatcher_status(spinner):
     return (False, '')
 
 
@@ -203,10 +217,9 @@ def start_diagnostic():
         return
     check_file_permission()
     check_redis()
-    check_zmq()
+    # check_zmq()
     check_buffer_queue()
-    check_subscriber_status()
-    check_dispatcher_status()
+    check_subscriber_dispatcher_status()
     check_server_listening()
     check_static_endpoint()
     check_dynamic_enpoint()

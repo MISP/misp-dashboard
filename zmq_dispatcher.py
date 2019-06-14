@@ -238,6 +238,9 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False, parent
     # Push to log
     live_helper.publish_log(zmq_name, attributeType, jsonobj)
 
+def handler_diagnostic_tool(zmq_name, jsonobj):
+    res = time.time() - jsonobj['content']
+    serv_list.set('diagnostic_tool_response', str(res))
 
 ###############
 ## MAIN LOOP ##
@@ -281,6 +284,7 @@ dico_action = {
         "misp_json_conversation":   handler_conversation,
         "misp_json_object_reference": handler_skip,
         "misp_json_audit": handler_audit,
+        "diagnostic_channel":       handler_diagnostic_tool
         }
 
 
