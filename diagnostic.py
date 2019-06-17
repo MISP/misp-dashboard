@@ -14,6 +14,7 @@ try:
     import zmq
     import json
     import flask
+    import requests
     from halo import Halo
 except ModuleNotFoundError as e:
     print('Dependency not met. Either not in a virtualenv or dependency not installed.')
@@ -37,6 +38,8 @@ Steps:
 - check log dynamic endpoint
 '''
 
+HOST = 'http://127.0.0.1'
+PORT = 8001  # overriden by configuration file
 configuration_file = {}
 pgrep_subscriber_output = ''
 pgrep_dispatcher_output = ''
@@ -121,7 +124,7 @@ def check_virtual_environment(spinner):
 
 @add_spinner
 def check_configuration(spinner):
-    global configuration_file
+    global configuration_file, port
     configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
     cfg = configparser.ConfigParser()
     cfg.read(configfile)
@@ -136,6 +139,7 @@ def check_configuration(spinner):
     result, faulties = diagnostic_util.dict_compare(cfg_default, cfg)
     faulties = [item for sublist in faulties for item in sublist]
     if result:
+        port = configuration_file.get("Server", "port")
         return (True, '')
     else:
         return (False, f'''Configuration incomplete.
@@ -330,7 +334,7 @@ def check_dispatcher_status(spinner):
         if reply is None:
             if time_slept >= sleep_max:
                 return_flag = False
-                return_text = f'''zmq_dispatcher did not respond in the given time ({int(sleep_max)}sec)
+                return_text = f'''zmq_dispatcher did not respond in the given time ({int(sleep_max)}s)
 \t➥ Consider restarting it: {pgrep_dispatcher_output}'''
                 break
             time.sleep(sleep_duration)
@@ -346,17 +350,42 @@ def check_dispatcher_status(spinner):
 
 @add_spinner
 def check_server_listening(spinner):
-    return (False, '')
+    url = f'{HOST}:{PORT}/_get_log_head'
+    spinner.text = f'Trying to connect to {url}'
+    r = requests.get(url)
+    return (
+        r.status_code == 200,
+        f'Server is {"not " if r.status_code != 200 else ""}running. Status code [{r.status_code}]'
+     )
 
 
 @add_spinner
-def check_static_endpoint(spinner):
-    return (False, '')
-
-
-@add_spinner
-def check_dynamic_enpoint(spinner):
-    return (False, '')
+def check_server_dynamic_enpoint(spinner):
+    sleep_max = 15
+    start_time = time.time()
+    url = f'{HOST}:{PORT}/_logs'
+    p = subprocess.Popen(
+        ['curl', '-sfN', '--header', 'Accept: text/event-stream', url],
+        stdout=subprocess.PIPE,
+        bufsize=1)
+    signal.alarm(sleep_max)
+    try:
+        for line in iter(p.stdout.readline, b''):
+            if line.startswith(b'data: '):
+                data = line[6:]
+                try:
+                    j = json.loads(data)
+                    return_flag = True
+                    return_text = f'Dynamic endpoint returned data (took {time.time()-start_time:.2f}s)'
+                    signal.alarm(0)
+                    break
+                except Exception as e:
+                    return_flag = False
+                    return_text = f'Something went wrong. Output {line}'
+                    break
+    except TimeoutException:
+        return_text = f'Dynamic endpoint did not returned data in the given time ({int(time.time()-start_time)}sec)'
+    return (return_flag, return_text)
 
 
 def start_diagnostic():
@@ -371,8 +400,7 @@ def start_diagnostic():
         check_buffer_change_rate()
     check_dispatcher_status()
     check_server_listening()
-    check_static_endpoint()
-    check_dynamic_enpoint()
+    check_server_dynamic_enpoint()
 
 
 def main():
