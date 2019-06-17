@@ -45,16 +45,7 @@ pgrep_subscriber_output = ''
 pgrep_dispatcher_output = ''
 
 
-class TimeoutException(Exception):
-    pass
-
-
-def timeout_handler(signum, frame):
-    raise TimeoutException
-
-
-signal.signal(signal.SIGALRM, timeout_handler)
-
+signal.signal(signal.SIGALRM, diagnostic_util.timeout_handler)
 
 
 def humanize(name, isResult=False):
@@ -238,7 +229,7 @@ def check_subscriber_status(spinner):
             if action == '"LPUSH"' and target == f'\"{configuration_file.get("RedisLIST", "listName")}\"':
                 signal.alarm(0)
                 break
-    except TimeoutException:
+    except diagnostic_util.TimeoutException:
         return_text = f'''zmq_subscriber seems not to be working.
 \t➥ Consider restarting it: {pgrep_subscriber_output}'''
         return (False, return_text)
@@ -383,7 +374,7 @@ def check_server_dynamic_enpoint(spinner):
                     return_flag = False
                     return_text = f'Something went wrong. Output {line}'
                     break
-    except TimeoutException:
+    except diagnostic_util.TimeoutException:
         return_text = f'Dynamic endpoint did not returned data in the given time ({int(time.time()-start_time)}sec)'
     return (return_flag, return_text)
 

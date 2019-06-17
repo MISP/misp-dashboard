@@ -7,3 +7,5 @@ phonenumbers
 pip
 pycountry
 zmq
+requests
+halo

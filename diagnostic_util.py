@@ -20,6 +20,14 @@ def dict_compare(dict1, dict2):
         return (False, faulties)
 
 
+class TimeoutException(Exception):
+    pass
+
+
+def timeout_handler(signum, frame):
+    raise TimeoutException
+
+
 # https://stackoverflow.com/a/10464730
 class Monitor():
     def __init__(self, connection_pool):
