@@ -60,6 +60,8 @@ def main(zmqName):
             put_in_redis_list(zmqName, content)
         except KeyboardInterrupt:
             return
+        except Exception as e:
+            logger.warning('Error:' + str(e))
 
 
 if __name__ == "__main__":
