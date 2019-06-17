@@ -264,10 +264,6 @@ def check_buffer_change_rate(spinner):
         host=configuration_file.get('RedisGlobal', 'host'),
         port=configuration_file.getint('RedisGlobal', 'port'),
         db=configuration_file.getint('RedisLIST', 'db'))
-    content = {'content': time.time()}
-    redis_server.rpush(configuration_file.get('RedisLIST', 'listName'),
-        json.dumps({'zmq_name': 'diagnostic_channel', 'content': 'diagnostic_channel ' + json.dumps(content)})
-    )
 
     time_slept = 0
     sleep_duration = 0.001
@@ -301,7 +297,7 @@ def check_buffer_change_rate(spinner):
             change_decrease = 0
 
         if time_slept >= sleep_max:
-            return_flag = elements_in_list == 0 or (elements_in_list - elements_in_inlist_init < 3)
+            return_flag = elements_in_list == 0 or (elements_in_list < elements_in_inlist_init or elements_in_list < 2)
             return_text = f'Buffer is consumed {"faster" if return_flag else "slower" } than being populated'
             break
 
@@ -334,8 +330,11 @@ def check_dispatcher_status(spinner):
         if reply is None:
             if time_slept >= sleep_max:
                 return_flag = False
-                return_text = f'''zmq_dispatcher did not respond in the given time ({int(sleep_max)}s)
-\t➥ Consider restarting it: {pgrep_dispatcher_output}'''
+                return_text = f'zmq_dispatcher did not respond in the given time ({int(sleep_max)}s)'
+                if len(pgrep_dispatcher_output) > 0:
+                    return_text += f'\n\t➥ Consider restarting it: {pgrep_dispatcher_output}'
+                else:
+                    return_text += '\n\t➥ Consider starting it'
                 break
             time.sleep(sleep_duration)
             spinner.text = f'Dispatcher status: No response yet'
@@ -403,8 +402,8 @@ def start_diagnostic():
     check_subscriber_status()
     if check_buffer_queue() is not True:
         check_buffer_change_rate()
-    check_dispatcher_status()
-    if check_server_listening():
+    dispatcher_running = check_dispatcher_status()
+    if check_server_listening() and dispatcher_running:
         check_server_dynamic_enpoint()
 
 
