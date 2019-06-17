@@ -163,19 +163,25 @@ def check_redis(spinner):
 
 @add_spinner
 def check_zmq(spinner):
+    timeout = 15
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     socket.connect(configuration_file.get('RedisGlobal', 'zmq_url'))
     socket.setsockopt_string(zmq.SUBSCRIBE, '')
     poller = zmq.Poller()
 
+    start_time = time.time()
     poller.register(socket, zmq.POLLIN)
-    socks = dict(poller.poll(timeout=15000))
-    if len(socks) > 0:
-        if socket in socks and socks[socket] == zmq.POLLIN:
-            rcv_string = socket.recv()
-            if rcv_string.startswith(b'misp_json'):
-                return (True, '')
+    for t in range(1, timeout+1):
+        socks = dict(poller.poll(timeout=1*1000))
+        if len(socks) > 0:
+            if socket in socks and socks[socket] == zmq.POLLIN:
+                rcv_string = socket.recv()
+                if rcv_string.startswith(b'misp_json'):
+                    return (True, '')
+        else:
+            pass
+            spinner.text = f'checking zmq - elapsed time: {int(time.time() - start_time)}s'
     else:
         return (False, '''Can\'t connect to the ZMQ stream.
 \t➥ Make sure the MISP ZMQ is running: `/servers/serverSettings/diagnostics`
@@ -215,6 +221,7 @@ def check_subscriber_status(spinner):
     monitor = diagnostic_util.Monitor(pool)
     commands = monitor.monitor()
 
+    start_time = time.time()
     signal.alarm(15)
     try:
         for i, c in enumerate(commands):
@@ -229,6 +236,8 @@ def check_subscriber_status(spinner):
             if action == '"LPUSH"' and target == f'\"{configuration_file.get("RedisLIST", "listName")}\"':
                 signal.alarm(0)
                 break
+            else:
+                spinner.text = f'Checking subscriber status - elapsed time: {int(time.time() - start_time)}s'
     except diagnostic_util.TimeoutException:
         return_text = f'''zmq_subscriber seems not to be working.
 \t➥ Consider restarting it: {pgrep_subscriber_output}'''
@@ -280,7 +289,7 @@ def check_buffer_change_rate(spinner):
         if next_refresh < time_slept:
             next_refresh = time_slept + refresh_frequency
             change_rate_text = f'↑ {change_increase}/sec\t↓ {change_decrease}/sec'
-            spinner.text = f'Buffer: {elements_in_list}\t, {change_rate_text}'
+            spinner.text = f'Buffer: {elements_in_list}\t{change_rate_text}'
 
             if consecutive_no_rate_change == 3:
                 time_slept = sleep_max
@@ -363,6 +372,8 @@ def check_server_dynamic_enpoint(spinner):
         stdout=subprocess.PIPE,
         bufsize=1)
     signal.alarm(sleep_max)
+    return_flag = False
+    return_text = f'Dynamic endpoint returned data but not in the correct format.'
     try:
         for line in iter(p.stdout.readline, b''):
             if line.startswith(b'data: '):
