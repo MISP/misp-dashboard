@@ -50,7 +50,6 @@ zmq_url=tcp://localhost:50000
 [RedisLIST]
 db=3
 listName=bufferList
-dbVersion=db_version
 
 [RedisLog]
 db=0
@@ -69,3 +68,4 @@ path_countrycode_to_coord_JSON=./data/country_code_lat_long.json
 
 [RedisDB]
 db=2
+dbVersion=db_version
