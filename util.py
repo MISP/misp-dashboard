@@ -18,7 +18,7 @@ def push_to_redis_zset(serv_redis_db, mainKey, toAdd, endSubkey="", count=1):
     now = datetime.datetime.now()
     today_str = getDateStrFormat(now)
     keyname = "{}:{}{}".format(mainKey, today_str, endSubkey)
-    serv_redis_db.zincrby(keyname, toAdd, count)
+    serv_redis_db.zincrby(keyname, count, toAdd)
 
 def getMonthSpan(date):
     ds = datetime.datetime(date.year, date.month, 1)

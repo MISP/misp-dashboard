@@ -240,7 +240,10 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False, parent
     live_helper.publish_log(zmq_name, attributeType, jsonobj)
 
 def handler_diagnostic_tool(zmq_name, jsonobj):
-    res = time.time() - float(jsonobj['content'])
+    try:
+        res = time.time() - float(jsonobj['content'])
+    except Exception as e:
+        logger.error(e)
     serv_list.set('diagnostic_tool_response', str(res))
 
 ###############
@@ -263,7 +266,8 @@ def main(sleeptime):
     while True:
         content = serv_list.rpop(LISTNAME)
         if content is None:
-            logger.info('Processed {} message(s) since last sleep.'.format(numMsg))
+            log_text = 'Processed {} message(s) since last sleep.'.format(numMsg)
+            logger.info(log_text)
             numMsg = 0
             time.sleep(sleeptime)
             continue

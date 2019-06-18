@@ -49,7 +49,7 @@ class Trendings_helper:
             to_save = json.dumps(data)
         else:
             to_save = data
-        self.serv_redis_db.zincrby(keyname, to_save, 1)
+        self.serv_redis_db.zincrby(keyname, 1, to_save)
         self.logger.debug('Added to redis: keyname={}, content={}'.format(keyname, to_save))
 
     def addTrendingEvent(self, eventName, timestamp):

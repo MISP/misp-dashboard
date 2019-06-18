@@ -95,13 +95,6 @@ class LogItem():
             else:
                 to_add = util.getFields(self.feed, field)
             to_ret[i] = to_add if to_add is not None else ''
-
-        # Number to keep them sorted (jsonify sort keys)
-        for item in range(len(LogItem.FIELDNAME_ORDER)):
-            try:
-                to_ret[item] = self.fields[item]
-            except IndexError: # not enough field in rcv item
-                to_ret[item] = ''
         return to_ret
 
 
