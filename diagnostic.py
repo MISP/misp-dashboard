@@ -105,12 +105,15 @@ def add_spinner(_func=None, name='dots'):
 
 
 @add_spinner
-def check_virtual_environment(spinner):
+def check_virtual_environment_and_packages(spinner):
     result = os.environ.get('VIRTUAL_ENV')
     if result is None:
         return (False, 'This diagnostic tool should be started inside a virtual environment.')
     else:
-        return (True, '')
+        if redis.__version__.startswith('2'):
+            return (False, f'Redis python client have version {redis.__version__}. Version 3.x required.')
+        else:
+            return (True, '')
 
 
 @add_spinner
@@ -393,7 +396,7 @@ def check_server_dynamic_enpoint(spinner):
 
 
 def start_diagnostic():
-    if not (check_virtual_environment() and check_configuration()):
+    if not (check_virtual_environment_and_packages() and check_configuration()):
         return
     check_file_permission()
     check_redis()
