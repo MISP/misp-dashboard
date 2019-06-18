@@ -37,6 +37,7 @@ directory=logs
 dispatcher_filename=zmq_dispatcher.log
 subscriber_filename=zmq_subscriber.log
 helpers_filename=helpers.log
+update_filename=updates.log
 
 [RedisGlobal]
 host=localhost
@@ -49,6 +50,7 @@ zmq_url=tcp://localhost:50000
 [RedisLIST]
 db=3
 listName=bufferList
+dbVersion=db_version
 
 [RedisLog]
 db=0

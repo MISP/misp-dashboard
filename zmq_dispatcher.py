@@ -15,6 +15,7 @@ import redis
 import zmq
 
 import util
+import updates
 from helpers import (contributor_helper, geo_helper, live_helper,
                      trendings_helper, users_helper)
 
@@ -256,6 +257,8 @@ def process_log(zmq_name, event):
 
 
 def main(sleeptime):
+    updates.check_for_updates()
+
     numMsg = 0
     while True:
         content = serv_list.rpop(LISTNAME)
