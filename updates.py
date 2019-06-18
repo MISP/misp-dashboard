@@ -64,8 +64,8 @@ def exec_updates(db_version):
         result = apply_update_1()
 
     if result:
-        serv_redis_db.set(cfg.get('RedisDB', 'dbVersion'), db_version+1)
-        update_logger.warning(f'dbVersion sets to {db_version+1}')
+        serv_redis_db.set(cfg.get('RedisDB', 'dbVersion'), db_version)
+        update_logger.warning(f'dbVersion sets to {db_version}')
     else:
         update_logger.error(f'Something went wrong. {result}')
 
