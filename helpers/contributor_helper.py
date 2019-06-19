@@ -177,7 +177,7 @@ class Contributor_helper:
         if pnts is None:
             pnts = 0
         else:
-            pnts = int(pnts.decode('utf8'))
+            pnts = int(pnts)
         return pnts
 
     # return: [final_rank, requirement_fulfilled, requirement_not_fulfilled]
@@ -381,7 +381,7 @@ class Contributor_helper:
     def getOrgsTrophyRanking(self, categ):
         keyname = '{mainKey}:{orgCateg}'
         res = self.serv_redis_db.zrange(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), 0, -1, withscores=True, desc=True)
-        res = [[org.decode('utf8'), score] for org, score in res]
+        res = [[org, score] for org, score in res]
         return res
 
     def getAllOrgsTrophyRanking(self, category=None):
@@ -562,7 +562,7 @@ class Contributor_helper:
 
     def getAllOrgFromRedis(self):
         data = self.serv_redis_db.smembers(self.keyAllOrg)
-        data = [x.decode('utf8') for x in data]
+        data = [x for x in data]
         return data
 
     def getCurrentOrgRankFromRedis(self, org):

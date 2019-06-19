@@ -48,7 +48,7 @@ class Live_helper:
         entries = self.serv_live.lrange(rKey, 0, -1)
         to_ret = []
         for entry in entries:
-            jentry = json.loads(entry.decode('utf8'))
+            jentry = json.loads(entry)
             to_ret.append(jentry)
         return to_ret
 

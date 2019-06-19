@@ -41,15 +41,18 @@ LISTNAME = cfg.get('RedisLIST', 'listName')
 serv_log = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisLog', 'db'))
+        db=cfg.getint('RedisLog', 'db'),
+        decode_responses=True)
 serv_redis_db = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisDB', 'db'))
+        db=cfg.getint('RedisDB', 'db'),
+        decode_responses=True)
 serv_list = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisLIST', 'db'))
+        db=cfg.getint('RedisLIST', 'db'),
+        decode_responses=True)
 
 live_helper = live_helper.Live_helper(serv_redis_db, cfg)
 geo_helper = geo_helper.Geo_helper(serv_redis_db, cfg)
@@ -271,7 +274,7 @@ def main(sleeptime):
             numMsg = 0
             time.sleep(sleeptime)
             continue
-        content = content.decode('utf8')
+        content = content
         the_json = json.loads(content)
         zmqName = the_json['zmq_name']
         content = the_json['content']

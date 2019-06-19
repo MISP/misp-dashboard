@@ -34,15 +34,18 @@ app = Flask(__name__)
 redis_server_log = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisLog', 'db'))
+        db=cfg.getint('RedisLog', 'db'),
+        decode_responses=True)
 redis_server_map = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisMap', 'db'))
+        db=cfg.getint('RedisMap', 'db'),
+        decode_responses=True)
 serv_redis_db = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisDB', 'db'))
+        db=cfg.getint('RedisDB', 'db'),
+        decode_responses=True)
 
 streamLogCacheKey = cfg.get('RedisLog', 'streamLogCacheKey')
 streamMapCacheKey = cfg.get('RedisLog', 'streamMapCacheKey')
@@ -110,7 +113,6 @@ class EventMessage():
     # Suppose the event message is a json with the format {name: 'feedName', log:'logData'}
     def __init__(self, msg, filters):
         if not isinstance(msg, dict):
-            msg = msg.decode('utf8')
             try:
                 jsonMsg = json.loads(msg)
                 jsonMsg['log'] = json.loads(jsonMsg['log'])
@@ -314,7 +316,7 @@ def event_stream_maps():
     subscriber_map.psubscribe(cfg.get('RedisMap', 'channelDisp'))
     try:
         for msg in subscriber_map.listen():
-            content = msg['data'].decode('utf8')
+            content = msg['data']
             to_ret = 'data: {}\n\n'.format(content)
             yield to_ret
     except GeneratorExit:
@@ -373,7 +375,7 @@ def eventStreamLastContributor():
     subscriber_lastContrib.psubscribe(cfg.get('RedisLog', 'channelLastContributor'))
     try:
         for msg in subscriber_lastContrib.listen():
-            content = msg['data'].decode('utf8')
+            content = msg['data']
             contentJson = json.loads(content)
             lastContribJson = json.loads(contentJson['log'])
             org = lastContribJson['org']
@@ -389,7 +391,7 @@ def eventStreamAwards():
     subscriber_lastAwards.psubscribe(cfg.get('RedisLog', 'channelLastAwards'))
     try:
         for msg in subscriber_lastAwards.listen():
-            content = msg['data'].decode('utf8')
+            content = msg['data']
             contentJson = json.loads(content)
             lastAwardJson = json.loads(contentJson['log'])
             org = lastAwardJson['org']

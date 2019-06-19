@@ -35,7 +35,8 @@ LISTNAME = cfg.get('RedisLIST', 'listName')
 serv_list = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisLIST', 'db'))
+        db=cfg.getint('RedisLIST', 'db'),
+        decode_responses=True)
 
 
 ###############
