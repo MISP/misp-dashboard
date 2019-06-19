@@ -590,7 +590,6 @@ function createHead(callback) {
                     .animate( { 'background-color': '' }, { duration: 1500 } );
                 }
                 if (isObjectAttribute === true) {
-                    console.log(entry);
                     $( rowNode ).children().last()
                         .css('position', 'relative')
                         .append(
