@@ -199,7 +199,12 @@ def check_processes_status(spinner):
         universal_newlines=True
     )
     for line in response.splitlines():
-        pid, _, p_name = line.split(' ')
+        lines = line.split(' ')
+        if len(lines) == 2:
+            pid, p_name = lines
+        elif len(lines) ==3:
+            pid, _, p_name = lines
+
         if 'zmq_subscriber.py' in p_name:
             pgrep_subscriber_output = line
         elif 'zmq_dispatcher.py' in p_name:
