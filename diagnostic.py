@@ -111,7 +111,8 @@ def check_virtual_environment_and_packages(spinner):
         return (False, 'This diagnostic tool should be started inside a virtual environment.')
     else:
         if redis.__version__.startswith('2'):
-            return (False, f'Redis python client have version {redis.__version__}. Version 3.x required.')
+            return (False, f'''Redis python client have version {redis.__version__}. Version 3.x required.
+\t➥ [inside virtualenv] pip3 install -U redis''')
         else:
             return (True, '')
 
@@ -138,6 +139,7 @@ def check_configuration(spinner):
     else:
         return (False, f'''Configuration incomplete.
 \tUpdate your configuration file `config.cfg`.\n\t➥ Faulty fields: {", ".join(faulties)}''')
+    # TODO: propose auto fix
 
 
 @add_spinner(name='dot')
