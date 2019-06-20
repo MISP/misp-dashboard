@@ -34,15 +34,18 @@ app = Flask(__name__)
 redis_server_log = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisLog', 'db'))
+        db=cfg.getint('RedisLog', 'db'),
+        decode_responses=True)
 redis_server_map = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisMap', 'db'))
+        db=cfg.getint('RedisMap', 'db'),
+        decode_responses=True)
 serv_redis_db = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisDB', 'db'))
+        db=cfg.getint('RedisDB', 'db'),
+        decode_responses=True)
 
 streamLogCacheKey = cfg.get('RedisLog', 'streamLogCacheKey')
 streamMapCacheKey = cfg.get('RedisLog', 'streamMapCacheKey')
@@ -70,10 +73,10 @@ class LogItem():
             FIELDNAME_ORDER_HEADER.append(item)
         FIELDNAME_ORDER.append(item)
 
-    def __init__(self, feed):
+    def __init__(self, feed, filters={}):
+        self.filters = filters
+        self.feed = feed
         self.fields = []
-        for f in feed:
-            self.fields.append(f)
 
     def get_head_row(self):
         to_ret = []
@@ -82,38 +85,72 @@ class LogItem():
         return to_ret
 
     def get_row(self):
+        if not self.pass_filter():
+            return False
+
         to_ret = {}
-        # Number to keep them sorted (jsonify sort keys)
-        for item in range(len(LogItem.FIELDNAME_ORDER)):
-            try:
-                to_ret[item] = self.fields[item]
-            except IndexError: # not enough field in rcv item
-                to_ret[item] = ''
+        for i, field in enumerate(json.loads(cfg.get('Dashboard', 'fieldname_order'))):
+            if type(field) is list:
+                to_join = []
+                for subField in field:
+                    to_join.append(str(util.getFields(self.feed, subField)))
+                to_add = cfg.get('Dashboard', 'char_separator').join(to_join)
+            else:
+                to_add = util.getFields(self.feed, field)
+            to_ret[i] = to_add if to_add is not None else ''
         return to_ret
+
+
+    def pass_filter(self):
+        for filter, filterValue in self.filters.items():
+            jsonValue = util.getFields(self.feed, filter)
+            if jsonValue is None or jsonValue != filterValue:
+                return False
+        return True
 
 
 class EventMessage():
     # Suppose the event message is a json with the format {name: 'feedName', log:'logData'}
-    def __init__(self, msg):
-        msg = msg.decode('utf8')
-        try:
-            jsonMsg = json.loads(msg)
-        except json.JSONDecodeError as e:
-            logger.error(e)
-            jsonMsg = { 'name': "undefined" ,'log': json.loads(msg) }
+    def __init__(self, msg, filters):
+        if not isinstance(msg, dict):
+            try:
+                jsonMsg = json.loads(msg)
+                jsonMsg['log'] = json.loads(jsonMsg['log'])
+            except json.JSONDecodeError as e:
+                logger.error(e)
+                jsonMsg = { 'name': "undefined" ,'log': json.loads(msg) }
+        else:
+            jsonMsg = msg
 
         self.name = jsonMsg['name']
         self.zmqName = jsonMsg['zmqName']
-        self.feed = json.loads(jsonMsg['log'])
-        self.feed = LogItem(self.feed).get_row()
+
+        if self.name == 'Attribute':
+            self.feed = jsonMsg['log']
+            self.feed = LogItem(self.feed, filters).get_row()
+        elif self.name == 'ObjectAttribute':
+            self.feed = jsonMsg['log']
+            self.feed = LogItem(self.feed, filters).get_row()
+        else:
+            self.feed = jsonMsg['log']
 
     def to_json_ev(self):
-        to_ret = { 'log': self.feed, 'name': self.name, 'zmqName': self.zmqName }
-        return 'data: {}\n\n'.format(json.dumps(to_ret))
+        if self.feed is not False:
+            to_ret = { 'log': self.feed, 'name': self.name, 'zmqName': self.zmqName }
+            return 'data: {}\n\n'.format(json.dumps(to_ret))
+        else:
+            return ''
 
     def to_json(self):
-        to_ret = { 'log': self.feed, 'name': self.name, 'zmqName': self.zmqName }
-        return json.dumps(to_ret)
+        if self.feed is not False:
+            to_ret = { 'log': self.feed, 'name': self.name, 'zmqName': self.zmqName }
+            return json.dumps(to_ret)
+        else:
+            return ''
+
+    def to_dict(self):
+        return {'log': self.feed, 'name': self.name, 'zmqName': self.zmqName}
+
 
 ###########
 ## ROUTE ##
@@ -232,9 +269,18 @@ def logs():
     if request.accept_mimetypes.accept_json or request.method == 'POST':
         key = 'Attribute'
         j = live_helper.get_stream_log_cache(key)
-        return jsonify(j)
+        to_ret = []
+        for item in j:
+            filters = request.cookies.get('filters', '{}')
+            filters = json.loads(filters)
+            ev = EventMessage(item, filters)
+            if ev is not None:
+                dico = ev.to_dict()
+                if dico['log'] != False:
+                    to_ret.append(dico)
+        return jsonify(to_ret)
     else:
-        return Response(event_stream_log(), mimetype="text/event-stream")
+        return Response(stream_with_context(event_stream_log()), mimetype="text/event-stream")
 
 @app.route("/_maps")
 def maps():
@@ -254,9 +300,14 @@ def event_stream_log():
     subscriber_log.subscribe(live_helper.CHANNEL)
     try:
         for msg in subscriber_log.listen():
+            filters = request.cookies.get('filters', '{}')
+            filters = json.loads(filters)
             content = msg['data']
-            ev = EventMessage(content)
-            yield ev.to_json_ev()
+            ev = EventMessage(content, filters)
+            if ev is not None:
+                yield ev.to_json_ev()
+            else:
+                pass
     except GeneratorExit:
         subscriber_log.unsubscribe()
 
@@ -265,7 +316,7 @@ def event_stream_maps():
     subscriber_map.psubscribe(cfg.get('RedisMap', 'channelDisp'))
     try:
         for msg in subscriber_map.listen():
-            content = msg['data'].decode('utf8')
+            content = msg['data']
             to_ret = 'data: {}\n\n'.format(content)
             yield to_ret
     except GeneratorExit:
@@ -324,7 +375,7 @@ def eventStreamLastContributor():
     subscriber_lastContrib.psubscribe(cfg.get('RedisLog', 'channelLastContributor'))
     try:
         for msg in subscriber_lastContrib.listen():
-            content = msg['data'].decode('utf8')
+            content = msg['data']
             contentJson = json.loads(content)
             lastContribJson = json.loads(contentJson['log'])
             org = lastContribJson['org']
@@ -340,7 +391,7 @@ def eventStreamAwards():
     subscriber_lastAwards.psubscribe(cfg.get('RedisLog', 'channelLastAwards'))
     try:
         for msg in subscriber_lastAwards.listen():
-            content = msg['data'].decode('utf8')
+            content = msg['data']
             contentJson = json.loads(content)
             lastAwardJson = json.loads(contentJson['log'])
             org = lastAwardJson['org']

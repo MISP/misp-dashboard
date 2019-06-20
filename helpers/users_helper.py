@@ -41,11 +41,11 @@ class Users_helper:
         timestampDate_str = util.getDateStrFormat(timestampDate)
 
         keyname_timestamp = "{}:{}".format(self.keyTimestamp, org)
-        self.serv_redis_db.zadd(keyname_timestamp, timestamp, timestamp)
+        self.serv_redis_db.zadd(keyname_timestamp, {timestamp: timestamp})
         self.logger.debug('Added to redis: keyname={}, org={}'.format(keyname_timestamp, timestamp))
 
         keyname_org = "{}:{}".format(self.keyOrgLog, timestampDate_str)
-        self.serv_redis_db.zincrby(keyname_org, org, 1)
+        self.serv_redis_db.zincrby(keyname_org, 1, org)
         self.logger.debug('Added to redis: keyname={}, org={}'.format(keyname_org, org))
 
         self.serv_redis_db.sadd(self.keyAllOrgLog, org)
@@ -53,7 +53,7 @@ class Users_helper:
 
     def getAllOrg(self):
         temp = self.serv_redis_db.smembers(self.keyAllOrgLog)
-        return [ org.decode('utf8') for org in temp ]
+        return [ org for org in temp ]
 
     # return: All timestamps for one org for the spanned time or not
     def getDates(self, org, date=None):
@@ -90,7 +90,7 @@ class Users_helper:
             keyname = "{}:{}".format(self.keyOrgLog, util.getDateStrFormat(curDate))
             data = self.serv_redis_db.zrange(keyname, 0, -1, desc=True)
             for org in data:
-                orgs.add(org.decode('utf8'))
+                orgs.add(org)
         return list(orgs)
 
     # return: list composed of the number of [log, contrib] for one org for the time spanned
@@ -134,7 +134,7 @@ class Users_helper:
     def getLoginVSCOntribution(self, date):
         keyname = "{}:{}".format(self.keyContribDay, util.getDateStrFormat(date))
         orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=False)
-        orgs_contri = [ org.decode('utf8') for org in orgs_contri ]
+        orgs_contri = [ org for org in orgs_contri ]
         orgs_login = [ org for org in self.getAllLoggedInOrgs(date, prev_days=0) ]
         contributed_num = 0
         non_contributed_num = 0

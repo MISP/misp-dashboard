@@ -1,9 +1,10 @@
 argparse
 flask
 geoip2
-# Redis needs to be 2.10.6 due to a change in redis 3.10 client, see here: https://github.com/MISP/misp-dashboard/issues/76#issuecomment-439389621
-redis==2.10.6
+redis
 phonenumbers
 pip
 pycountry
 zmq
+requests
+halo

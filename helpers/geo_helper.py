@@ -206,7 +206,7 @@ class Geo_helper:
         now = datetime.datetime.now()
         today_str = util.getDateStrFormat(now)
         keyname = "{}:{}{}".format(keyCateg, today_str, endSubkey)
-        self.serv_redis_db.zincrby(keyname, toAdd, count)
+        self.serv_redis_db.zincrby(keyname, count, toAdd)
         self.logger.debug('Added to redis: keyname={}, toAdd={}, count={}'.format(keyname, toAdd, count))
 
     def ip_to_coord(self, ip):

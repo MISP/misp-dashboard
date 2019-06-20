@@ -24,8 +24,27 @@
     <script src="{{ url_for('static', filename='js/jquery.flot.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.flot.pie.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.flot.resize.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
+    <link href="{{ url_for('static', filename='css/jquery-ui.min.css') }}" type="text/css" rel="stylesheet">
+
     <!-- Bootstrap Core JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.dataTables.min.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
+
+    <link href="{{ url_for('static', filename='css/font-awesome.min.css') }}" type="text/css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-jvectormap-2.0.3.css') }}" type="text/css" media="screen"/>
+    <script src="{{ url_for('static', filename='js/jquery-jvectormap-2.0.3.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery-jvectormap-world-mill.js') }}"></script>
+
+
+    <script src="{{ url_for('static', filename='js/doT.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/extendext.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/moment-with-locales.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/query-builder.js') }}"></script>
+    <link href="{{ url_for('static', filename='css/query-builder.default.css') }}" type="text/css" rel="stylesheet">
 
 </head>
 
@@ -42,8 +61,9 @@
     font-size: 12px;
     font-weight: bold;
     line-height: 14px;
-    border-bottom-left-radius: 3px;
+    border-radius: 3px;
     box-shadow: 3px 3px 3px #888888;
+    margin: 2px;
 }
 
 table {
@@ -123,6 +143,63 @@ small {
     font-weight: bold;
 }
 
+.led_green {
+    background-color: #ABFF00;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 6px, #89FF00 0 0px 6px;
+}
+
+.led_red {
+    background-color: #F82222;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 6px, #FF0303 0 0px 6px;
+}
+
+.led_orange {
+    background-color: #FFB400;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 6px, #FF9000 0 0px 6px;
+}
+
+.led-small {
+    margin: auto auto;
+    margin-top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.led-container {
+    text-align: center;
+    display: inline-block;
+}
+
+.led-container > span {
+    margin: auto 5px;
+}
+
+div.dataTables_scrollHead table.dataTable {
+    margin-top: 0px !important;
+}
+
+.dataTables_scrollBody thead tr {
+    visibility: collapse !important;
+}
+
+.liveLogFullScreen {
+    position: absolute !important;
+    top: 66px !important;
+    left: 15px !important;
+    right: 10px !important;
+    z-index: 1001 !important;
+    bottom: -7px !important;
+    height: unset !important;
+}
+
+.rowTableIsObject {
+    position: absolute;
+    right: 15px;
+    top: 0px;
+    color: #3465a4;
+}
+
 </style>
 
 <body>
@@ -198,7 +275,7 @@ small {
                     </div>
                     <!-- /.col-lg-6 -->
                     <!-- /.col-lg-6 -->
-                    <div class="col-lg-{{ size_dashboard_width[1] }}">
+                    <div id="rightCol" class="col-lg-{{ size_dashboard_width[1] }}">
 
                         <div class="panel panel-default" style="margin-top: 15px; height: {{ pannelSize[2] }}vh;">
                             <div id="panelbody" class="panel-body" style="height: 100%;">
@@ -212,23 +289,12 @@ small {
                         <div id="panelLogTable" class="panel panel-default" style="height: {{ pannelSize[3] }}vh;">
                             <div class="panel-heading">
                                 <i class="fa fa-tasks fa-fw"></i> Logs
-                                <div class="pull-right">
-                                    <input id="checkbox_log_info" type="checkbox" value="info"> INFO
-                                    <input id="checkbox_log_warning" type="checkbox" value="warning" checked="true"> WARNING
-                                    <input id="checkbox_log_critical" type="checkbox" value="critical" checked="true"> CRITICAL
+                                <div style="display: inline-block; float: right;">
+                                    <button id="log-filter" data-toggle="modal" data-target="#modalFilters" class="btn btn-xs btn-default" ><i class="fa fa-filter"></i></button>
+                                    <button id="log-fullscreen" class="btn btn-xs btn-default"><i class="fa fa-expand"></i></button>
                                 </div>
                             </div>
-                            <div id="divLogTable" class="panel-body" style="height: 98%; padding: 0px;">
-                                <div class="row" style="height: 100%;">
-                                    <div class="col-lg-12" style="height: 100%;">
-                                        <table class="table table-bordered table-hover table-striped" id="table_log">
-                                            <thead id="table_log_head">
-                                            </thead>
-                                            <tbody id="table_log_body">
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                            <div id="divLogTable" class="panel-body" style="height: calc(100% - 46px); padding: 0px; overflow: hidden">
                             </div>
                         </div>
 
@@ -253,6 +319,25 @@ small {
 
     </div>
 <!-- /#wrapper -->
+
+<!-- Modal -->
+<div class="modal fade" id="modalFilters" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Log filtering rules</h4>
+      </div>
+      <div class="modal-body">
+        <div id="filteringQB"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button id="saveFilters" type="button" class="btn btn-primary">Save filters</button>
+      </div>
+    </div>
+  </div>
+</div>
 
     <!-- Index -->
     <script>
@@ -299,11 +384,6 @@ small {
     <script src="{{ url_for('static', filename='js/index/index_map.js') }}"></script>
     <script src="{{ url_for('static', filename='js/index/index_pie.js') }}"></script>
 
-
-    <link href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-jvectormap-2.0.3.css') }}" type="text/css" media="screen"/>
-    <script src="{{ url_for('static', filename='js/jquery-jvectormap-2.0.3.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery-jvectormap-world-mill.js') }}"></script>
     <script type="text/javascript">
 
     </script>

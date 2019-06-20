@@ -166,56 +166,34 @@ var sources = new Sources();
 sources.addSource('global');
 var ledmanager = new LedManager();
 
-var curNumLog = 0;
 var curMaxDataNumLog = 0;
-var source_log;
 
-function connect_source_log() {
-    source_log = new EventSource(urlForLogs);
-
-    source_log.onopen = function(){
-        //console.log('connection is opened. '+source_log.readyState);  
-    };
-
-    source_log.onerror = function(){
-        console.log('error: '+source_log.readyState);  
-        setTimeout(function() { connect_source_log(); }, 5000);
-    };
-
-    source_log.onmessage = function(event) {
-        var json = jQuery.parseJSON( event.data );
-        updateLogTable(json.name, json.log, json.zmqName);
-    };
-}
-
+var livelog;
 $(document).ready(function () {
-    createHead(function() {
-        if (!!window.EventSource) {
-            $.getJSON( urlForLogs, function( data ) {
-                data.forEach(function(item) {
-                    updateLogTable(item.name, item.log, item.zmqName);
-                });
-                connect_source_log();
-            });
-        } else {
-            console.log("No event source_log");
-        }
-
+    $.getJSON(urlForHead, function(head) {
+        livelog = new $.livelog($("#divLogTable"), {
+            pollingFrequency: 5000,
+            tableHeader: head,
+            tableMaxEntries: 50,
+            // animate: false,
+            preDataURL: urlForLogs,
+            endpoint: urlForLogs
+        });
     });
+
 
 });
 
 
 //  LOG TABLE
-function updateLogTable(name, log, zmqName) {
+function updateLogTable(name, log, zmqName, ignoreLed) {
     if (log.length == 0)
         return;
 
     // update keepAlives
-    ledmanager.updateKeepAlive(zmqName);
-
-    // Create new row
-    tableBody = document.getElementById('table_log_body');
+    if (ignoreLed !== true) {
+        ledmanager.updateKeepAlive(zmqName);
+    }
 
     // only add row for attribute
     if (name == "Attribute" ) {
@@ -224,13 +202,6 @@ function updateLogTable(name, log, zmqName) {
         sources.incCountOnSource(categName);
         sources.incCountOnSource('global');
         updateChartDirect();
-        createRow(tableBody, log);
-
-        // Remove old row
-        while ($("#table_log").height() >= $("#panelLogTable").height()-26){ //26 for margin
-            tableBody.deleteRow(0);
-        }
-
     } else if (name == "Keepalive") {
         // do nothing
     } else {
@@ -261,23 +232,6 @@ function getTextColour(rgb) {
         return 'white';
     } else {
         return 'black';
-    }
-}
-
-function addObjectToLog(name, obj, td) {
-    if(name == "Tag") {
-        var a = document.createElement('A');
-        a.classList.add('tagElem');
-        a.style.backgroundColor = obj.colour;
-        a.style.color = getTextColour(obj.colour.substring(1,6));
-        a.innerHTML = obj.name;
-        td.appendChild(a);
-        td.appendChild(document.createElement('br'));
-    } else if (name == "mispObject") {
-        td.appendChild(document.createTextNode('mispObj'));
-    } else {
-        td.appendChild(document.createTextNode('nop'));
-
     }
 }
 
@@ -337,4 +291,554 @@ function createHead(callback) {
         document.getElementById('table_log_head').appendChild(tr);
         callback();
     });
+}
+
+
+
+/* LIVE LOG */
+(function(factory) {
+        "use strict";
+        if (typeof define === 'function' && define.amd) {
+            define(['jquery'], factory);
+        } else if (window.jQuery && !window.jQuery.fn.Livelog) {
+            factory(window.jQuery);
+        }
+    }
+    (function($) {
+        'use strict';
+
+        // Livelog object
+        var Livelog = function(container, options) {
+            this._default_options = {
+                pollingFrequency: 5000,
+                tableHeader: undefined,
+                tableMaxEntries: undefined,
+                animate: true
+            }
+
+            options.container = container;
+
+            this.validateOptions(options);
+            this._options = $.extend({}, this._default_options, options);
+
+            // create table and draw header
+            this.origTableOptions = {
+                dom: "<'row'<'col-sm-12'<'dt-toolbar-led'>>>"
+                        + "<'row'<'col-sm-12'tr>>",
+                searching: false,
+                paging:         false,
+                "order": [[ 0, "desc" ]],
+                responsive: true,
+                columnDefs: [
+                    { targets: 0, orderable: false },
+                    { targets: '_all', searchable: false, orderable: false,
+                        render: function ( data, type, row ) {
+                            var $toRet;
+                            if (typeof data === 'object') {
+                                $toRet = $('<span></span>');
+                                data.data.forEach(function(cur, i) {
+                                    switch (data.name) {
+                                        case 'Tag':
+                                            var $tag = $('<a></a>');
+                                            $tag.addClass('tagElem');
+                                            $tag.css({
+                                                backgroundColor: cur.colour,
+                                                color: getTextColour(cur.colour.substring(1,6))
+                                            });
+                                            $tag.text(cur.name)
+                                            $toRet.append($tag);
+                                            break;
+                                        case 'mispObject':
+                                            $toRet.append('MISP Object not supported yet')
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                });
+                                $toRet = $toRet[0].outerHTML;
+                            } else if (data === undefined) {
+                                    $toRet = '';
+                            } else {
+                                var textToAddArray = data.split(char_separator);
+                                $toRet = '';
+                                textToAddArray.forEach(function(e, i) {
+                                    if (i > 0) {
+                                        $toRet += '<br>' + e;
+                                    } else {
+                                        $toRet += e;
+                                    }
+                                });
+                            }
+                            return $toRet;
+                       },
+                    }
+                ],
+            };
+
+            this.DOMTable = $('<table class="table table-striped table-bordered" style="width:100%"></table>');
+            this._options.container.append(this.DOMTable);
+            this.origTableOptions.columns = [];
+            var that = this;
+            this._options.tableHeader.forEach(function(field) {
+                var th = $('<th>'+field+'</th>');
+                that.origTableOptions.columns.push({ title: field });
+            });
+            this.dt = this.DOMTable.DataTable(this.origTableOptions);
+
+            this.fetch_predata();
+
+            // add status led
+            this._ev_timer = null;
+            this._ev_retry_frequency = this._options.pollingFrequency; // sec
+            this._cur_ev_retry_count = 0;
+            this._ev_retry_count_thres = 3;
+            var led_container = $('<div class="led-container" style="margin-left: 10px;"></div>');
+            var led = $('<div class="led-small led_red"></div>');
+            this.statusLed = led;
+            led_container.append(led);
+            var header = this._options.container.parent().parent().find('.panel-heading');
+
+            if (header.length > 0) { // add in panel header
+                header.append(led_container);
+            } else { // add over the map
+                led.css('display', 'inline-block');
+                led_container.append($('<span>Status</span>')).css('float', 'left');
+                $('.dt-toolbar-led').append(led_container)
+            }
+            this.data_source = undefined;
+
+            this.connect_to_data_source();
+
+        };
+
+        Livelog.prototype = {
+            constructor: Livelog,
+
+            validateOptions: function(options) {
+                var o = options;
+
+                if (o.endpoint === undefined || typeof o.endpoint != 'string') {
+                    throw "Livelog must have a valid endpoint";
+                }
+
+                if (o.container === undefined) {
+                    throw "Livelog must have a container";
+                } else {
+                    o.container = o.container instanceof jQuery ? o.container : $('#'+o.container);
+                }
+
+                // pre-data is either the data to be shown or an URL from which the data should be taken from
+                if (Array.isArray(o.preData)){
+                    o.preDataURL = null;
+                    o.preData = o.preData;
+                } else if (o.preData !== undefined) { // should fetch
+                    o.preDataURL = o.preData;
+                    o.preData = [];
+                }
+
+                if (o.tableHeader === undefined || !Array.isArray(o.tableHeader)) {
+                    throw "Livelog must have a valid header";
+                }
+
+                if (o.tableMaxEntries !== undefined) {
+                    o.tableMaxEntries = parseInt(o.tableMaxEntries);
+                }
+            },
+
+            fetch_predata: function() {
+                var that = this;
+                if (this._options.preDataURL !== null) {
+                    $.when(
+                        $.ajax({
+                            dataType: "json",
+                            url: this._options.preDataURL,
+                            data: this._options.additionalOptions,
+                            success: function(data) {
+                                that._options.preData = data;
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                console.log(textStatus);
+                                that._options.preData = [];
+                            }
+                        })
+                    ).then(
+                        function() { // success
+                            // add data to the widget
+                            that._options.preData.forEach(function(j) {
+                                var name = j.name,
+                                    zmqName = j.zmqName,
+                                    entry = j.log;
+                                updateLogTable(name, entry, zmqName, true);
+                                switch (name) {
+                                    case 'Attribute':
+                                        that.add_entry(entry);
+                                        break;
+                                    case 'ObjectAttribute':
+                                        that.add_entry(entry, true);
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            });
+                        }, function() { // fail
+                        }
+                    );
+                }
+            },
+
+            connect_to_data_source: function() {
+                var that = this;
+                if (!this.data_source) {
+                    // var url_param = $.param( this.additionalOptions );
+                    this.data_source = new EventSource(this._options.endpoint);
+                    this.data_source.onmessage = function(event) {
+                        var json = jQuery.parseJSON( event.data );
+                        var name = json.name,
+                            zmqName = json.zmqName,
+                            entry = json.log;
+                        updateLogTable(name, entry, zmqName);
+                        switch (name) {
+                            case 'Attribute':
+                                that.add_entry(entry);
+                                break;
+                            case 'ObjectAttribute':
+                                that.add_entry(entry, true);
+                                break;
+                            default:
+                                break;
+                        }
+                    };
+                    this.data_source.onopen = function(){
+                        that._cur_ev_retry_count = 0;
+                        that.update_connection_state('connected');
+                    };
+                    this.data_source.onerror = function(){
+                        if (that.data_source.readyState == 0) { // reconnecting
+                            that.update_connection_state('connecting');
+                        }  else if (that.data_source.readyState == 2) { // closed, reconnect with new object
+                            that.reconnection_logique();
+                        } else {
+                            that.update_connection_state('not connected');
+                            that.reconnection_logique();
+                        }
+                    };
+                }
+            },
+
+            reconnection_logique: function () {
+                var that = this;
+                if (that.data_source) {
+                    that.data_source.close();
+                    that.data_source = null;
+                }
+                if (that._ev_timer) {
+                    clearTimeout(that._ev_timer);
+                }
+                if(that._cur_ev_retry_count >= that._ev_retry_count_thres) {
+                    that.update_connection_state('not connected');
+                } else {
+                    that._cur_ev_retry_count++;
+                    that.update_connection_state('connecting');
+                }
+                that._ev_timer = setTimeout(function () { that.connect_to_data_source(); }, that._ev_retry_frequency*1000);
+            },
+
+            reconnect: function() {
+                if (this.data_source) {
+                    this.data_source.close();
+                    this.data_source = null;
+                    this._cur_ev_retry_count = 0;
+                    this.update_connection_state('reconnecting');
+                    this.connect_to_data_source();
+                }
+            },
+
+            update_connection_state: function(connectionState) {
+                this.connectionState = connectionState;
+                this.updateDOMState(this.statusLed, connectionState);
+            },
+
+            updateDOMState: function(led, state) {
+                switch (state) {
+                    case 'connected':
+                        led.removeClass("led_red");
+                        led.removeClass("led_orange");
+                        led.addClass("led_green");
+                        break;
+                    case 'not connected':
+                        led.removeClass("led_green");
+                        led.removeClass("led_orange");
+                        led.addClass("led_red");
+                        break;
+                    case 'connecting':
+                        led.removeClass("led_green");
+                        led.removeClass("led_red");
+                        led.addClass("led_orange");
+                        break;
+                    default:
+                        led.removeClass("led_green");
+                        led.removeClass("led_orange");
+                        led.addClass("led_red");
+                }
+            },
+
+            add_entry: function(entry, isObjectAttribute) {
+                var rowNode = this.dt.row.add(entry).draw().node();
+                if (this._options.animate) {
+                    $( rowNode )
+                    .css( 'background-color', '#5cb85c !important' )
+                    .animate( { 'background-color': '' }, { duration: 1500 } );
+                }
+                if (isObjectAttribute === true) {
+                    $( rowNode ).children().last()
+                        .css('position', 'relative')
+                        .append(
+                            $('<it class="fa fa-th rowTableIsObject" title="This attribute belong to an Object"></it>')
+                        );
+                }
+                // remove entries
+                var numRows = this.dt.rows().count();
+                var rowsToRemove = numRows - this._options.tableMaxEntries;
+                if (rowsToRemove > 0 && this._options.tableMaxEntries != -1) {
+                    //get row indexes as an array
+                    var arraySlice = this.dt.rows().indexes().toArray();
+                    //get row indexes to remove starting at row 0
+                    arraySlice = arraySlice.slice(-rowsToRemove);
+                    //remove the rows and redraw the table
+                    var rows = this.dt.rows(arraySlice).remove().draw();
+                }
+            }
+        };
+
+        $.livelog = Livelog;
+        $.fn.livelog = function(option) {
+            var pickerArgs = arguments;
+
+            return this.each(function() {
+                var $this = $(this),
+                    inst = $this.data('livelog'),
+                    options = ((typeof option === 'object') ? option : {});
+                if ((!inst) && (typeof option !== 'string')) {
+                    $this.data('livelog', new Livelog(this, options));
+                } else {
+                    if (typeof option === 'string') {
+                        inst[option].apply(inst, Array.prototype.slice.call(pickerArgs, 1));
+                    }
+                }
+            });
+        };
+
+        $.fn.livelog.constructor = Livelog;
+
+}));
+
+/* Live log filter */
+
+function recursiveInject(result, rules, isNot) {
+    if (rules.rules === undefined) { // add to result
+        var field = rules.field;
+        var value = rules.value;
+        var operator_notequal = rules.operator === 'not_equal' ? true : false;
+        var negate = isNot ^ operator_notequal;
+        value = negate ? '!' + value : value;
+        if (result.hasOwnProperty(field)) {
+            if (Array.isArray(result[field])) {
+                result[field].push(value);
+            } else {
+                result[field] = [result[field], value];
+            }
+        } else {
+            result[field] = value;
+        }
+    }
+    else if (Array.isArray(rules.rules)) {
+        rules.rules.forEach(function(subrules) {
+           recursiveInject(result, subrules, isNot ^ rules.not) ;
+        });
+    }
+}
+
+function cleanRules(rules) {
+    var res = {};
+    recursiveInject(res, rules);
+    // clean up invalid and unset
+    Object.keys(res).forEach(function(k) {
+        var v = res[k];
+        if (v === undefined || v === '') {
+            delete res[k];
+        }
+    });
+    return res;
+}
+
+$(document).ready(function() {
+    var qbOptions = {
+         plugins: {
+             'filter-description' : {
+                 mode: 'inline'
+             },
+             'unique-filter': null,
+             'bt-tooltip-errors': null,
+         },
+         allow_empty: true,
+         filters: [],
+        rules: {
+            condition: 'AND',
+            not: false,
+            rules: [],
+            flags: {
+                no_add_group: true,
+                condition_readonly: true,
+            }
+        },
+        icons: {
+            add_group: 'fa fa-plus-square',
+            add_rule: 'fa fa-plus-circle',
+            remove_group: 'fa fa-minus-square',
+            remove_rule: 'fa fa-minus-circle',
+            error: 'fa fa-exclamation-triangle'
+        }
+    };
+
+    // add filters and rules
+    [
+        'Attribute.category',
+        'Attribute.comment',
+        'Attribute.deleted',
+        'Attribute.disable_correlation',
+        'Attribute.distribution',
+        'Attribute.event_id',
+        'Attribute.id',
+        'Attribute.object_id',
+        'Attribute.object_relation',
+        'Attribute.sharing_group_id',
+        'Attribute.Tag.name',
+        'Attribute.timestamp',
+        'Attribute.to_ids',
+        'Attribute.type',
+        'Attribute.uuid',
+        'Attribute.value',
+        'Event.Org',
+        'Event.Orgc',
+        'Event.analysis',
+        'Event.attribute_count',
+        'Event.date',
+        'Event.disable_correlation',
+        'Event.distribution',
+        'Event.event_creator_email',
+        'Event.extends_uuid',
+        'Event.id',
+        'Event.info',
+        'Event.locked',
+        'Event.org_id',
+        'Event.orgc_id',
+        'Event.proposal_email_lock',
+        'Event.publish_timestamp',
+        'Event.published',
+        'Event.sharing_group_id',
+        'Event.threat_level_id',
+        'Event.Tag.name',
+        'Event.timestamp',
+        'Event.uuid',
+        'Org.id',
+        'Org.name',
+        'Org.uuid',
+        'Orgc.id',
+        'Orgc.name',
+        'Orgc.uuid'
+    ].forEach(function(field) {
+        var tempFilter = {
+            "input": "text",
+            "type": "string",
+            "operators": [
+                "equal",
+                "not_equal"
+            ],
+            "unique": true,
+            "id": field,
+            "label": field,
+            "description": "Perfom strict equality on " + field,
+            "validation": {
+                "allow_empty_value": true
+            }
+        };
+        qbOptions.filters.push(tempFilter);
+    });
+
+    var filterCookie = getCookie('filters');
+    var filters = JSON.parse(filterCookie !== undefined && filterCookie !== '' ? filterCookie : "{}");
+    var activeFilters = Object.keys(filters)
+    var tempRule = [];
+    activeFilters.forEach(function(field) {
+        var v = filters[field];
+        var tmp = {
+            field: field,
+            id: field,
+            value: v
+        };
+        tempRule.push(tmp);
+    });
+    qbOptions.rules.rules = tempRule;
+    updateFilterButton(activeFilters);
+
+    var $ev = $('#filteringQB');
+    var querybuilderTool = $ev.queryBuilder(qbOptions);
+    querybuilderTool = querybuilderTool[0].queryBuilder;
+
+    $('#saveFilters').click(function() {
+        var rules = querybuilderTool.getRules({ skip_empty: true, allow_invalid: true });
+        var result = {};
+        recursiveInject(result, rules, false);
+        updateFilterButton(Object.keys(result));
+        var jres = JSON.stringify(result, null);
+        document.cookie = 'filters=' + jres;
+        $('#modalFilters').modal('hide');
+        livelog.dt
+            .clear()
+            .draw();
+        livelog.fetch_predata();
+        livelog.reconnect();
+    })
+
+    $('#log-fullscreen').click(function() {
+        var $this = $(this);
+        var $panel = $('#panelLogTable');
+        var isfullscreen = $this.data('isfullscreen');
+        if (isfullscreen === undefined || !isfullscreen) {
+            $panel.detach().prependTo('#page-wrapper')
+            $panel.addClass('liveLogFullScreen');
+            $this.data('isfullscreen', true);
+        } else {
+            $panel.detach().appendTo('#rightCol')
+            $panel.removeClass('liveLogFullScreen');
+            $this.data('isfullscreen', false);
+        }
+    });
+
+});
+
+function updateFilterButton(activeFilters) {
+    if (activeFilters.length > 0) {
+        $('#log-filter').removeClass('btn-default');
+        $('#log-filter').addClass('btn-success');
+    } else {
+        $('#log-filter').removeClass('btn-success');
+        $('#log-filter').addClass('btn-default');
+    }
+}
+
+function getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(var i = 0; i <ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
 }
