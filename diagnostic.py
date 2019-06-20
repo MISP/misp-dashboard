@@ -125,21 +125,22 @@ def check_configuration(spinner):
     cfg.read(configfile)
     configuration_file = cfg
     cfg = {s: dict(cfg.items(s)) for s in cfg.sections()}
-    configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg.default')
+    configfile_default = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg.default')
     cfg_default = configparser.ConfigParser()
-    cfg_default.read(configfile)
+    cfg_default.read(configfile_default)
     cfg_default = {s: dict(cfg_default.items(s)) for s in cfg_default.sections()}
 
     # Check if all fields from config.default exists in config
     result, faulties = diagnostic_util.dict_compare(cfg_default, cfg)
-    faulties = [item for sublist in faulties for item in sublist]
     if result:
         port = configuration_file.get("Server", "port")
         return (True, '')
     else:
-        return (False, f'''Configuration incomplete.
-\tUpdate your configuration file `config.cfg`.\n\t➥ Faulty fields: {", ".join(faulties)}''')
-    # TODO: propose auto fix
+        return_text = '''Configuration incomplete.
+\tUpdate your configuration file `config.cfg`.\n\t➥ Faulty fields:\n'''
+        for field_name in faulties:
+            return_text += f'\t\t- {field_name}\n'
+        return (False, return_text)
 
 
 @add_spinner(name='dot')
