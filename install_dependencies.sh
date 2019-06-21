@@ -9,7 +9,11 @@ if ! id zmqs >/dev/null 2>&1; then
 	# Create zmq user
 	sudo useradd -U -G www-data -m -s /bin/bash  zmqs
 	# Adds right to www-data to run ./start-zmq as zmq
-	sudo echo "www-data ALL=(zmqs)	NOPASSWD:/bin/bash	/var/www/misp-dashboard/start_zmq.sh" > /etc/sudoers.d/www-data
+	if gcc --version | grep -E "ubuntu|debian|kali";then
+		sudo echo "www-data ALL=(zmqs)	NOPASSWD:/bin/bash	/var/www/misp-dashboard/start_zmq.sh" > /etc/sudoers.d/www-data
+	elif gcc --version | grep -E "Red Hat|Cent OS";then
+		sudo echo "www-data ALL=(zmqs)	NOPASSWD:/bin/bash	/var/www/misp-dashboard/start_zmq.sh" | sudo EDITOR='tee -a' visudo
+	fi
 fi
 
 sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip -y
