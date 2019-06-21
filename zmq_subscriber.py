@@ -28,7 +28,6 @@ except PermissionError as error:
     sys.exit(126)
 logger = logging.getLogger('zmq_subscriber')
 
-ZMQ_URL = cfg.get('RedisGlobal', 'zmq_url')
 CHANNEL = cfg.get('RedisLog', 'channel')
 LISTNAME = cfg.get('RedisLIST', 'listName')
 
@@ -49,16 +48,17 @@ def put_in_redis_list(zmq_name, content):
     serv_list.lpush(LISTNAME, json.dumps(to_add))
     logger.debug('Pushed: {}'.format(json.dumps(to_add)))
 
-def main(zmqName):
+def main(zmqName, zmqurl):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
-    socket.connect(ZMQ_URL)
+    socket.connect(zmqurl)
     socket.setsockopt_string(zmq.SUBSCRIBE, '')
 
     while True:
         try:
             content = socket.recv()
             put_in_redis_list(zmqName, content)
+            print(zmqName, content)
         except KeyboardInterrupt:
             return
         except Exception as e:
@@ -69,10 +69,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='A zmq subscriber. It subscribes to a ZMQ then redispatch it to the misp-dashboard')
     parser.add_argument('-n', '--name', required=False, dest='zmqname', help='The ZMQ feed name', default="MISP Standard ZMQ")
-    parser.add_argument('-u', '--url', required=False, dest='zmqurl', help='The URL to connect to', default=ZMQ_URL)
+    parser.add_argument('-u', '--url', required=False, dest='zmqurl', help='The URL to connect to', default="tcp://localhost:50000")
     args = parser.parse_args()
 
     try:
-        main(args.zmqname)
+        main(args.zmqname, args.zmqurl)
     except redis.exceptions.ResponseError as error:
         print(error)

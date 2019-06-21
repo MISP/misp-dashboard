@@ -171,25 +171,41 @@ def check_redis(spinner):
 def check_zmq(spinner):
     timeout = 15
     context = zmq.Context()
-    socket = context.socket(zmq.SUB)
-    socket.connect(configuration_file.get('RedisGlobal', 'zmq_url'))
-    socket.setsockopt_string(zmq.SUBSCRIBE, '')
-    poller = zmq.Poller()
+    misp_instances = json.loads(configuration_file.get('RedisGlobal', 'misp_instances'))
+    instances_status = {}
+    for misp_instance in misp_instances:
+        socket = context.socket(zmq.SUB)
+        socket.connect(misp_instance.get('zmq'))
+        socket.setsockopt_string(zmq.SUBSCRIBE, '')
+        poller = zmq.Poller()
 
-    start_time = time.time()
-    poller.register(socket, zmq.POLLIN)
-    for t in range(1, timeout+1):
-        socks = dict(poller.poll(timeout=1*1000))
-        if len(socks) > 0:
-            if socket in socks and socks[socket] == zmq.POLLIN:
-                rcv_string = socket.recv()
-                if rcv_string.startswith(b'misp_json'):
-                    return (True, '')
-        else:
-            pass
-            spinner.text = f'checking zmq - elapsed time: {int(time.time() - start_time)}s'
+        flag_skip = False
+        start_time = time.time()
+        poller.register(socket, zmq.POLLIN)
+        for t in range(1, timeout+1):
+            socks = dict(poller.poll(timeout=1*1000))
+            if len(socks) > 0:
+                if socket in socks and socks[socket] == zmq.POLLIN:
+                    rcv_string = socket.recv()
+                    if rcv_string.startswith(b'misp_json'):
+                        instances_status[misp_instance.get('name')] = True
+                        flag_skip = True
+                        break
+            else:
+                spinner.text = f'checking zmq of {misp_instance.get("name")} - elapsed time: {int(time.time() - start_time)}s'
+        if not flag_skip:
+            instances_status[misp_instance.get('name')] = False
+
+    results = [s for n, s in instances_status.items()]
+    if all(results):
+        return (True, '')
+    elif any(results):
+        return_text = 'Connection to ZMQ stream(s) failed.\n'
+        for name, status in instances_status.items():
+            return_text += f'\t➥ {name}: {"success" if status else "failed"}\n'
+        return (True, return_text)
     else:
-        return (False, '''Can\'t connect to the ZMQ stream.
+        return (False, '''Can\'t connect to the ZMQ stream(s).
 \t➥ Make sure the MISP ZMQ is running: `/servers/serverSettings/diagnostics`
 \t➥ Make sure your network infrastucture allows you to connect to the ZMQ''')
 
@@ -202,11 +218,8 @@ def check_processes_status(spinner):
         universal_newlines=True
     )
     for line in response.splitlines():
-        lines = line.split(' ')
-        if len(lines) == 2:
-            pid, p_name = lines
-        elif len(lines) ==3:
-            pid, _, p_name = lines
+        lines = line.split(' ', maxsplit=1)
+        pid, p_name = lines
 
         if 'zmq_subscriber.py' in p_name:
             pgrep_subscriber_output = line
