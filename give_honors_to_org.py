@@ -1,9 +1,13 @@
 #!/usr/bin/env python3.5
 
-import os, sys, json
-import datetime, time
-import redis
 import configparser
+import datetime
+import json
+import os
+import sys
+import time
+
+import redis
 
 import util
 from helpers import contributor_helper
@@ -206,7 +210,7 @@ def main():
 
     for award in awards_given:
         # update awards given
-        serv_redis_db.zadd('CONTRIB_LAST_AWARDS:'+util.getDateStrFormat(now), nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec }))
+        serv_redis_db.zadd('CONTRIB_LAST_AWARDS:'+util.getDateStrFormat(now), {json.dumps({'org': org, 'award': award, 'epoch': nowSec }): nowSec})
         serv_redis_db.expire('CONTRIB_LAST_AWARDS:'+util.getDateStrFormat(now), ONE_DAY*7) #expire after 7 day
         # publish
         publish_log('GIVE_HONOR_ZMQ', 'CONTRIBUTION', {'org': org, 'award': award, 'epoch': nowSec }, CHANNEL_LASTAWARDS)

@@ -1,24 +1,31 @@
 #!/usr/bin/env python3
 
-import time, datetime
-import zmq
-import logging
-import redis
-import configparser
 import argparse
+import configparser
+import datetime
+import json
+import logging
 import os
 import sys
-import json
+import time
+
+import redis
+import zmq
 
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 logDir = cfg.get('Log', 'directory')
-logfilename = cfg.get('Log', 'filename')
+logfilename = cfg.get('Log', 'subscriber_filename')
 logPath = os.path.join(logDir, logfilename)
 if not os.path.exists(logDir):
     os.makedirs(logDir)
-logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+try:
+    logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+except PermissionError as error:
+    print(error)
+    print("Please fix the above and try again.")
+    sys.exit(126)
 logger = logging.getLogger('zmq_subscriber')
 
 CHANNEL = cfg.get('RedisLog', 'channel')
@@ -27,7 +34,8 @@ LISTNAME = cfg.get('RedisLIST', 'listName')
 serv_list = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisLIST', 'db'))
+        db=cfg.getint('RedisLIST', 'db'),
+        decode_responses=True)
 
 
 ###############
@@ -53,6 +61,8 @@ def main(zmqName, zmqurl):
             print(zmqName, content)
         except KeyboardInterrupt:
             return
+        except Exception as e:
+            logger.warning('Error:' + str(e))
 
 
 if __name__ == "__main__":
@@ -62,4 +72,7 @@ if __name__ == "__main__":
     parser.add_argument('-u', '--url', required=False, dest='zmqurl', help='The URL to connect to', default="tcp://localhost:50000")
     args = parser.parse_args()
 
-    main(args.zmqname, args.zmqurl)
+    try:
+        main(args.zmqname)
+    except redis.exceptions.ResponseError as error:
+        print(error)

@@ -1,8 +1,14 @@
 #!/usr/bin/env python3.5
 import configparser
+import datetime
+import os
+import sys
+import time
+
 import redis
-import sys,os
-import datetime, time
+
+from helpers import trendings_helper
+
 sys.path.append('..')
 
 configfile = 'test_config.cfg'
@@ -14,7 +20,6 @@ serv_redis_db = redis.StrictRedis(
         port=6260,
         db=1)
 
-from helpers import trendings_helper
 trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
 
 

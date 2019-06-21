@@ -1,10 +1,14 @@
-import math, random
-import os
+import datetime
 import json
-import datetime, time
 import logging
+import math
+import os
+import random
+import sys
+import time
 
 import util
+
 from . import contributor_helper
 
 
@@ -20,11 +24,16 @@ class Users_helper:
 
         #logger
         logDir = cfg.get('Log', 'directory')
-        logfilename = cfg.get('Log', 'filename')
+        logfilename = cfg.get('Log', 'helpers_filename')
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        try:
+            logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
         self.logger = logging.getLogger(__name__)
 
     def add_user_login(self, timestamp, org, email=''):
@@ -32,11 +41,11 @@ class Users_helper:
         timestampDate_str = util.getDateStrFormat(timestampDate)
 
         keyname_timestamp = "{}:{}".format(self.keyTimestamp, org)
-        self.serv_redis_db.zadd(keyname_timestamp, timestamp, timestamp)
+        self.serv_redis_db.zadd(keyname_timestamp, {timestamp: timestamp})
         self.logger.debug('Added to redis: keyname={}, org={}'.format(keyname_timestamp, timestamp))
 
         keyname_org = "{}:{}".format(self.keyOrgLog, timestampDate_str)
-        self.serv_redis_db.zincrby(keyname_org, org, 1)
+        self.serv_redis_db.zincrby(keyname_org, 1, org)
         self.logger.debug('Added to redis: keyname={}, org={}'.format(keyname_org, org))
 
         self.serv_redis_db.sadd(self.keyAllOrgLog, org)
@@ -44,7 +53,7 @@ class Users_helper:
 
     def getAllOrg(self):
         temp = self.serv_redis_db.smembers(self.keyAllOrgLog)
-        return [ org.decode('utf8') for org in temp ]
+        return [ org for org in temp ]
 
     # return: All timestamps for one org for the spanned time or not
     def getDates(self, org, date=None):
@@ -63,11 +72,11 @@ class Users_helper:
                 else:
                     break # timestamps should be sorted, no need to process anymore
         return to_return
-                    
+
 
     # return: All dates for all orgs, if date is not supplied, return for all dates
     def getUserLogins(self, date=None):
-        # get all orgs and retreive their timestamps
+        # get all orgs and retrieve their timestamps
         dates = []
         for org in self.getAllOrg():
             keyname = "{}:{}".format(self.keyOrgLog, org)
@@ -81,7 +90,7 @@ class Users_helper:
             keyname = "{}:{}".format(self.keyOrgLog, util.getDateStrFormat(curDate))
             data = self.serv_redis_db.zrange(keyname, 0, -1, desc=True)
             for org in data:
-                orgs.add(org.decode('utf8'))
+                orgs.add(org)
         return list(orgs)
 
     # return: list composed of the number of [log, contrib] for one org for the time spanned
@@ -125,7 +134,7 @@ class Users_helper:
     def getLoginVSCOntribution(self, date):
         keyname = "{}:{}".format(self.keyContribDay, util.getDateStrFormat(date))
         orgs_contri = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=False)
-        orgs_contri = [ org.decode('utf8') for org in orgs_contri ]
+        orgs_contri = [ org for org in orgs_contri ]
         orgs_login = [ org for org in self.getAllLoggedInOrgs(date, prev_days=0) ]
         contributed_num = 0
         non_contributed_num = 0
@@ -169,7 +178,7 @@ class Users_helper:
         data = [data[6]]+data[:6]
         return data
 
-    # return: a dico of the form {login: [[timestamp, count], ...], contrib: [[timestamp, 1/0], ...]} 
+    # return: a dico of the form {login: [[timestamp, count], ...], contrib: [[timestamp, 1/0], ...]}
     #         either for all orgs or the supplied one
     def getUserLoginsAndContribOvertime(self, date, org=None, prev_days=6):
         dico_hours_contrib = {}

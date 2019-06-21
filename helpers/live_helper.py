@@ -1,8 +1,10 @@
-import os
+import datetime
 import json
-import random
-import datetime, time
 import logging
+import os
+import random
+import sys
+import time
 
 
 class Live_helper:
@@ -16,11 +18,16 @@ class Live_helper:
 
         # logger
         logDir = cfg.get('Log', 'directory')
-        logfilename = cfg.get('Log', 'filename')
+        logfilename = cfg.get('Log', 'helpers_filename')
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        try:
+            logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
         self.logger = logging.getLogger(__name__)
 
     def publish_log(self, zmq_name, name, content, channel=None):
@@ -32,6 +39,7 @@ class Live_helper:
         self.serv_live.publish(channel, j_to_send)
         self.logger.debug('Published: {}'.format(j_to_send))
         if name != 'Keepalive':
+            name = 'Attribute' if 'ObjectAttribute' else name
             self.add_to_stream_log_cache(name, j_to_send_keep)
 
 
@@ -40,10 +48,10 @@ class Live_helper:
         entries = self.serv_live.lrange(rKey, 0, -1)
         to_ret = []
         for entry in entries:
-            jentry = json.loads(entry.decode('utf8'))
+            jentry = json.loads(entry)
             to_ret.append(jentry)
         return to_ret
-    
+
 
     def add_to_stream_log_cache(self, cacheKey, item):
         rKey = self.prefix_redis_key+cacheKey

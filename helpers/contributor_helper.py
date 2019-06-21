@@ -1,16 +1,20 @@
-import util
-from util import getZrange
-import math, random
-import time
-import os
 import configparser
-import json
 import datetime
+import json
 import logging
+import math
+import os
+import random
+import sys
+import time
+
 import redis
 
 import util
+from util import getZrange
+
 from . import users_helper
+
 KEYDAY = "CONTRIB_DAY" # To be used by other module
 KEYALLORG = "CONTRIB_ALL_ORG" # To be used by other module
 
@@ -30,11 +34,16 @@ class Contributor_helper:
 
         #logger
         logDir = cfg.get('Log', 'directory')
-        logfilename = cfg.get('Log', 'filename')
+        logfilename = cfg.get('Log', 'helpers_filename')
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        try:
+            logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
         self.logger = logging.getLogger(__name__)
 
         #honorBadge
@@ -106,7 +115,7 @@ class Contributor_helper:
     def addContributionToCateg(self, date, categ, org, count=1):
         today_str = util.getDateStrFormat(date)
         keyname = "{}:{}:{}".format(self.keyCateg, today_str, categ)
-        self.serv_redis_db.zincrby(keyname, org, count)
+        self.serv_redis_db.zincrby(keyname, count, org)
         self.logger.debug('Added to redis: keyname={}, org={}, count={}'.format(keyname, org, count))
 
     def publish_log(self, zmq_name, name, content, channel=""):
@@ -120,14 +129,14 @@ class Contributor_helper:
         if action in ['edit', None]:
             pass
             #return #not a contribution?
-    
+
         now = datetime.datetime.now()
         nowSec = int(time.time())
         pnts_to_add = self.default_pnts_per_contribution
-    
+
         # Do not consider contribution as login anymore
         #self.users_helper.add_user_login(nowSec, org)
-    
+
         # is a valid contribution
         if categ is not None:
             try:
@@ -135,27 +144,27 @@ class Contributor_helper:
             except KeyError:
                 pnts_to_add = self.default_pnts_per_contribution
             pnts_to_add *= pntMultiplier
-    
+
             util.push_to_redis_zset(self.serv_redis_db, self.keyDay, org, count=pnts_to_add)
             #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
             util.push_to_redis_zset(self.serv_redis_db, self.keyCateg, org, count=1, endSubkey=':'+util.noSpaceLower(categ))
             self.publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=self.CHANNEL_LASTCONTRIB)
         else:
             categ = ""
-    
+
         self.serv_redis_db.sadd(self.keyAllOrg, org)
-    
+
         keyname = "{}:{}".format(self.keyLastContrib, util.getDateStrFormat(now))
-        self.serv_redis_db.zadd(keyname, nowSec, org)
+        self.serv_redis_db.zadd(keyname, {org: nowSec})
         self.logger.debug('Added to redis: keyname={}, nowSec={}, org={}'.format(keyname, nowSec, org))
         self.serv_redis_db.expire(keyname, util.ONE_DAY*7) #expire after 7 day
-    
+
         awards_given = self.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled, categ=util.noSpaceLower(categ))
-    
+
         for award in awards_given:
             # update awards given
             keyname = "{}:{}".format(self.keyLastAward, util.getDateStrFormat(now))
-            self.serv_redis_db.zadd(keyname, nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec }))
+            self.serv_redis_db.zadd(keyname, {json.dumps({'org': org, 'award': award, 'epoch': nowSec }): nowSec})
             self.logger.debug('Added to redis: keyname={}, nowSec={}, content={}'.format(keyname, nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec })))
             self.serv_redis_db.expire(keyname, util.ONE_DAY*7) #expire after 7 day
             # publish
@@ -168,7 +177,7 @@ class Contributor_helper:
         if pnts is None:
             pnts = 0
         else:
-            pnts = int(pnts.decode('utf8'))
+            pnts = int(pnts)
         return pnts
 
     # return: [final_rank, requirement_fulfilled, requirement_not_fulfilled]
@@ -372,7 +381,7 @@ class Contributor_helper:
     def getOrgsTrophyRanking(self, categ):
         keyname = '{mainKey}:{orgCateg}'
         res = self.serv_redis_db.zrange(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), 0, -1, withscores=True, desc=True)
-        res = [[org.decode('utf8'), score] for org, score in res]
+        res = [[org, score] for org, score in res]
         return res
 
     def getAllOrgsTrophyRanking(self, category=None):
@@ -401,12 +410,12 @@ class Contributor_helper:
 
     def giveTrophyPointsToOrg(self, org, categ, points):
         keyname = '{mainKey}:{orgCateg}'
-        self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), org, points)
+        self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), points, org)
         self.logger.debug('Giving {} trophy points to {} in {}'.format(points, org, categ))
 
     def removeTrophyPointsFromOrg(self, org, categ, points):
         keyname = '{mainKey}:{orgCateg}'
-        self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), org, -points)
+        self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), -points, org)
         self.logger.debug('Removing {} trophy points from {} in {}'.format(points, org, categ))
 
     ''' AWARDS HELPER '''
@@ -553,7 +562,7 @@ class Contributor_helper:
 
     def getAllOrgFromRedis(self):
         data = self.serv_redis_db.smembers(self.keyAllOrg)
-        data = [x.decode('utf8') for x in data]
+        data = [x for x in data]
         return data
 
     def getCurrentOrgRankFromRedis(self, org):
@@ -589,4 +598,3 @@ class Contributor_helper:
                 return { 'remainingPts': i-points, 'stepPts': prev }
             prev = i
         return { 'remainingPts': 0, 'stepPts': self.rankMultiplier**self.levelMax }
-

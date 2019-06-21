@@ -346,7 +346,8 @@ function addLastContributor(datatable, data, update) {
     } else {
         last_added_contrib = org;
         var date = new Date(data.epoch*1000);
-        date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
+        //date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
+        date = date.getFullYear() + "-" + String(date.getMonth()+1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0") + "@" + String(date.getHours()).padStart(2, "0") + ":" + String(date.getMinutes()).padStart(2, "0");
         var to_add = [
             date,
             data.pnts,
@@ -383,7 +384,8 @@ function addAwards(datatableAwards, json, playAnim) {
         var award = createTrophyImg(json.award[1][1], 40, categ);
     }
     var date = new Date(json.epoch*1000);
-    date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
+    //date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
+    date = date.getFullYear() + "-" + String(date.getMonth()+1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0") + "@" + String(date.getHours()).padStart(2, "0") + ":" + String(date.getMinutes()).padStart(2, "0");
     var to_add = [
         date,
         createImg(json.logo_path, 32),

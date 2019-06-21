@@ -23,7 +23,7 @@ class MapEvent {
         this.specifName = json.specifName;
         this.cityName = json.cityName;
         this.text = this.categ + ": " + this.value;
-        let underText = ""; 
+        let underText = "";
         if (this.specifName !== null && this.cityName !== null) {
             underText = this.specifName+", "+this.cityName;
         } else if (this.specifName !== null) {
@@ -225,6 +225,7 @@ function connect_source_map() {
     };
     source_map.onerror = function(){
         console.log('error: '+source_map.readyState);
+        source_map.close()
         setTimeout(function() { connect_source_map(); }, 5000);
     };
 }
