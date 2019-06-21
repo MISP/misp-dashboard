@@ -19,7 +19,7 @@ configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/c
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 logDir = cfg.get('Log', 'directory')
-logfilename = cfg.get('Log', 'filename')
+logfilename = cfg.get('Log', 'subscriber_filename')
 logPath = os.path.join(logDir, logfilename)
 if not os.path.exists(logDir):
     os.makedirs(logDir)

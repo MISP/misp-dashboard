@@ -73,6 +73,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        main(args.zmqname)
+        main(args.zmqname, args.zmqurl)
     except redis.exceptions.ResponseError as error:
         print(error)
