@@ -48,3 +48,6 @@ if [ "${check_dashboard_port}" == "1" ]; then
 else
     echo -e $RED"\t* NOT starting flask server, made a very unrealiable check on port 8001, and something seems to be there… please double check if this is good!"$DEFAULT
 fi
+
+sleep 0.1
+sudo -u zmqs /bin/bash /var/www/misp-dashboard/start_zmq.sh &
