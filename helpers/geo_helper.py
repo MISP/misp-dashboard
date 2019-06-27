@@ -121,6 +121,7 @@ class Geo_helper:
                 raise InvalidCoordinate("Coordinate do not match EPSG:900913 / EPSG:3785 / OSGEO:41001")
             self.push_to_redis_zset(self.keyCategCoord, json.dumps(ordDic))
             iso_code = rep['full_rep'].country.iso_code if rep['full_rep'].country.iso_code is not None else rep['full_rep'].registered_country.iso_code
+            country_name = rep['full_rep'].country.name if rep['full_rep'].country.name is not None else rep['full_rep'].registered_country.name
             self.push_to_redis_zset(self.keyCategCountry, iso_code)
             ordDic = OrderedDict() #keep fields with the same layout in redis
             ordDic['categ'] = categ
@@ -130,10 +131,10 @@ class Geo_helper:
                     "coord": coord,
                     "categ": categ,
                     "value": supposed_ip,
-                    "country": rep['full_rep'].country.name,
+                    "country": country_name,
                     "specifName": rep['full_rep'].subdivisions.most_specific.name,
                     "cityName": rep['full_rep'].city.name,
-                    "regionCode": rep['full_rep'].country.iso_code,
+                    "regionCode": iso_code,
                     }
             j_to_send = json.dumps(to_send)
             self.serv_coord.publish(self.CHANNELDISP, j_to_send)
