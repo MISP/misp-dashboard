@@ -120,7 +120,8 @@ class Geo_helper:
             if not self.coordinate_list_valid(coord_list):
                 raise InvalidCoordinate("Coordinate do not match EPSG:900913 / EPSG:3785 / OSGEO:41001")
             self.push_to_redis_zset(self.keyCategCoord, json.dumps(ordDic))
-            self.push_to_redis_zset(self.keyCategCountry, rep['full_rep'].country.iso_code)
+            iso_code = rep['full_rep'].country.iso_code if rep['full_rep'].country.iso_code is not None else rep['full_rep'].registered_country.iso_code
+            self.push_to_redis_zset(self.keyCategCountry, iso_code)
             ordDic = OrderedDict() #keep fields with the same layout in redis
             ordDic['categ'] = categ
             ordDic['value'] = supposed_ip
@@ -203,6 +204,9 @@ class Geo_helper:
             print("To test for support: echo \"help GEOADD\"| redis-cli")
         self.logger.debug('Added to redis: keyname={}, lon={}, lat={}, content={}'.format(keyname, lon, lat, content))
     def push_to_redis_zset(self, keyCateg, toAdd, endSubkey="", count=1):
+        if not isinstance(toAdd, str):
+            self.logger.warning(f'Can\'t add to redis, element is not of type String. {type(toAdd)}')
+            return
         now = datetime.datetime.now()
         today_str = util.getDateStrFormat(now)
         keyname = "{}:{}{}".format(keyCateg, today_str, endSubkey)
