@@ -32,12 +32,16 @@ class Trendings_helper:
         if not os.path.exists(logDir):
             os.makedirs(logDir)
         try:
-            logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+            handler = logging.FileHandler(logPath)
         except PermissionError as error:
             print(error)
             print("Please fix the above and try again.")
             sys.exit(126)
+        formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+        handler.setFormatter(formatter)
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        self.logger.addHandler(handler)
 
     ''' SETTER '''
 
