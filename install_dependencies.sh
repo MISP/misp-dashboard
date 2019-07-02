@@ -36,7 +36,7 @@ if ! id zmqs >/dev/null 2>&1; then
   fi
 fi
 
-sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip -y
+sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip net-tools -y
 
 if [ -z "$VIRTUAL_ENV" ]; then
     virtualenv -p python3 DASHENV ; DASH_VENV=$?
