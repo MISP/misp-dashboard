@@ -63,7 +63,7 @@ fi
 sleep 0.1
 if [ "${check_dashboard_port}" == "1" ]; then
     echo -e $GREEN"\t* Launching flask server"$DEFAULT
-    ${ENV_PY} ./server.py &
+    source ${DIR}/DASHENV/activate && python ./server.py &
 else
     echo -e $RED"\t* NOT starting flask server, made a very unrealiable check on port 8001, and something seems to be there… please double check if this is good!"$DEFAULT
 fi
