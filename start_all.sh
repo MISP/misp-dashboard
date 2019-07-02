@@ -69,4 +69,4 @@ else
 fi
 
 sleep 0.1
-sudo -u zmqs /bin/bash /var/www/misp-dashboard/start_zmq.sh &
+/bin/bash ./start_zmq.sh &
