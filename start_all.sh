@@ -69,4 +69,4 @@ else
 fi
 
 sleep 0.1
-/bin/bash ./start_zmq.sh &
+sudo -u zmqs /bin/bash ${DIR}/start_zmq.sh &
