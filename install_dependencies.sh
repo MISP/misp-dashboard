@@ -6,16 +6,37 @@
 ## Debug mode
 #set -x
 
+# Functions
+
+get_distribution() {
+  lsb_dist=""
+  # Every system that we officially support has /etc/os-release
+  if [ -r /etc/os-release ]; then
+    lsb_dist="$(. /etc/os-release && echo "$ID")"
+  fi
+  # Returning an empty string here should be alright since the
+  # case statements don't act unless you provide an actual value
+  echo "$lsb_dist" | tr '[:upper:]' '[:lower:]'
+}
+
 sudo chmod -R g+w . 
 
 if ! id zmqs >/dev/null 2>&1; then
-	# Create zmq user
-	sudo useradd -U -G www-data -m -s /bin/bash  zmqs
-	# Adds right to www-data to run ./start-zmq as zmq
-	sudo echo "www-data ALL=(zmqs)	NOPASSWD:/bin/bash	/var/www/misp-dashboard/start_zmq.sh" > /etc/sudoers.d/www-data
+
+  if [ "$(get_distribution)" == "rhel" ]; then
+    # Create zmq user
+    sudo useradd -U -G apache -m -s /usr/bin/bash zmqs
+    # Adds right to www-data to run ./start-zmq as zmq
+    echo "apache ALL=(zmqs) NOPASSWD:/bin/bash /var/www/misp-dashboard/start_zmq.sh" |sudo tee /etc/sudoers.d/apache
+  else
+    # Create zmq user
+    sudo useradd -U -G www-data -m -s /bin/bash zmqs
+    # Adds right to www-data to run ./start-zmq as zmq
+    echo "www-data ALL=(zmqs) NOPASSWD:/bin/bash /var/www/misp-dashboard/start_zmq.sh" |sudo tee /etc/sudoers.d/www-data
+  fi
 fi
 
-sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip -y
+sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip net-tools -y
 
 if [ -z "$VIRTUAL_ENV" ]; then
     virtualenv -p python3 DASHENV ; DASH_VENV=$?

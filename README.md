@@ -90,7 +90,7 @@ Traceback (most recent call last):
     with open(dst, 'wb') as fdst:
 OSError: [Errno 26] Text file busy: '/home/steve/code/misp-dashboard/DASHENV/bin/python3'
 ```
-- Restart the System: `./zmq_subscriber.py &`, `./zmq_dispatcher.py &` and `./server.py &`
+- Restart the System: `./start_all.sh` **OR** `./start_zmq.sh` and `./server.py &`
 
 # Starting the System
 :warning: You should not run it as root. Normal privileges are fine.
