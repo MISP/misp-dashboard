@@ -18,7 +18,7 @@ try:
     from halo import Halo
 except ModuleNotFoundError as e:
     print('Dependency not met. Either not in a virtualenv or dependency not installed.')
-    print(f'- Error: {e}')
+    print('- Error: {}'.format(e))
     sys.exit(1)
 
 '''
@@ -79,12 +79,12 @@ def add_spinner(_func=None, name='dots'):
                 else:
                     status = False
                     flag_skip = True
-                    spinner.fail(f'{human_func_name} -  Function return unexpected result: {str(result)}')
+                    spinner.fail('{} -  Function return unexpected result: {}'.format(human_func_name, str(result)))
 
                 if not flag_skip:
                     text = human_func_result
                     if output is not None and len(output) > 0:
-                        text += f': {output}'
+                        text += ': {}'.format(output)
 
                     if isinstance(status, bool) and status:
                         spinner.succeed(text)
@@ -111,8 +111,8 @@ def check_virtual_environment_and_packages(spinner):
         return (False, 'This diagnostic tool should be started inside a virtual environment.')
     else:
         if redis.__version__.startswith('2'):
-            return (False, f'''Redis python client have version {redis.__version__}. Version 3.x required.
-\t➥ [inside virtualenv] pip3 install -U redis''')
+            return (False, '''Redis python client have version {}. Version 3.x required.
+\t➥ [inside virtualenv] pip3 install -U redis'''.format(redis.__version__))
         else:
             return (True, '')
 
@@ -139,7 +139,7 @@ def check_configuration(spinner):
         return_text = '''Configuration incomplete.
 \tUpdate your configuration file `config.cfg`.\n\t➥ Faulty fields:\n'''
         for field_name in faulties:
-            return_text += f'\t\t- {field_name}\n'
+            return_text += '\t\t- {}\n'.format(field_name)
         return (False, return_text)
 
 
@@ -192,7 +192,7 @@ def check_zmq(spinner):
                         flag_skip = True
                         break
             else:
-                spinner.text = f'checking zmq of {misp_instance.get("name")} - elapsed time: {int(time.time() - start_time)}s'
+                spinner.text = 'checking zmq of {} - elapsed time: {}s'.format(misp_instance.get("name"), int(time.time() - start_time))
         if not flag_skip:
             instances_status[misp_instance.get('name')] = False
 
@@ -202,7 +202,7 @@ def check_zmq(spinner):
     elif any(results):
         return_text = 'Connection to ZMQ stream(s) failed.\n'
         for name, status in instances_status.items():
-            return_text += f'\t➥ {name}: {"success" if status else "failed"}\n'
+            return_text += '\t➥ {}: {}\n'.format(name, "success" if status else "failed")
         return (True, return_text)
     else:
         return (False, '''Can\'t connect to the ZMQ stream(s).
@@ -257,14 +257,14 @@ def check_subscriber_status(spinner):
                 target = split[4]
             except IndexError:
                 pass
-            if action == '"LPUSH"' and target == f'\"{configuration_file.get("RedisLIST", "listName")}\"':
+            if action == '"LPUSH"' and target == '\"{}\"'.format(configuration_file.get("RedisLIST", "listName")):
                 signal.alarm(0)
                 break
             else:
-                spinner.text = f'Checking subscriber status - elapsed time: {int(time.time() - start_time)}s'
+                spinner.text = 'Checking subscriber status - elapsed time: {}s'.format(int(time.time() - start_time))
     except diagnostic_util.TimeoutException:
-        return_text = f'''zmq_subscriber seems not to be working.
-\t➥ Consider restarting it: {pgrep_subscriber_output}'''
+        return_text = '''zmq_subscriber seems not to be working.
+\t➥ Consider restarting it: {}'''.format(pgrep_subscriber_output)
         return (False, return_text)
     return (True, 'subscriber is running and populating the buffer')
 
@@ -278,7 +278,7 @@ def check_buffer_queue(spinner):
     warning_threshold = 100
     elements_in_list = redis_server.llen(configuration_file.get('RedisLIST', 'listName'))
     return_status = 'warning' if elements_in_list > warning_threshold else ('info' if elements_in_list > 0 else True)
-    return_text = f'Currently {elements_in_list} items in the buffer'
+    return_text = 'Currently {} items in the buffer'.format(elements_in_list)
     return (return_status, return_text)
 
 
@@ -308,8 +308,8 @@ def check_buffer_change_rate(spinner):
 
         if next_refresh < time_slept:
             next_refresh = time_slept + refresh_frequency
-            change_rate_text = f'↑ {change_increase}/sec\t↓ {change_decrease}/sec'
-            spinner.text = f'Buffer: {elements_in_list}\t{change_rate_text}'
+            change_rate_text = '↑ {}/sec\t↓ {}/sec'.format(change_increase, change_decrease)
+            spinner.text = 'Buffer: {}\t{}'.format(elements_in_list, change_rate_text)
 
             if consecutive_no_rate_change == 3:
                 time_slept = sleep_max
@@ -322,7 +322,7 @@ def check_buffer_change_rate(spinner):
 
         if time_slept >= sleep_max:
             return_flag = elements_in_list == 0 or (elements_in_list < elements_in_inlist_init or elements_in_list < 2)
-            return_text = f'Buffer is consumed {"faster" if return_flag else "slower" } than being populated'
+            return_text = 'Buffer is consumed {} than being populated'.format("faster" if return_flag else "slower")
             break
 
         time.sleep(sleep_duration)
@@ -354,18 +354,18 @@ def check_dispatcher_status(spinner):
         if reply is None:
             if time_slept >= sleep_max:
                 return_flag = False
-                return_text = f'zmq_dispatcher did not respond in the given time ({int(sleep_max)}s)'
+                return_text = 'zmq_dispatcher did not respond in the given time ({}s)'.format(int(sleep_max))
                 if len(pgrep_dispatcher_output) > 0:
-                    return_text += f'\n\t➥ Consider restarting it: {pgrep_dispatcher_output}'
+                    return_text += '\n\t➥ Consider restarting it: {}'.format(pgrep_dispatcher_output)
                 else:
                     return_text += '\n\t➥ Consider starting it'
                 break
             time.sleep(sleep_duration)
-            spinner.text = f'Dispatcher status: No response yet'
+            spinner.text = 'Dispatcher status: No response yet'
             time_slept += sleep_duration
         else:
             return_flag = True
-            return_text = f'Took {float(reply):.2f}s to complete'
+            return_text = 'Took {}s to complete'.format(float(reply):.2f)
             break
 
     return (return_flag, return_text)
@@ -373,15 +373,15 @@ def check_dispatcher_status(spinner):
 
 @add_spinner
 def check_server_listening(spinner):
-    url = f'{HOST}:{PORT}/_get_log_head'
-    spinner.text = f'Trying to connect to {url}'
+    url = '{}:{}/_get_log_head'.format(HOST, PORT)
+    spinner.text = 'Trying to connect to {}'.format(url)
     try:
         r = requests.get(url)
     except requests.exceptions.ConnectionError:
-        return (False, f'Can\'t connect to {url}')
+        return (False, 'Can\'t connect to {}').format(url)
     return (
         r.status_code == 200,
-        f'{url} {"not " if r.status_code != 200 else ""}reached. Status code [{r.status_code}]'
+        '{} {}reached. Status code [{}]'.format(url, "not " if r.status_code != 200 else "", r.status_code)
      )
 
 
@@ -389,14 +389,14 @@ def check_server_listening(spinner):
 def check_server_dynamic_enpoint(spinner):
     sleep_max = 15
     start_time = time.time()
-    url = f'{HOST}:{PORT}/_logs'
+    url = '{}:{}/_logs'.format(HOST, PORT)
     p = subprocess.Popen(
         ['curl', '-sfN', '--header', 'Accept: text/event-stream', url],
         stdout=subprocess.PIPE,
         bufsize=1)
     signal.alarm(sleep_max)
     return_flag = False
-    return_text = f'Dynamic endpoint returned data but not in the correct format.'
+    return_text = 'Dynamic endpoint returned data but not in the correct format.'
     try:
         for line in iter(p.stdout.readline, b''):
             if line.startswith(b'data: '):
@@ -404,15 +404,15 @@ def check_server_dynamic_enpoint(spinner):
                 try:
                     j = json.loads(data)
                     return_flag = True
-                    return_text = f'Dynamic endpoint returned data (took {time.time()-start_time:.2f}s)'
+                    return_text = 'Dynamic endpoint returned data (took {}s)'.format(time.time()-start_time:.2f)
                     signal.alarm(0)
                     break
                 except Exception as e:
                     return_flag = False
-                    return_text = f'Something went wrong. Output {line}'
+                    return_text = 'Something went wrong. Output {}'.format(line)
                     break
     except diagnostic_util.TimeoutException:
-        return_text = f'Dynamic endpoint did not returned data in the given time ({int(time.time()-start_time)}sec)'
+        return_text = 'Dynamic endpoint did not returned data in the given time ({}sec)'.format(int(time.time()-start_time))
     return (return_flag, return_text)
 
 
