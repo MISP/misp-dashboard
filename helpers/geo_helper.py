@@ -208,9 +208,10 @@ class Geo_helper:
             print("Please fix the above, and make sure you use a redis version that supports the GEOADD command.")
             print("To test for support: echo \"help GEOADD\"| redis-cli")
         self.logger.debug('Added to redis: keyname={}, lon={}, lat={}, content={}'.format(keyname, lon, lat, content))
+
     def push_to_redis_zset(self, keyCateg, toAdd, endSubkey="", count=1):
         if not isinstance(toAdd, str):
-            self.logger.warning(f'Can\'t add to redis, element is not of type String. {type(toAdd)}')
+            self.logger.warning('Can\'t add to redis, element is not of type String. {}'.format(type(toAdd)))
             return
         now = datetime.datetime.now()
         today_str = util.getDateStrFormat(now)
