@@ -365,7 +365,7 @@ def check_dispatcher_status(spinner):
             time_slept += sleep_duration
         else:
             return_flag = True
-            return_text = 'Took {}s to complete'.format(float(reply):.2f)
+            return_text = 'Took {:.2f}s to complete'.format(float(reply))
             break
 
     return (return_flag, return_text)
@@ -404,7 +404,7 @@ def check_server_dynamic_enpoint(spinner):
                 try:
                     j = json.loads(data)
                     return_flag = True
-                    return_text = 'Dynamic endpoint returned data (took {}s)'.format(time.time()-start_time:.2f)
+                    return_text = 'Dynamic endpoint returned data (took {:.2f}s)'.format(time.time()-start_time)
                     signal.alarm(0)
                     break
                 except Exception as e:
