@@ -152,6 +152,7 @@ function getMonthlyRankIcon(rank, size, header) {
             img.width = size;
         }
     }
+    img.setAttribute('onerror', "this.style.display='none'");
     return img.outerHTML;
 }
 
@@ -167,7 +168,8 @@ function getOrgRankIcon(rank, size) {
     obj.src = rankLogoPath;
     obj.type = "image/svg"
     obj.title = org_rank_obj[rank];
-    obj.classList.add('orgRankClass')
+    obj.classList.add('orgRankClass');
+    obj.setAttribute('onerror', "this.style.display='none'");
     return obj.outerHTML;
 }
 
@@ -177,8 +179,9 @@ function createImg(source, size) {
     obj.width = size;
     obj.style.margin = 'auto';
     obj.src = source;
-    obj.type = "image/png"
-    obj.alt = ""
+    obj.type = "image/png";
+    obj.alt = "";
+    obj.setAttribute('onerror', "this.style.display='none'");
     return obj.outerHTML;
 }
 
@@ -187,10 +190,11 @@ function createTrophyImg(rank, size, categ) {
     obj.height = size;
     obj.width = size;
     obj.style.margin = 'auto';
-    obj.src = url_baseTrophyLogo+rank+'.png';;
+    obj.src = url_baseTrophyLogo+rank+'.png';
     obj.title = trophy_title[rank] + " in " + categ;
-    obj.type = "image/png"
-    obj.alt = ""
+    obj.type = "image/png";
+    obj.alt = "";
+    obj.setAttribute('onerror', "this.style.display='none'");
     return obj.outerHTML;
 }
 
@@ -208,6 +212,7 @@ function createHonorImg(array, size) {
         obj.style.margin = 'auto';
         obj.title = org_honor_badge_title[badgeNum];
         obj.src = url_baseHonorLogo+badgeNum+'.svg';
+        obj.setAttribute('onerror', "this.style.display='none'");
         div.appendChild(obj);
     }
     div.style.width = 32*array.length+'px';
@@ -563,7 +568,7 @@ function generate_table_ranking_on_category(categ) {
             var rank = arr[2];
             var tr = $('<tr></tr>');
             tr.append($('<td style="width: 100px;">'+i+'</td>'));
-            tr.append($('<td style="width: 100px;"><img src="'+url_baseTrophyLogo+rank+'.png" width="30" height="30"></td>'));
+            tr.append($('<td style="width: 100px;"><img src="'+url_baseTrophyLogo+rank+'.png" width="30" height="30"  onerror="this.style.display=\'none\'"></td>'));
             tr.append($('<td style="width: 200px;">'+points+'</td>'));
             tr.append($('<td><a href="?org='+org+'">'+org+'</a></td>'));
             if (currOrg == org) {
