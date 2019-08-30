@@ -21,6 +21,7 @@ from phonenumbers import geocoder
 class InvalidCoordinate(Exception):
     pass
 
+
 class Geo_helper:
     def __init__(self, serv_redis_db, cfg):
         self.serv_redis_db = serv_redis_db
@@ -62,7 +63,12 @@ class Geo_helper:
             print(error)
             print("Please fix the above and try again.")
             sys.exit(126)
-        self.country_to_iso = { country.name: country.alpha_2 for country in pycountry.countries}
+        self.country_to_iso = {}
+        for country in pycountry.countries:
+            try:
+                self.country_to_iso[country.name] = country.alpha_2
+            except AttributeError:
+                pass
         with open(self.PATH_TO_JSON) as f:
             self.country_code_to_coord = json.load(f)
 
