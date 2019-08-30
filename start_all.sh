@@ -6,6 +6,29 @@ GREEN="\\033[1;32m"
 DEFAULT="\\033[0;39m"
 RED="\\033[1;31m"
 
+function wait_until_redis_is_ready {
+    redis_not_ready=true
+    while $redis_not_ready; do
+        if checking_redis; then
+            redis_not_ready=false;
+        else
+            sleep 1
+        fi
+    done
+    echo -e $GREEN"* Redis 6250 is running"$DEFAULT
+}
+
+function checking_redis {
+    flag_redis=0
+    bash -c 'redis-cli -p 6250 PING | grep "PONG" &> /dev/null'
+    if [ ! $? == 0 ]; then
+        echo -e $RED"Redis 6250 not ready"$DEFAULT
+        flag_redis=1
+    fi
+    sleep 0.1
+    return $flag_redis;
+}
+
 # Getting CWD where bash script resides
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DASH_HOME="${DIR}"
@@ -61,6 +84,8 @@ else
 fi
 
 sleep 0.1
+wait_until_redis_is_ready;
+
 if [ "${check_dashboard_port}" == "1" ]; then
     echo -e $GREEN"\t* Launching flask server"$DEFAULT
     ${ENV_PY} ./server.py &

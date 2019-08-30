@@ -20,19 +20,11 @@ else
     exit 1
 fi
 
-
 PID_SCREEN=$(screen -ls | grep ${SCREEN_NAME} | cut -f2 | cut -d. -f1)
 if [[ $PID_SCREEN ]]; then
     echo -e $RED"* A screen '$SCREEN_NAME' is already launched"$DEFAULT
-    echo "Would you like to restart it (y/n)? "
-    read answer
-    if [ "$answer" != "${answer#[Yy]}" ] ;then
-        echo -e $GREEN"Killing $PID_SCREEN"$DEFAULT;
-        kill $PID_SCREEN
-    else
-        echo 'Exiting'
-        exit 0;
-    fi  
+    echo -e $GREEN"Killing $PID_SCREEN"$DEFAULT;
+    kill $PID_SCREEN
 else
     echo 'No screen detected'
 fi
