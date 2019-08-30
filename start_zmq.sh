@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #set -x
 
 GREEN="\\033[1;32m"
@@ -9,6 +8,7 @@ RED="\\033[1;31m"
 # Getting CWD where bash script resides
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DASH_HOME="${DIR}"
+SCREEN_NAME="Misp_Dashboard"
 
 cd ${DASH_HOME}
 
@@ -20,11 +20,27 @@ else
     exit 1
 fi
 
+
+PID_SCREEN=$(screen -ls | grep ${SCREEN_NAME} | cut -f2 | cut -d. -f1)
+if [[ $PID_SCREEN ]]; then
+    echo -e $RED"* A screen '$SCREEN_NAME' is already launched"$DEFAULT
+    echo "Would you like to restart it (y/n)? "
+    read answer
+    if [ "$answer" != "${answer#[Yy]}" ] ;then
+        echo -e $GREEN"Killing $PID_SCREEN"$DEFAULT;
+        kill $PID_SCREEN
+    else
+        echo 'Exiting'
+        exit 0;
+    fi  
+else
+    echo 'No screen detected'
+fi
+
+screen -dmS ${SCREEN_NAME}
+
 ps auxw |grep zmq_subscriber.py |grep -v grep ; check_zmq_subscriber=$?
 ps auxw |grep zmq_dispatcher.py |grep -v grep ; check_zmq_dispatcher=$?
-
-screen -dmS "Misp_Dashboard"
-
 sleep 0.1
 if [ "${check_zmq_subscriber}" == "1" ]; then
     echo -e $GREEN"\t* Launching zmq subscribers"$DEFAULT
