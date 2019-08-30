@@ -120,7 +120,7 @@
                                 <tbody id='bodyTablerankingModal'>
                                       {% for item in org_rank_list %}
                                           <tr data-rank={{ loop.index }}>
-                                              <td style='padding: 0px; text-align: right;'><img height='35px' width='70px' style="margin-right: 20px;" src="{{ url_for('static', filename='pics/rankingMISPOrg/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img></td>
+                                              <td style='padding: 0px; text-align: right;'><img height='35px' width='70px' style="margin-right: 20px;" src="{{ url_for('static', filename='pics/rankingMISPOrg/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;" onerror="this.style.display='none'"</img></td>
                                               <td>{{ item[1] }}</td>
                                               <td>{{ item[2] }}</td>
                                               <td>{{ item[3] }}</td>
@@ -172,7 +172,7 @@
                                     <tr>
                                         <td>
                                             <div id="divBadge_{{ loop.index }}" class="circleBadgeSmall circlBadgeNotAcquired">
-                                                <img height='48px' width='48' class="" style="margin-top: 3px;" src="{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img>
+                                                <img height='48px' width='48' class="" style="margin-top: 3px;" src="{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;" onerror="this.style.display='none'"</img>
                                             </div>
                                         </td>
                                         <td style="padding-left: 15px;">{{ item[1] }}</td>

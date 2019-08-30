@@ -100,7 +100,7 @@ class Contributor_helper:
                 self.DICO_PNTS_REWARD[categ] = self.default_pnts_per_contribution
 
         self.rankMultiplier = self.cfg_org_rank.getfloat('monthlyRanking' ,'rankMultiplier')
-        self.levelMax = self.cfg_org_rank.getint('monthlyRanking' ,'levelMax')
+        self.levelMax = self.cfg_org_rank.getint('monthlyRanking', 'levelMax')
 
         # REDIS KEYS
         self.keyDay         = KEYDAY
@@ -110,7 +110,6 @@ class Contributor_helper:
         self.keyContribReq  = "CONTRIB_ORG"
         self.keyTrophy      = "CONTRIB_TROPHY"
         self.keyLastAward   = "CONTRIB_LAST_AWARDS"
-
 
     ''' HELPER '''
     def getOrgLogoFromMISP(self, org):
@@ -123,7 +122,7 @@ class Contributor_helper:
         self.logger.debug('Added to redis: keyname={}, org={}, count={}'.format(keyname, org, count))
 
     def publish_log(self, zmq_name, name, content, channel=""):
-        to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
+        to_send = {'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
         self.serv_log.publish(channel, json.dumps(to_send))
         self.logger.debug('Published: {}'.format(json.dumps(to_send)))
 

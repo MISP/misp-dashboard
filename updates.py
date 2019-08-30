@@ -65,9 +65,9 @@ def exec_updates(db_version):
 
     if result:
         serv_redis_db.set(cfg.get('RedisDB', 'dbVersion'), db_version)
-        update_logger.warning(f'dbVersion sets to {db_version}')
+        update_logger.warning('dbVersion sets to {}'.format(db_version))
     else:
-        update_logger.error(f'Something went wrong. {result}')
+        update_logger.error('Something went wrong. {}'.format(result))
 
 
 # Data format changed. Wipe the key.

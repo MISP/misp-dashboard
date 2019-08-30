@@ -445,6 +445,13 @@ function createHead(callback) {
                 }
             },
 
+            changeOptions: function(options) {
+                var that = this;
+                Object.keys(options).forEach(function (optionName) {
+                    that._options[optionName] = options[optionName];
+                });
+            },
+
             fetch_predata: function() {
                 var that = this;
                 if (this._options.preDataURL !== null) {
@@ -808,10 +815,14 @@ $(document).ready(function() {
             $panel.detach().prependTo('#page-wrapper')
             $panel.addClass('liveLogFullScreen');
             $this.data('isfullscreen', true);
+            $panel.find('#divLogTable').css({'overflow-y': 'auto'});
+            livelog.changeOptions({tableMaxEntries: 300});
         } else {
             $panel.detach().appendTo('#rightCol')
             $panel.removeClass('liveLogFullScreen');
             $this.data('isfullscreen', false);
+            $panel.find('#divLogTable').css({'overflow': 'hidden'});
+            livelog.changeOptions({tableMaxEntries: 50});
         }
     });
 

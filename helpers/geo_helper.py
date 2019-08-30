@@ -21,6 +21,7 @@ from phonenumbers import geocoder
 class InvalidCoordinate(Exception):
     pass
 
+
 class Geo_helper:
     def __init__(self, serv_redis_db, cfg):
         self.serv_redis_db = serv_redis_db
@@ -62,7 +63,12 @@ class Geo_helper:
             print(error)
             print("Please fix the above and try again.")
             sys.exit(126)
-        self.country_to_iso = { country.name: country.alpha_2 for country in pycountry.countries}
+        self.country_to_iso = {}
+        for country in pycountry.countries:
+            try:
+                self.country_to_iso[country.name] = country.alpha_2
+            except AttributeError:
+                pass
         with open(self.PATH_TO_JSON) as f:
             self.country_code_to_coord = json.load(f)
 
@@ -208,9 +214,10 @@ class Geo_helper:
             print("Please fix the above, and make sure you use a redis version that supports the GEOADD command.")
             print("To test for support: echo \"help GEOADD\"| redis-cli")
         self.logger.debug('Added to redis: keyname={}, lon={}, lat={}, content={}'.format(keyname, lon, lat, content))
+
     def push_to_redis_zset(self, keyCateg, toAdd, endSubkey="", count=1):
         if not isinstance(toAdd, str):
-            self.logger.warning(f'Can\'t add to redis, element is not of type String. {type(toAdd)}')
+            self.logger.warning('Can\'t add to redis, element is not of type String. {}'.format(type(toAdd)))
             return
         now = datetime.datetime.now()
         today_str = util.getDateStrFormat(now)
