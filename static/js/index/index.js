@@ -184,7 +184,6 @@ $(document).ready(function () {
 
 });
 
-
 //  LOG TABLE
 function updateLogTable(name, log, zmqName, ignoreLed) {
     if (log.length == 0)
@@ -590,6 +589,7 @@ function createHead(callback) {
             },
 
             add_entry: function(entry, isObjectAttribute) {
+                entry = this.sanitizeJson(entry);
                 var rowNode = this.dt.row.add(entry).draw().node();
                 if (this._options.animate) {
                     $( rowNode )
@@ -614,6 +614,29 @@ function createHead(callback) {
                     //remove the rows and redraw the table
                     var rows = this.dt.rows(arraySlice).remove().draw();
                 }
+            },
+
+            sanitizeJson: function(dirty_json) {
+                var sanitized_json = {};
+                var that = this;
+                Object.keys(dirty_json).forEach(function(k) {
+                    var val = dirty_json[k];
+                    if (Array.isArray(val)) {
+                        var clear_array = [];
+                        sanitized_json[k] = val.map(function(item) {
+                            return that.sanitize(item);
+                        });
+                    } else if(typeof val === 'object') {
+                        sanitized_json[k] = that.sanitizeJson(val);
+                    } else {
+                        sanitized_json[k] = that.sanitize(val);
+                    }
+                });
+                return sanitized_json;
+            },
+
+            sanitize: function(e) {
+                return $("<p>").text(e).html();;
             }
         };
 
