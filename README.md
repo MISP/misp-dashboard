@@ -57,6 +57,8 @@ __Includes__:
 ![Dashboard users](./screenshots/dashboard-trendings.png)
 
 # Installation
+Before installing, consider that the only supported system are open source Unix-like operating system such as Linux and others.
+
 - Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory ([idempotent-ish](https://en.wikipedia.org/wiki/Idempotence))
 - Update the configuration file ```config.cfg``` so that it matches your system
   - Fields that you may change:
