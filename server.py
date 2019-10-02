@@ -135,6 +135,15 @@ def load_user(user_id):
     return User(user_id, "")
 
 
+@login_manager.unauthorized_handler
+def unauthorized():
+    """
+    Redirect unauthorized user to login page.
+    :return:
+    """
+    return redirect(url_for('login'))
+
+
 @app.route('/logout')
 @login_required
 def logout():
