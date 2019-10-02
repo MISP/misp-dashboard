@@ -168,8 +168,8 @@ def login():
 
 
 class LoginForm(Form):
-    username = StringField('Username', [validators.Length(min=4, max=50)])
-    password = PasswordField('Password', [validators.Length(min=4, max=50)])
+    username = StringField('Username', [validators.Length(max=255)])
+    password = PasswordField('Password', [validators.Length(max=255)])
     submit = SubmitField('Sign In')
 
 
