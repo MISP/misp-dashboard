@@ -7,6 +7,12 @@ debug = False
 misp_fqdn = "https://misp.local"
 ssl_verify = True
 session_secret = **Change_Me**
+# Only send cookies with requests over HTTPS if the cookie is marked secure.
+session_cookie_secure = True
+# Prevent sending cookies in all external requests including regular links.
+session_cookie_samesite = Strict
+# Expire session cookie after n days.
+permanent_session_lifetime = 1
 
 [Dashboard]
 #hours

@@ -7,6 +7,7 @@ import logging
 import math
 import os
 import re
+from datetime import timedelta
 import random
 from time import gmtime as now
 from time import sleep, strftime
@@ -36,9 +37,18 @@ server_debug = cfg.get("Server", "debug")
 auth_host = cfg.get("Auth", "misp_fqdn")
 auth_ssl_verify = cfg.getboolean("Auth", "ssl_verify")
 auth_session_secret = cfg.get("Auth", "session_secret")
+auth_session_cookie_secure = cfg.getboolean("Auth", "session_cookie_secure")
+auth_session_cookie_samesite = cfg.getboolean("Auth", "session_cookie_samesite")
+auth_permanent_session_lifetime = cfg.getint("Auth", "permanent_session_lifetime")
 
 app = Flask(__name__)
-app.secret_key = auth_session_secret
+#app.secret_key = auth_session_secret
+app.config.update(
+    SECRET_KEY=auth_session_secret,
+    SESSION_COOKIE_SECURE=auth_session_cookie_secure,
+    SESSION_COOKIE_SAMESITE=auth_session_cookie_samesite,
+    PERMANENT_SESSION_LIFETIME=timedelta(days=auth_permanent_session_lifetime)
+)
 
 redis_server_log = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
