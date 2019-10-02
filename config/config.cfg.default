@@ -3,6 +3,10 @@ host = localhost
 port = 8001
 debug = False
 
+[Auth]
+misp_fqdn = "https://misp.local"
+
+
 [Dashboard]
 #hours
 graph_log_refresh_rate = 1
