@@ -35,11 +35,11 @@
             <br><legend>Welcome to MISP-Dashboard</legend><br>
         <div class="input email required">
             {{ form.username.label }}<br>
-            {{ form.username(size=32, maxlength=255) }}
+            {{ form.username(size=32, maxlength=255, autocomplete="off", autofocus="autofocus") }}
         </div>
         <div class="input password required">
             {{ form.password.label }}<br>
-            {{ form.password(size=32, maxlength=255) }}
+            {{ form.password(size=32, maxlength=255, autocomplete="off") }}
         </div>
 
         <div class="clear"></div>
