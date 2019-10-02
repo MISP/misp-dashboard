@@ -38,7 +38,7 @@ auth_host = cfg.get("Auth", "misp_fqdn")
 auth_ssl_verify = cfg.getboolean("Auth", "ssl_verify")
 auth_session_secret = cfg.get("Auth", "session_secret")
 auth_session_cookie_secure = cfg.getboolean("Auth", "session_cookie_secure")
-auth_session_cookie_samesite = cfg.getboolean("Auth", "session_cookie_samesite")
+auth_session_cookie_samesite = cfg.get("Auth", "session_cookie_samesite")
 auth_permanent_session_lifetime = cfg.getint("Auth", "permanent_session_lifetime")
 
 app = Flask(__name__)
