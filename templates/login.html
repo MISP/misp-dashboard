@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />    <meta name="viewport" content="width=device-width" />
+    <title>
+        Users - MISP
+    </title>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap3-typeahead.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
+
+
+</head>
+<body>
+    <div id="popover_form" class="ajax_popover_form"></div>
+    <div id="popover_form_large" class="ajax_popover_form ajax_popover_form_large"></div>
+    <div id="popover_form_x_large" class="ajax_popover_form ajax_popover_form_x_large"></div>
+    <div id="popover_matrix" class="ajax_popover_form ajax_popover_matrix"></div>
+    <div id="popover_box" class="popover_box"></div>
+    <div id="screenshot_box" class="screenshot_box"></div>
+    <div id="confirmation_box" class="confirmation_box"></div>
+    <div id="gray_out" class="gray_out"></div>
+    <div id="container">
+        <div id="topBar" class="navbar navbar-inverse debugOff" style="z-index: 20;">
+  <div class="navbar-inner">
+    <ul class="nav">
+            </ul>
+    <ul class="nav pull-right">
+            </ul>
+  </div>
+</div>
+
+<input type="hidden" class="keyboardShortcutsConfig" value="/shortcuts/global_menu.json" />
+    </div>
+    <div id="flashContainer" style="padding-top:50px; !important;">
+        <div id="main-view-container" class="container-fluid ">
+                    </div>
+    </div>
+
+    <div>
+        <div style="width:100%;">
+    <table style="margin-left:auto;margin-right:auto;">
+    <tr>
+    <td style="text-align:right;width:250px;padding-right:50px">
+            </td>
+    <td style="width:460px">
+
+        <div>
+            <img src="{{ url_for('static', filename='/pics/misp-logo.png') }}" style="display:block; margin-left: auto; margin-right: auto;"/>
+        </div>
+
+        <div style="text-align:right;font-size:18px;">
+                Welcome to MISP-Dashboard
+        </div>
+
+        <form action="" id="UserLoginForm" method="post" accept-charset="utf-8">
+            <legend>Login</legend><br>
+        <div class="input email required">
+            {{ form.username.label }}<br>
+            {{ form.username(size=32) }}
+        </div>
+        <div class="input password required">
+            {{ form.password.label }}<br>
+            {{ form.password(size=32) }}
+        </div>
+
+        <div class="clear"></div>
+            <p>{{ form.submit() }}</p>
+{#        <button class="btn btn-primary" type="submit">Login</button>#}
+            </form>
+
+    </td>
+    <td style="width:250px;padding-left:50px">
+            </td>
+    </tr>
+    </table>
+</div>
+    </div>
+
+
+</body>
+</html>
