@@ -34,9 +34,11 @@ server_host = cfg.get("Server", "host")
 server_port = cfg.getint("Server", "port")
 server_debug = cfg.get("Server", "debug")
 auth_host = cfg.get("Auth", "misp_fqdn")
-auth_ssl_verify = cfg.get("Auth", "ssl_verify")
+auth_ssl_verify = cfg.getboolean("Auth", "ssl_verify")
+auth_session_secret = cfg.get("Auth", "session_secret")
 
 app = Flask(__name__)
+app.secret_key = auth_session_secret
 
 redis_server_log = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
