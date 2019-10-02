@@ -94,9 +94,10 @@ class User(UserMixin):
 
         misp_login_page = auth_host + "/users/login"
         session = requests.Session()
+        session.verify = True
 
         # The login page contains hidden form values required for authenticaiton.
-        login_page = session.get(misp_login_page, ssl=True)
+        login_page = session.get(misp_login_page)
 
         # This regex matches the "data[_Token][fields]" value needed to make a POST request on the MISP login page.
         token_fields_exp = re.compile(r'name="data\[_Token]\[fields]" value="([^\s]+)"')
