@@ -136,6 +136,7 @@ def load_user(user_id):
 
 
 @app.route('/logout')
+@login_required
 def logout():
     """
     Logout the user and redirect to the login form.
@@ -148,7 +149,7 @@ def logout():
 @app.route('/login', methods=['GET','POST'])
 def login():
     """
-    Login form.
+    Login form route.
     :return:
     """
     if current_user.is_authenticated:
@@ -168,6 +169,9 @@ def login():
 
 
 class LoginForm(Form):
+    """
+    WTForm form object.  This object defines form fields in the login endpoint.
+    """
     username = StringField('Username', [validators.Length(max=255)])
     password = PasswordField('Password', [validators.Length(max=255)])
     submit = SubmitField('Sign In')
@@ -275,6 +279,7 @@ class EventMessage():
 ''' MAIN ROUTE '''
 
 @app.route("/")
+@login_required
 def index():
     ratioCorrection = 88
     pannelSize = [
@@ -296,11 +301,13 @@ def index():
             )
 
 @app.route('/favicon.ico')
+@login_required
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route("/geo")
+@login_required
 def geo():
     return render_template('geo.html',
             zoomlevel=cfg.getint('GEO' ,'zoomlevel'),
@@ -308,6 +315,7 @@ def geo():
             )
 
 @app.route("/contrib")
+@login_required
 def contrib():
     categ_list = contributor_helper.categories_in_datatable
     categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in categ_list]
@@ -359,12 +367,14 @@ def contrib():
             )
 
 @app.route("/users")
+@login_required
 def users():
     return render_template('users.html',
             )
 
 
 @app.route("/trendings")
+@login_required
 def trendings():
     maxNum = request.args.get('maxNum')
     try:
