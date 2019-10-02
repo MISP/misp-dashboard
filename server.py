@@ -34,6 +34,7 @@ server_host = cfg.get("Server", "host")
 server_port = cfg.getint("Server", "port")
 server_debug = cfg.get("Server", "debug")
 auth_host = cfg.get("Auth", "misp_fqdn")
+auth_ssl_verify = cfg.get("Auth", "ssl_verify")
 
 app = Flask(__name__)
 
@@ -94,7 +95,7 @@ class User(UserMixin):
 
         misp_login_page = auth_host + "/users/login"
         session = requests.Session()
-        session.verify = True
+        session.verify = auth_ssl_verify
 
         # The login page contains hidden form values required for authenticaiton.
         login_page = session.get(misp_login_page)

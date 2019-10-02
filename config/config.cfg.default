@@ -5,7 +5,7 @@ debug = False
 
 [Auth]
 misp_fqdn = "https://misp.local"
-
+ssl_verify = True
 
 [Dashboard]
 #hours
