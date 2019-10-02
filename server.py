@@ -132,7 +132,6 @@ def load_user(user_id):
 
 
 @app.route('/logout')
-@login_required
 def logout():
     """
     Logout the user and redirect to the login form.
@@ -272,7 +271,6 @@ class EventMessage():
 ''' MAIN ROUTE '''
 
 @app.route("/")
-@login_required
 def index():
     ratioCorrection = 88
     pannelSize = [
@@ -294,13 +292,11 @@ def index():
             )
 
 @app.route('/favicon.ico')
-@login_required
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route("/geo")
-@login_required
 def geo():
     return render_template('geo.html',
             zoomlevel=cfg.getint('GEO' ,'zoomlevel'),
@@ -308,7 +304,6 @@ def geo():
             )
 
 @app.route("/contrib")
-@login_required
 def contrib():
     categ_list = contributor_helper.categories_in_datatable
     categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in categ_list]
@@ -360,14 +355,12 @@ def contrib():
             )
 
 @app.route("/users")
-@login_required
 def users():
     return render_template('users.html',
             )
 
 
 @app.route("/trendings")
-@login_required
 def trendings():
     maxNum = request.args.get('maxNum')
     try:
@@ -384,7 +377,6 @@ def trendings():
 ''' INDEX '''
 
 @app.route("/_logs")
-@login_required
 def logs():
     if request.accept_mimetypes.accept_json or request.method == 'POST':
         key = 'Attribute'
@@ -403,7 +395,6 @@ def logs():
         return Response(stream_with_context(event_stream_log()), mimetype="text/event-stream")
 
 @app.route("/_maps")
-@login_required
 def maps():
     if request.accept_mimetypes.accept_json or request.method == 'POST':
         key = 'Map'
@@ -413,7 +404,6 @@ def maps():
         return Response(event_stream_maps(), mimetype="text/event-stream")
 
 @app.route("/_get_log_head")
-@login_required
 def getLogHead():
     return json.dumps(LogItem('').get_head_row())
 
@@ -447,7 +437,6 @@ def event_stream_maps():
 ''' GEO '''
 
 @app.route("/_getTopCoord")
-@login_required
 def getTopCoord():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -457,7 +446,6 @@ def getTopCoord():
     return jsonify(data)
 
 @app.route("/_getHitMap")
-@login_required
 def getHitMap():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -467,7 +455,6 @@ def getHitMap():
     return jsonify(data)
 
 @app.route("/_getCoordsByRadius")
-@login_required
 def getCoordsByRadius():
     try:
         dateStart = datetime.datetime.fromtimestamp(float(request.args.get('dateStart')))
@@ -484,17 +471,14 @@ def getCoordsByRadius():
 ''' CONTRIB '''
 
 @app.route("/_getLastContributors")
-@login_required
 def getLastContributors():
     return jsonify(contributor_helper.getLastContributorsFromRedis())
 
 @app.route("/_eventStreamLastContributor")
-@login_required
 def getLastContributor():
     return Response(eventStreamLastContributor(), mimetype="text/event-stream")
 
 @app.route("/_eventStreamAwards")
-@login_required
 def getLastStreamAwards():
     return Response(eventStreamAwards(), mimetype="text/event-stream")
 
@@ -532,7 +516,6 @@ def eventStreamAwards():
         subscriber_lastAwards.unsubscribe()
 
 @app.route("/_getTopContributor")
-@login_required
 def getTopContributor(suppliedDate=None, maxNum=100):
     if suppliedDate is None:
         try:
@@ -546,7 +529,6 @@ def getTopContributor(suppliedDate=None, maxNum=100):
     return jsonify(data)
 
 @app.route("/_getFameContributor")
-@login_required
 def getFameContributor():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -557,7 +539,6 @@ def getFameContributor():
     return getTopContributor(suppliedDate=date, maxNum=10)
 
 @app.route("/_getFameQualContributor")
-@login_required
 def getFameQualContributor():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -568,12 +549,10 @@ def getFameQualContributor():
     return getTopContributor(suppliedDate=date, maxNum=10)
 
 @app.route("/_getTop5Overtime")
-@login_required
 def getTop5Overtime():
     return jsonify(contributor_helper.getTop5OvertimeFromRedis())
 
 @app.route("/_getOrgOvertime")
-@login_required
 def getOrgOvertime():
     try:
         org = request.args.get('org')
@@ -582,7 +561,6 @@ def getOrgOvertime():
     return jsonify(contributor_helper.getOrgOvertime(org))
 
 @app.route("/_getCategPerContrib")
-@login_required
 def getCategPerContrib():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -592,7 +570,6 @@ def getCategPerContrib():
     return jsonify(contributor_helper.getCategPerContribFromRedis(date))
 
 @app.route("/_getLatestAwards")
-@login_required
 def getLatestAwards():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -602,12 +579,10 @@ def getLatestAwards():
     return jsonify(contributor_helper.getLastAwardsFromRedis())
 
 @app.route("/_getAllOrg")
-@login_required
 def getAllOrg():
     return jsonify(contributor_helper.getAllOrgFromRedis())
 
 @app.route("/_getOrgRank")
-@login_required
 def getOrgRank():
     try:
         org = request.args.get('org')
@@ -616,7 +591,6 @@ def getOrgRank():
     return jsonify(contributor_helper.getCurrentOrgRankFromRedis(org))
 
 @app.route("/_getContributionOrgStatus")
-@login_required
 def getContributionOrgStatus():
     try:
         org = request.args.get('org')
@@ -625,7 +599,6 @@ def getContributionOrgStatus():
     return jsonify(contributor_helper.getCurrentContributionStatus(org))
 
 @app.route("/_getHonorBadges")
-@login_required
 def getHonorBadges():
     try:
         org = request.args.get('org')
@@ -634,7 +607,6 @@ def getHonorBadges():
     return jsonify(contributor_helper.getOrgHonorBadges(org))
 
 @app.route("/_getTrophies")
-@login_required
 def getTrophies():
     try:
         org = request.args.get('org')
@@ -643,9 +615,7 @@ def getTrophies():
     return jsonify(contributor_helper.getOrgTrophies(org))
 
 @app.route("/_getAllOrgsTrophyRanking")
-@login_required
 @app.route("/_getAllOrgsTrophyRanking/<string:categ>")
-@login_required
 def getAllOrgsTrophyRanking(categ=None):
     return jsonify(contributor_helper.getAllOrgsTrophyRanking(categ))
 
@@ -653,7 +623,6 @@ def getAllOrgsTrophyRanking(categ=None):
 ''' USERS '''
 
 @app.route("/_getUserLogins")
-@login_required
 def getUserLogins():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -665,12 +634,10 @@ def getUserLogins():
     return jsonify(data)
 
 @app.route("/_getAllLoggedOrg")
-@login_required
 def getAllLoggedOrg():
     return jsonify(users_helper.getAllOrg())
 
 @app.route("/_getTopOrglogin")
-@login_required
 def getTopOrglogin():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -681,7 +648,6 @@ def getTopOrglogin():
     return jsonify(data)
 
 @app.route("/_getLoginVSCOntribution")
-@login_required
 def getLoginVSCOntribution():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -692,7 +658,6 @@ def getLoginVSCOntribution():
     return jsonify(data)
 
 @app.route("/_getUserLoginsAndContribOvertime")
-@login_required
 def getUserLoginsAndContribOvertime():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -705,7 +670,6 @@ def getUserLoginsAndContribOvertime():
 
 ''' TRENDINGS '''
 @app.route("/_getTrendingEvents")
-@login_required
 def getTrendingEvents():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -719,7 +683,6 @@ def getTrendingEvents():
     return jsonify(data)
 
 @app.route("/_getTrendingCategs")
-@login_required
 def getTrendingCategs():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -733,7 +696,6 @@ def getTrendingCategs():
     return jsonify(data)
 
 @app.route("/_getTrendingTags")
-@login_required
 def getTrendingTags():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -747,7 +709,6 @@ def getTrendingTags():
     return jsonify(data)
 
 @app.route("/_getTrendingSightings")
-@login_required
 def getTrendingSightings():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -760,7 +721,6 @@ def getTrendingSightings():
     return jsonify(data)
 
 @app.route("/_getTrendingDisc")
-@login_required
 def getTrendingDisc():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -774,7 +734,6 @@ def getTrendingDisc():
     return jsonify(data)
 
 @app.route("/_getTypeaheadData")
-@login_required
 def getTypeaheadData():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -787,7 +746,6 @@ def getTypeaheadData():
     return jsonify(data)
 
 @app.route("/_getGenericTrendingOvertime")
-@login_required
 def getGenericTrendingOvertime():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
