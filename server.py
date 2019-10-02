@@ -66,6 +66,7 @@ users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
 
 login_manager = LoginManager(app)
+login_manager.session_protection = "strong"
 login_manager.init_app(app)
 
 ##########
