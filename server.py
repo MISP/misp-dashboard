@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import configparser
 import datetime
+import uuid
 import errno
 import json
 import logging
@@ -35,6 +36,7 @@ server_host = cfg.get("Server", "host")
 server_port = cfg.getint("Server", "port")
 server_debug = cfg.get("Server", "debug")
 auth_host = cfg.get("Auth", "misp_fqdn")
+auth_enabled = cfg.getboolean("Auth", "auth_enabled")
 auth_ssl_verify = cfg.getboolean("Auth", "ssl_verify")
 auth_session_secret = cfg.get("Auth", "session_secret")
 auth_session_cookie_secure = cfg.getboolean("Auth", "session_cookie_secure")
@@ -172,6 +174,12 @@ def login():
     Login form route.
     :return:
     """
+    if not auth_enabled:
+        # Generate a random user name and redirect the automatically authenticated user to index.
+        user = User(str(uuid.uuid4()).replace('-',''), '')
+        login_user(user)
+        return redirect(url_for('index'))
+
     if current_user.is_authenticated:
         return redirect(url_for('index'))
 

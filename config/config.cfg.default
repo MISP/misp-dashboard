@@ -4,7 +4,8 @@ port = 8001
 debug = False
 
 [Auth]
-misp_fqdn = "https://misp.local"
+auth_enabled = False
+misp_fqdn = https://misp.local
 ssl_verify = True
 session_secret = **Change_Me**
 # Only send cookies with requests over HTTPS if the cookie is marked secure.
