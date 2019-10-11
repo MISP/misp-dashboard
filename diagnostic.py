@@ -387,27 +387,35 @@ def check_server_listening(spinner):
 
 @add_spinner
 def check_server_dynamic_enpoint(spinner):
+    payload = {
+        'username': 'admin@admin.test',
+        'password': 'Password1234',
+        'submit': 'Sign In'
+    }
     sleep_max = 15
     start_time = time.time()
+    url_login = '{}:{}/login'.format(HOST, PORT)
     url = '{}:{}/_logs'.format(HOST, PORT)
-    p = subprocess.Popen(
-        ['curl', '-sfN', '--header', 'Accept: text/event-stream', url],
-        stdout=subprocess.PIPE,
-        bufsize=1)
-    signal.alarm(sleep_max)
+    session = requests.Session()
+    session.verify = False
+    r_login = session.post(url_login, data=payload)
+    if '/login' in r_login.url:
+        return_text = 'Invalid credential. Use valid credential to proceed.'
+        return (False, return_text)
+
+    r = session.get(url, stream=True, timeout=sleep_max, headers={'Accept': 'text/event-stream'})
     return_flag = False
     return_text = 'Dynamic endpoint returned data but not in the correct format.'
     try:
-        for line in iter(p.stdout.readline, b''):
+        for line in r.iter_lines():
             if line.startswith(b'data: '):
                 data = line[6:]
                 try:
-                    j = json.loads(data)
+                    json.loads(data)
                     return_flag = True
-                    return_text = 'Dynamic endpoint returned data (took {:.2f}s)'.format(time.time()-start_time)
-                    signal.alarm(0)
+                    return_text = 'Dynamic endpoint returned data (took {:.2f}s)\n\t➥ {}...'.format(time.time()-start_time, line[6:20])
                     break
-                except Exception as e:
+                except Exception:
                     return_flag = False
                     return_text = 'Something went wrong. Output {}'.format(line)
                     break
