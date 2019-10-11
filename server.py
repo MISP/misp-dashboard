@@ -138,8 +138,6 @@ class User(UserMixin):
             dashboard_access = me_json.get('UserSetting', {}).get('dashboard_access', False)
             if dashboard_access is not False:
                 return dashboard_access is True or dashboard_access == 1
-            else:
-                return False
         return None
 
 
