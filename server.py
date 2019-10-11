@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 import configparser
 import datetime
+import uuid
 import errno
 import json
 import logging
 import math
 import os
+import re
+from datetime import timedelta
 import random
 from time import gmtime as now
 from time import sleep, strftime
@@ -14,9 +17,13 @@ import redis
 
 import util
 from flask import (Flask, Response, jsonify, render_template, request,
-                   send_from_directory, stream_with_context)
+                   send_from_directory, stream_with_context, url_for, redirect)
+from flask_login import (UserMixin, LoginManager, current_user, login_user, logout_user, login_required)
 from helpers import (contributor_helper, geo_helper, live_helper,
                      trendings_helper, users_helper)
+
+import requests
+from wtforms import Form, SubmitField, StringField, PasswordField, validators
 
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()
@@ -28,8 +35,22 @@ logger.setLevel(logging.ERROR)
 server_host = cfg.get("Server", "host")
 server_port = cfg.getint("Server", "port")
 server_debug = cfg.get("Server", "debug")
+auth_host = cfg.get("Auth", "misp_fqdn")
+auth_enabled = cfg.getboolean("Auth", "auth_enabled")
+auth_ssl_verify = cfg.getboolean("Auth", "ssl_verify")
+auth_session_secret = cfg.get("Auth", "session_secret")
+auth_session_cookie_secure = cfg.getboolean("Auth", "session_cookie_secure")
+auth_session_cookie_samesite = cfg.get("Auth", "session_cookie_samesite")
+auth_permanent_session_lifetime = cfg.getint("Auth", "permanent_session_lifetime")
 
 app = Flask(__name__)
+#app.secret_key = auth_session_secret
+app.config.update(
+    SECRET_KEY=auth_session_secret,
+    SESSION_COOKIE_SECURE=auth_session_cookie_secure,
+    SESSION_COOKIE_SAMESITE=auth_session_cookie_samesite,
+    PERMANENT_SESSION_LIFETIME=timedelta(days=auth_permanent_session_lifetime)
+)
 
 redis_server_log = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
@@ -55,6 +76,133 @@ geo_helper = geo_helper.Geo_helper(serv_redis_db, cfg)
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
 users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
+
+login_manager = LoginManager(app)
+login_manager.session_protection = "strong"
+login_manager.init_app(app)
+
+##########
+## Auth ##
+##########
+
+class User(UserMixin):
+    def __init__(self, id, password):
+        self.id = id
+        self.password = password
+
+    def misp_login(self):
+        """
+        Use login form data to authenticate a user to MISP.
+
+        This function uses requests to log a user into the MISP web UI. When authentication is successful MISP redirects the client to the '/users/routeafterlogin' endpoint. The requests session history is parsed for a redirect to this endpoint.
+        :param misp_url: The FQDN of a MISP instance to authenticate against.
+        :param user: The user account to authenticate.
+        :param password: The user account password.
+        :return:
+        """
+        post_data = {
+            "data[_Token][key]": "",
+            "data[_Token][fields]": "",
+            "data[_Token][unlocked]": "",
+            "data[User][email]": self.id,
+            "data[User][password]": self.password,
+        }
+
+        misp_login_page = auth_host + "/users/login"
+        session = requests.Session()
+        session.verify = auth_ssl_verify
+
+        # The login page contains hidden form values required for authenticaiton.
+        login_page = session.get(misp_login_page)
+
+        # This regex matches the "data[_Token][fields]" value needed to make a POST request on the MISP login page.
+        token_fields_exp = re.compile(r'name="data\[_Token]\[fields]" value="([^\s]+)"')
+        token_fields = token_fields_exp.search(login_page.text)
+
+        # This regex matches the "data[_Token][fields]" value needed to make a POST request on the MISP login page.
+        token_key_exp = re.compile(r'name="data\[_Token]\[key]" value="([^\s]+)"')
+        token_key = token_key_exp.search(login_page.text)
+
+        post_data["data[_Token][fields]"] = token_fields.group(1)
+        post_data["data[_Token][key]"] = token_key.group(1)
+
+        # POST request with user credentials + hidden form values.
+        post_to_login_page = session.post(misp_login_page, data=post_data)
+
+        # Authentication is successful if MISP returns a redirect to '/users/routeafterlogin'.
+        for resp in post_to_login_page.history:
+            if resp.url == auth_host + '/users/routeafterlogin':
+                return True
+        return None
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    """
+    Return a User object required by flask-login to keep state of a user session.
+
+    Typically load_user is used to perform a user lookup on a db; it should return a User object or None if the user is not found. Authentication is defered to MISP via User.misp_login() and so this function always returns a User object .
+    :param user_id: A MISP username.
+    :return:
+    """
+    return User(user_id, "")
+
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    """
+    Redirect unauthorized user to login page.
+    :return:
+    """
+    return redirect(url_for('login'))
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    """
+    Logout the user and redirect to the login form.
+    :return:
+    """
+    logout_user()
+    return redirect(url_for('login'))
+
+
+@app.route('/login', methods=['GET','POST'])
+def login():
+    """
+    Login form route.
+    :return:
+    """
+    if not auth_enabled:
+        # Generate a random user name and redirect the automatically authenticated user to index.
+        user = User(str(uuid.uuid4()).replace('-',''), '')
+        login_user(user)
+        return redirect(url_for('index'))
+
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    form = LoginForm(request.form)
+    if request.method == 'POST' and form.validate():
+        user = User(form.username.data, form.password.data)
+
+        if user.misp_login():
+            login_user(user)
+            return redirect(url_for('index'))
+
+        return redirect(url_for('login'))
+    return render_template('login.html', title='Login', form=form)
+
+
+
+class LoginForm(Form):
+    """
+    WTForm form object.  This object defines form fields in the login endpoint.
+    """
+    username = StringField('Username', [validators.Length(max=255)])
+    password = PasswordField('Password', [validators.Length(max=255)])
+    submit = SubmitField('Sign In')
 
 
 ##########
@@ -159,6 +307,7 @@ class EventMessage():
 ''' MAIN ROUTE '''
 
 @app.route("/")
+@login_required
 def index():
     ratioCorrection = 88
     pannelSize = [
@@ -180,11 +329,13 @@ def index():
             )
 
 @app.route('/favicon.ico')
+@login_required
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route("/geo")
+@login_required
 def geo():
     return render_template('geo.html',
             zoomlevel=cfg.getint('GEO' ,'zoomlevel'),
@@ -192,6 +343,7 @@ def geo():
             )
 
 @app.route("/contrib")
+@login_required
 def contrib():
     categ_list = contributor_helper.categories_in_datatable
     categ_list_str = [ s[0].upper() + s[1:].replace('_', ' ') for s in categ_list]
@@ -243,12 +395,14 @@ def contrib():
             )
 
 @app.route("/users")
+@login_required
 def users():
     return render_template('users.html',
             )
 
 
 @app.route("/trendings")
+@login_required
 def trendings():
     maxNum = request.args.get('maxNum')
     try:
@@ -265,6 +419,7 @@ def trendings():
 ''' INDEX '''
 
 @app.route("/_logs")
+@login_required
 def logs():
     if request.accept_mimetypes.accept_json or request.method == 'POST':
         key = 'Attribute'
@@ -283,6 +438,7 @@ def logs():
         return Response(stream_with_context(event_stream_log()), mimetype="text/event-stream")
 
 @app.route("/_maps")
+@login_required
 def maps():
     if request.accept_mimetypes.accept_json or request.method == 'POST':
         key = 'Map'
@@ -292,6 +448,7 @@ def maps():
         return Response(event_stream_maps(), mimetype="text/event-stream")
 
 @app.route("/_get_log_head")
+@login_required
 def getLogHead():
     return json.dumps(LogItem('').get_head_row())
 
@@ -325,6 +482,7 @@ def event_stream_maps():
 ''' GEO '''
 
 @app.route("/_getTopCoord")
+@login_required
 def getTopCoord():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -334,6 +492,7 @@ def getTopCoord():
     return jsonify(data)
 
 @app.route("/_getHitMap")
+@login_required
 def getHitMap():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -343,6 +502,7 @@ def getHitMap():
     return jsonify(data)
 
 @app.route("/_getCoordsByRadius")
+@login_required
 def getCoordsByRadius():
     try:
         dateStart = datetime.datetime.fromtimestamp(float(request.args.get('dateStart')))
@@ -359,14 +519,17 @@ def getCoordsByRadius():
 ''' CONTRIB '''
 
 @app.route("/_getLastContributors")
+@login_required
 def getLastContributors():
     return jsonify(contributor_helper.getLastContributorsFromRedis())
 
 @app.route("/_eventStreamLastContributor")
+@login_required
 def getLastContributor():
     return Response(eventStreamLastContributor(), mimetype="text/event-stream")
 
 @app.route("/_eventStreamAwards")
+@login_required
 def getLastStreamAwards():
     return Response(eventStreamAwards(), mimetype="text/event-stream")
 
@@ -404,6 +567,7 @@ def eventStreamAwards():
         subscriber_lastAwards.unsubscribe()
 
 @app.route("/_getTopContributor")
+@login_required
 def getTopContributor(suppliedDate=None, maxNum=100):
     if suppliedDate is None:
         try:
@@ -417,6 +581,7 @@ def getTopContributor(suppliedDate=None, maxNum=100):
     return jsonify(data)
 
 @app.route("/_getFameContributor")
+@login_required
 def getFameContributor():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -427,6 +592,7 @@ def getFameContributor():
     return getTopContributor(suppliedDate=date, maxNum=10)
 
 @app.route("/_getFameQualContributor")
+@login_required
 def getFameQualContributor():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -437,10 +603,12 @@ def getFameQualContributor():
     return getTopContributor(suppliedDate=date, maxNum=10)
 
 @app.route("/_getTop5Overtime")
+@login_required
 def getTop5Overtime():
     return jsonify(contributor_helper.getTop5OvertimeFromRedis())
 
 @app.route("/_getOrgOvertime")
+@login_required
 def getOrgOvertime():
     try:
         org = request.args.get('org')
@@ -449,6 +617,7 @@ def getOrgOvertime():
     return jsonify(contributor_helper.getOrgOvertime(org))
 
 @app.route("/_getCategPerContrib")
+@login_required
 def getCategPerContrib():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -458,6 +627,7 @@ def getCategPerContrib():
     return jsonify(contributor_helper.getCategPerContribFromRedis(date))
 
 @app.route("/_getLatestAwards")
+@login_required
 def getLatestAwards():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -467,10 +637,12 @@ def getLatestAwards():
     return jsonify(contributor_helper.getLastAwardsFromRedis())
 
 @app.route("/_getAllOrg")
+@login_required
 def getAllOrg():
     return jsonify(contributor_helper.getAllOrgFromRedis())
 
 @app.route("/_getOrgRank")
+@login_required
 def getOrgRank():
     try:
         org = request.args.get('org')
@@ -479,6 +651,7 @@ def getOrgRank():
     return jsonify(contributor_helper.getCurrentOrgRankFromRedis(org))
 
 @app.route("/_getContributionOrgStatus")
+@login_required
 def getContributionOrgStatus():
     try:
         org = request.args.get('org')
@@ -487,6 +660,7 @@ def getContributionOrgStatus():
     return jsonify(contributor_helper.getCurrentContributionStatus(org))
 
 @app.route("/_getHonorBadges")
+@login_required
 def getHonorBadges():
     try:
         org = request.args.get('org')
@@ -495,6 +669,7 @@ def getHonorBadges():
     return jsonify(contributor_helper.getOrgHonorBadges(org))
 
 @app.route("/_getTrophies")
+@login_required
 def getTrophies():
     try:
         org = request.args.get('org')
@@ -504,6 +679,7 @@ def getTrophies():
 
 @app.route("/_getAllOrgsTrophyRanking")
 @app.route("/_getAllOrgsTrophyRanking/<string:categ>")
+@login_required
 def getAllOrgsTrophyRanking(categ=None):
     return jsonify(contributor_helper.getAllOrgsTrophyRanking(categ))
 
@@ -511,6 +687,7 @@ def getAllOrgsTrophyRanking(categ=None):
 ''' USERS '''
 
 @app.route("/_getUserLogins")
+@login_required
 def getUserLogins():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -522,10 +699,12 @@ def getUserLogins():
     return jsonify(data)
 
 @app.route("/_getAllLoggedOrg")
+@login_required
 def getAllLoggedOrg():
     return jsonify(users_helper.getAllOrg())
 
 @app.route("/_getTopOrglogin")
+@login_required
 def getTopOrglogin():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -536,6 +715,7 @@ def getTopOrglogin():
     return jsonify(data)
 
 @app.route("/_getLoginVSCOntribution")
+@login_required
 def getLoginVSCOntribution():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -546,6 +726,7 @@ def getLoginVSCOntribution():
     return jsonify(data)
 
 @app.route("/_getUserLoginsAndContribOvertime")
+@login_required
 def getUserLoginsAndContribOvertime():
     try:
         date = datetime.datetime.fromtimestamp(float(request.args.get('date')))
@@ -558,6 +739,7 @@ def getUserLoginsAndContribOvertime():
 
 ''' TRENDINGS '''
 @app.route("/_getTrendingEvents")
+@login_required
 def getTrendingEvents():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -571,6 +753,7 @@ def getTrendingEvents():
     return jsonify(data)
 
 @app.route("/_getTrendingCategs")
+@login_required
 def getTrendingCategs():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -584,6 +767,7 @@ def getTrendingCategs():
     return jsonify(data)
 
 @app.route("/_getTrendingTags")
+@login_required
 def getTrendingTags():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -597,6 +781,7 @@ def getTrendingTags():
     return jsonify(data)
 
 @app.route("/_getTrendingSightings")
+@login_required
 def getTrendingSightings():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -609,6 +794,7 @@ def getTrendingSightings():
     return jsonify(data)
 
 @app.route("/_getTrendingDisc")
+@login_required
 def getTrendingDisc():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -622,6 +808,7 @@ def getTrendingDisc():
     return jsonify(data)
 
 @app.route("/_getTypeaheadData")
+@login_required
 def getTypeaheadData():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
@@ -634,6 +821,7 @@ def getTypeaheadData():
     return jsonify(data)
 
 @app.route("/_getGenericTrendingOvertime")
+@login_required
 def getGenericTrendingOvertime():
     try:
         dateS = datetime.datetime.fromtimestamp(float(request.args.get('dateS')))
