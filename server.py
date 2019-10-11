@@ -109,6 +109,7 @@ class User(UserMixin):
         }
 
         misp_login_page = auth_host + "/users/login"
+        misp_user_me_page = auth_host + "/users/view/me.json"
         session = requests.Session()
         session.verify = auth_ssl_verify
 
@@ -132,7 +133,13 @@ class User(UserMixin):
         redirect_location = post_to_login_page.headers.get('Location', '')
         # Authentication is successful if MISP returns a redirect to '/users/routeafterlogin'.
         if '/users/routeafterlogin' in redirect_location:
-            return True
+            # Logged in, check if logged in user can access the dashboard
+            me_json = session.get(misp_user_me_page).json()
+            dashboard_access = me_json.get('UserSetting', {}).get('dashboard_access', False)
+            if dashboard_access is not False:
+                return dashboard_access is True or dashboard_access == 1
+            else:
+                return False
         return None
 
 
