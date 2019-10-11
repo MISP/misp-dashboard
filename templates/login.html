@@ -7,9 +7,14 @@
         Users - MISP
     </title>
 
+    <!-- jQuery -->
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- Bootstrap Core CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/sb-admin-2.css') }}" rel="stylesheet">
     <!-- Bootstrap Core JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap3-typeahead.min.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
 
 </head>
@@ -27,8 +32,13 @@
     <td style="width:460px">
 
         <div>
-            <img src="{{ url_for('static', filename='/pics/misp-logo.png') }}" style="display:block; margin-left: auto; margin-right: auto;"/>
+            <img src="{{ url_for('static', filename='pics/misp-logo.png') }}" style="display:block; margin-left: auto; margin-right: auto;"/>
         </div>
+        {% if authError %}
+            <div class="alert alert-danger">
+                Username and Password does not match when connecting to MISP
+            </div>
+        {% endif %}
 
 
         <form action="" id="UserLoginForm" method="post" accept-charset="utf-8">
