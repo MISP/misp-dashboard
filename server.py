@@ -127,12 +127,12 @@ class User(UserMixin):
         post_data["data[_Token][key]"] = token_key.group(1)
 
         # POST request with user credentials + hidden form values.
-        post_to_login_page = session.post(misp_login_page, data=post_data)
-
+        post_to_login_page = session.post(misp_login_page, data=post_data, allow_redirects=False)
+        # Consider setup with MISP baseurl set
+        redirect_location = post_to_login_page.headers.get('Location', '')
         # Authentication is successful if MISP returns a redirect to '/users/routeafterlogin'.
-        for resp in post_to_login_page.history:
-            if resp.url == auth_host + '/users/routeafterlogin':
-                return True
+        if '/users/routeafterlogin' in redirect_location:
+            return True
         return None
 
 
@@ -191,8 +191,10 @@ def login():
             login_user(user)
             return redirect(url_for('index'))
 
-        return redirect(url_for('login'))
-    return render_template('login.html', title='Login', form=form)
+        return redirect(url_for('login', auth_error=True))
+    else:
+        auth_error = request.args.get('auth_error', False)
+        return render_template('login.html', title='Login', form=form, authError=auth_error)
 
 
 
