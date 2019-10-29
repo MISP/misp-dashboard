@@ -177,7 +177,7 @@ def unauthorized():
         )))
         response.set_cookie('redirectCount', '0', secure=False, httponly=True)
     else:
-        response = make_response(redirect(url_for('login')))
+        response = make_response(redirect(url_for('login', auth_error=True, auth_error_message='Unauthorized. Review your cookie settings')))
         response.set_cookie('redirectCount', str(redirectCount+1), secure=False, httponly=True)
     return response
 

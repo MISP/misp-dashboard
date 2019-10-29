@@ -443,8 +443,8 @@ def check_server_dynamic_enpoint(spinner):
     if '/login' in r_login.url:
         o = urlparse(r_login.url)
         query = parse_qs(o.query)
-        error_message = query.get('auth_error_message', ['Unknown error'])[0]
-        return_text = error_message
+        error_message = query.get('auth_error_message', ['Redirected to `loging` caused by an unknown error'])[0]
+        return_text = 'Redirected to `loging` caused by: {}'.format(error_message)
         return (False, return_text)
 
     # Connection seems to be successful, checking if we receive data from event-stream
