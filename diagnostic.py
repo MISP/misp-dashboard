@@ -6,7 +6,7 @@ import time
 import signal
 import functools
 import configparser
-from pprint import pprint
+from urllib.parse import urlparse, parse_qs
 import subprocess
 import diagnostic_util
 try:
@@ -15,6 +15,8 @@ try:
     import json
     import flask
     import requests
+    from requests.packages.urllib3.exceptions import InsecureRequestWarning
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     from halo import Halo
 except ModuleNotFoundError as e:
     print('Dependency not met. Either not in a virtualenv or dependency not installed.')
@@ -379,10 +381,22 @@ def check_server_listening(spinner):
         r = requests.get(url)
     except requests.exceptions.ConnectionError:
         return (False, 'Can\'t connect to {}').format(url)
-    return (
-        r.status_code == 200,
-        '{} {}reached. Status code [{}]'.format(url, "not " if r.status_code != 200 else "", r.status_code)
-     )
+    
+    if '/error_page' in r.url:
+        o = urlparse(r.url)
+        query = parse_qs(o.query)
+        error_code = query.get('error_code', '')
+        if error_code[0] == '1':
+            return (False, 'To many redirects. Server may not be properly configured\n\t➥ Try to correctly setup an HTTPS server or change the cookie policy in the configuration')
+        else:
+            error_message = query.get('error_message', '')[0]
+            return (False, 'Unkown error: {}\n{}'.format(error_code, error_message))
+    else:
+        return (
+            r.status_code == 200,
+            '{} {}reached. Status code [{}]'.format(url, "not " if r.status_code != 200 else "", r.status_code)
+         )
+
 
 
 @add_spinner
@@ -394,15 +408,46 @@ def check_server_dynamic_enpoint(spinner):
     }
     sleep_max = 15
     start_time = time.time()
+
+    # Check MISP connectivity
+    url_misp = configuration_file.get("Auth", "misp_fqdn")
+    try:
+        r = requests.get(url_misp, verify=configuration_file.getboolean("Auth", "ssl_verify"))
+    except requests.exceptions.SSLError as e:
+        if 'CERTIFICATE_VERIFY_FAILED' in str(e):
+            return (False, 'SSL connection error certificate verify failed.\n\t➥ Review your configuration'.format(e))
+        else:
+            return (False, 'SSL connection error `{}`.\n\t➥ Review your configuration'.format(e))
+
+    except requests.exceptions.ConnectionError:
+        return (False, 'MISP `{}` cannot be reached.\n\t➥ Review your configuration'.format(url_misp))
+
     url_login = '{}:{}/login'.format(HOST, PORT)
     url = '{}:{}/_logs'.format(HOST, PORT)
     session = requests.Session()
-    session.verify = False
+    session.verify = configuration_file.getboolean("Auth", "ssl_verify")
     r_login = session.post(url_login, data=payload)
+
+    # Check if we ended up on the error page
+    if '/error_page' in r_login.url:
+        o = urlparse(r_login.url)
+        query = parse_qs(o.query)
+        error_code = query.get('error_code', '')
+        if error_code[0] == '2':
+            return (False, 'MISP cannot be reached for authentication\n\t➥ Review MISP fully qualified name and SSL settings')
+        else:
+            error_message = query.get('error_message', '')[0]
+            return (False, 'Unkown error: {}\n{}'.format(error_code, error_message))
+
+    # Recover error message from the url
     if '/login' in r_login.url:
-        return_text = 'Invalid credential. Use valid credential to proceed.'
+        o = urlparse(r_login.url)
+        query = parse_qs(o.query)
+        error_message = query.get('auth_error_message', ['Redirected to `loging` caused by an unknown error'])[0]
+        return_text = 'Redirected to `loging` caused by: {}'.format(error_message)
         return (False, return_text)
 
+    # Connection seems to be successful, checking if we receive data from event-stream
     r = session.get(url, stream=True, timeout=sleep_max, headers={'Accept': 'text/event-stream'})
     return_flag = False
     return_text = 'Dynamic endpoint returned data but not in the correct format.'
