@@ -143,9 +143,11 @@ class User(UserMixin):
             # Logged in, check if logged in user can access the dashboard
             me_json = session.get(misp_user_me_page).json()
             dashboard_access = me_json.get('UserSetting', {}).get('dashboard_access', False)
-            if dashboard_access is not False:
-                return dashboard_access is True or dashboard_access == 1
-        return None
+            if dashboard_access is True or dashboard_access == 1:
+                return (True, '')
+            else:
+                return (None, 'User does not have dashboard access')
+        return (None, '')
 
 
 @login_manager.user_loader

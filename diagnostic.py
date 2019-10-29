@@ -15,6 +15,8 @@ try:
     import json
     import flask
     import requests
+    from requests.packages.urllib3.exceptions import InsecureRequestWarning
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     from halo import Halo
 except ModuleNotFoundError as e:
     print('Dependency not met. Either not in a virtualenv or dependency not installed.')
@@ -441,7 +443,7 @@ def check_server_dynamic_enpoint(spinner):
     if '/login' in r_login.url:
         o = urlparse(r_login.url)
         query = parse_qs(o.query)
-        error_message = query.get('auth_error_message', 'Unknown error')[0]
+        error_message = query.get('auth_error_message', ['Unknown error'])[0]
         return_text = error_message
         return (False, return_text)
 
