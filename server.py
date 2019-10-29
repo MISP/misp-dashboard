@@ -16,7 +16,7 @@ from time import sleep, strftime
 import redis
 
 import util
-from flask import (Flask, Response, jsonify, render_template, request,
+from flask import (Flask, Response, jsonify, render_template, request, make_response,
                    send_from_directory, stream_with_context, url_for, redirect)
 from flask_login import (UserMixin, LoginManager, current_user, login_user, logout_user, login_required)
 from helpers import (contributor_helper, geo_helper, live_helper,
@@ -101,9 +101,11 @@ class User(UserMixin):
         :return:
         """
         post_data = {
+            "_method": "POST",
             "data[_Token][key]": "",
             "data[_Token][fields]": "",
             "data[_Token][unlocked]": "",
+            "data[_Token][debug]": "",
             "data[User][email]": self.id,
             "data[User][password]": self.password,
         }
@@ -120,12 +122,17 @@ class User(UserMixin):
         token_fields_exp = re.compile(r'name="data\[_Token]\[fields]" value="([^\s]+)"')
         token_fields = token_fields_exp.search(login_page.text)
 
-        # This regex matches the "data[_Token][fields]" value needed to make a POST request on the MISP login page.
+        # This regex matches the "data[_Token][key]" value needed to make a POST request on the MISP login page.
         token_key_exp = re.compile(r'name="data\[_Token]\[key]" value="([^\s]+)"')
         token_key = token_key_exp.search(login_page.text)
 
+        # This regex matches the "data[_Token][debug]" value needed to make a POST request on the MISP login page.
+        token_key_exp = re.compile(r'name="data\[_Token]\[debug]" value="([^\s]+)"')
+        token_debug = token_key_exp.search(login_page.text)
+
         post_data["data[_Token][fields]"] = token_fields.group(1)
         post_data["data[_Token][key]"] = token_key.group(1)
+        post_data["data[_Token][debug]"] = token_debug.group(1)
 
         # POST request with user credentials + hidden form values.
         post_to_login_page = session.post(misp_login_page, data=post_data, allow_redirects=False)
@@ -159,7 +166,24 @@ def unauthorized():
     Redirect unauthorized user to login page.
     :return:
     """
-    return redirect(url_for('login'))
+    redirectCount = int(request.cookies.get('redirectCount', '0'))
+    if redirectCount > 5:
+        response = make_response(redirect(url_for(
+            'error_page',
+            error_message='Too many redirects. This can be due to your brower not accepting cookies or the misp-dashboard website is badly configured',
+            error_code='1'
+        )))
+        response.set_cookie('redirectCount', '0', secure=False, httponly=True)
+    else:
+        response = make_response(redirect(url_for('login')))
+        response.set_cookie('redirectCount', str(redirectCount+1), secure=False, httponly=True)
+    return response
+
+
+@app.route('/error_page')
+def error_page():
+    error_message = request.args.get('error_message', False)
+    return render_template('error_page.html', error_message=error_message)
 
 
 @app.route('/logout')
@@ -173,7 +197,7 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     """
     Login form route.
@@ -192,14 +216,22 @@ def login():
     if request.method == 'POST' and form.validate():
         user = User(form.username.data, form.password.data)
 
-        if user.misp_login():
-            login_user(user)
-            return redirect(url_for('index'))
+        error_message = 'Username and Password does not match when connecting to MISP or incorrect MISP permission'
+        try:
+            is_logged_in, misp_error_message = user.misp_login()
+            if len(misp_error_message) > 0:
+                error_message = misp_error_message
+            if is_logged_in:
+                login_user(user)
+                return redirect(url_for('index'))
+        except requests.exceptions.SSLError:
+            return redirect(url_for('login', auth_error=True, auth_error_message='MISP cannot be reached for authentication'))
 
-        return redirect(url_for('login', auth_error=True))
+        return redirect(url_for('login', auth_error=True, auth_error_message=error_message))
     else:
         auth_error = request.args.get('auth_error', False)
-        return render_template('login.html', title='Login', form=form, authError=auth_error)
+        auth_error_message = request.args.get('auth_error_message', '')
+        return render_template('login.html', title='Login', form=form, authError=auth_error, authErrorMessage=auth_error_message)
 
 
 
