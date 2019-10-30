@@ -107,6 +107,10 @@ OSError: [Errno 26] Text file busy: '/home/steve/code/misp-dashboard/DASHENV/bin
 
 __Alternatively__, you can run the ```start_all.sh``` script to run the commands described above.
 
+# Authentication
+Authentication can be enable in ``config/config.cfg`` by setting ``auth_enabled = True``.
+Users will be required to login to MISP and will be allowed to proceed if they have the *User Setting*'s ``dashboard_access`` sets to 1 for the MISP user account.
+
 # Debug
 
 Debug is fun and gives you more details on what is going on when things fail.
