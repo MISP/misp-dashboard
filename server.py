@@ -35,6 +35,14 @@ logger.setLevel(logging.ERROR)
 server_host = cfg.get("Server", "host")
 server_port = cfg.getint("Server", "port")
 server_debug = cfg.get("Server", "debug")
+server_ssl = cfg.get("Server", "ssl")
+try:
+    server_ssl_cert = cfg.get("Server", "ssl_cert")
+    server_ssl_key = cfg.get("Server", "ssl_key")
+except:
+    server_ssl_cert = None
+    server_ssl_key = None
+    pass
 auth_host = cfg.get("Auth", "misp_fqdn")
 auth_enabled = cfg.getboolean("Auth", "auth_enabled")
 auth_ssl_verify = cfg.getboolean("Auth", "ssl_verify")
@@ -877,8 +885,17 @@ def getGenericTrendingOvertime():
 
 if __name__ == '__main__':
     try:
+        if bool(server_ssl) is True:
+            if server_ssl_cert and server_ssl_key:
+                server_ssl_context = (server_ssl_cert, server_ssl_key)
+            else:
+                server_ssl_context = 'adhoc' 
+        else:
+            server_ssl_context = None
+
         app.run(host=server_host,
             port=server_port,
+            ssl_context=server_ssl_context,
             debug=server_debug,
             threaded=True)
     except OSError as error:
