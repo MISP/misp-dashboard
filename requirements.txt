@@ -10,3 +10,4 @@ pycountry
 zmq
 requests
 halo
+pyopenssl

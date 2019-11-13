@@ -2,6 +2,10 @@
 host = localhost
 port = 8001
 debug = False
+ssl = False
+# If you set SSL to True with a cert/key then an adhoc (self-signed) certificate is created
+# ssl_cert = cert.pem 
+# ssl_key = key.pem
 
 [Auth]
 auth_enabled = False
