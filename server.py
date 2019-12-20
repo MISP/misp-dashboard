@@ -113,7 +113,6 @@ class User(UserMixin):
             "data[_Token][key]": "",
             "data[_Token][fields]": "",
             "data[_Token][unlocked]": "",
-            # "data[_Token][debug]": "",
             "data[User][email]": self.id,
             "data[User][password]": self.password,
         }
@@ -140,7 +139,11 @@ class User(UserMixin):
 
         post_data["data[_Token][fields]"] = token_fields.group(1)
         post_data["data[_Token][key]"] = token_key.group(1)
-        # post_data["data[_Token][debug]"] = token_debug.group(1)
+
+        # debug_token should return None when MISP debug is off.
+        # Only send debug_token when MISP is running in debug mode.
+        if token_debug is not None:
+            post_data["data[_Token][debug]"] = token_debug.group(1)
 
         # POST request with user credentials + hidden form values.
         post_to_login_page = session.post(misp_login_page, data=post_data, allow_redirects=False)
