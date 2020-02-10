@@ -148,12 +148,16 @@ def check_configuration(spinner):
 @add_spinner(name='dot')
 def check_file_permission(spinner):
     max_mind_database_path = configuration_file.get('RedisMap', 'pathmaxminddb')
-    st = os.stat(max_mind_database_path)
+    try:
+        st = os.stat(max_mind_database_path)
+    except FileNotFoundError:
+        return (False, 'Maxmind GeoDB - File not found')
+
     all_read_perm = bool(st.st_mode & stat.S_IROTH)  # FIXME: permission may be changed
     if all_read_perm:
         return (True, '')
     else:
-        return (False, 'Maxmin GeoDB might have incorrect read file permission')
+        return (False, 'Maxmind GeoDB might have incorrect read file permission')
 
 
 @add_spinner
@@ -215,10 +219,14 @@ def check_zmq(spinner):
 @add_spinner
 def check_processes_status(spinner):
     global pgrep_subscriber_output, pgrep_dispatcher_output
-    response = subprocess.check_output(
-        ["pgrep", "-laf", "zmq_"],
-        universal_newlines=True
-    )
+    try:
+        response = subprocess.check_output(
+            ["pgrep", "-laf", "zmq_"],
+            universal_newlines=True
+        )
+    except subprocess.CalledProcessError as e:
+        return (False, 'Could not get processes status. Error returned:\n'+str(e))
+
     for line in response.splitlines():
         lines = line.split(' ', maxsplit=1)
         pid, p_name = lines
