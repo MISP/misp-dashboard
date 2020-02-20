@@ -57,7 +57,12 @@ __Includes__:
 ![Dashboard users](./screenshots/dashboard-trendings.png)
 
 # Installation
+
 Before installing, consider that the only supported system are open source Unix-like operating system such as Linux and others.
+
+1. You will need to [create a free MaxMind account.](https://www.maxmind.com/en/geolite2/signup)
+2. Set your password and [create a license key](https://www.maxmind.com/en/accounts/current/license-key)
+2.1 Make a note of your License Key it's needed during install.
 
 - Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory ([idempotent-ish](https://en.wikipedia.org/wiki/Idempotence))
 - Update the configuration file ```config.cfg``` so that it matches your system
