@@ -144,7 +144,18 @@ wget http://jvectormap.com/js/jquery-jvectormap-world-mill.js -O ./static/js/jqu
 rm -rf data/GeoLite2-City*
 mkdir -p data
 pushd data
-wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz -O GeoLite2-City.tar.gz
+# The following lines do not work any more, see: https://blog.maxmind.com/2019/12/18/significant-changes-to-accessing-and-using-geolite2-databases/
+#wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz -O GeoLite2-City.tar.gz
+read -p "Please paste your Max Mind License key: " MM_LIC
+wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_LIC}&suffix=tar.gz" -O GeoLite2-City.tar.gz
+wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_LIC}&suffix=tar.gz.sha256" -O GeoLite2-City.tar.gz.sha256
+cat GeoLite2-City.tar.gz.sha256 |sed 's/_.*/.tar.gz/' > GeoLite2-City.tar.gz.sha256
+while [ "$(sha256sum -c GeoLite2-City.tar.gz.sha256 >/dev/null; echo $?)" != "0" ]; do
+  echo "Redownloading GeoLite Assets, if this loops, CTRL-C and investigate"
+  wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_LIC}&suffix=tar.gz" -O GeoLite2-City.tar.gz
+  wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_LIC}&suffix=tar.gz.sha256" -O GeoLite2-City.tar.gz.sha256
+  sleep 3
+done
 tar xvfz GeoLite2-City.tar.gz
 ln -s GeoLite2-City_* GeoLite2-City
 rm -rf GeoLite2-City.tar.gz
