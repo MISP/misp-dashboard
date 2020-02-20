@@ -156,7 +156,7 @@ while [ "$(sha256sum -c GeoLite2-City.tar.gz.sha256 >/dev/null; echo $?)" != "0"
 done
 tar xvfz GeoLite2-City.tar.gz
 ln -s GeoLite2-City_* GeoLite2-City
-rm -rf GeoLite2-City.tar.gz
+rm -rf GeoLite2-City.tar.gz*
 popd
 
 # DataTable
