@@ -151,7 +151,7 @@ while [ "$(sha256sum -c GeoLite2-City.tar.gz.sha256 >/dev/null; echo $?)" != "0"
   echo "Redownloading GeoLite Assets, if this loops, CTRL-C and investigate"
   wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_LIC}&suffix=tar.gz" -O GeoLite2-City.tar.gz
   wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_LIC}&suffix=tar.gz.sha256" -O GeoLite2-City.tar.gz.sha256
-  cat GeoLite2-City.tar.gz.sha256 |sed 's/_.*/.tar.gz/' > GeoLite2-City.tar.gz.sha256
+  sed -i 's/_.*/.tar.gz/' GeoLite2-City.tar.gz.sha256
   sleep 3
 done
 tar xvfz GeoLite2-City.tar.gz
