@@ -151,6 +151,10 @@ while [ "$(sha256sum -c GeoLite2-City.tar.gz.sha256 >/dev/null; echo $?)" != "0"
   echo "Redownloading GeoLite Assets, if this loops, CTRL-C and investigate"
   wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_LIC}&suffix=tar.gz" -O GeoLite2-City.tar.gz
   wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_LIC}&suffix=tar.gz.sha256" -O GeoLite2-City.tar.gz.sha256
+  if [[ $? == 6 ]]; then
+    echo "Something is wrong with your License Key, please try entering another one. (You DO NOT need a GeoIP Update key) "
+    read -p "Please paste your Max Mind License key: " MM_LIC
+  fi
   sed -i 's/_.*/.tar.gz/' GeoLite2-City.tar.gz.sha256
   sleep 3
 done
