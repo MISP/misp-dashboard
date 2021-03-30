@@ -23,23 +23,26 @@ sudo chmod -R g+w .
 
 if ! id zmqs >/dev/null 2>&1; then
 
-  if [ "$(get_distribution)" == "rhel" ]; then
+  if [ "$(get_distribution)" == "rhel" ] || [ "${get_distribution}" == "centos" ]; then
     # Create zmq user
     sudo useradd -U -G apache -m -s /usr/bin/bash zmqs
     # Adds right to www-data to run ./start-zmq as zmq
     echo "apache ALL=(zmqs) NOPASSWD:/bin/bash /var/www/misp-dashboard/start_zmq.sh" |sudo tee /etc/sudoers.d/apache
+    VENV_BIN="/usr/local/bin/virtualenv"
   else
     # Create zmq user
     sudo useradd -U -G www-data -m -s /bin/bash zmqs
     # Adds right to www-data to run ./start-zmq as zmq
     echo "www-data ALL=(zmqs) NOPASSWD:/bin/bash /var/www/misp-dashboard/start_zmq.sh" |sudo tee /etc/sudoers.d/www-data
+    VENV_BIN="virtualenv"
   fi
 fi
+VENV_BIN="${VENV_BIN:-virtualenv}"
 
 sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip net-tools -y
 
 if [ -z "$VIRTUAL_ENV" ]; then
-    virtualenv -p python3 DASHENV ; DASH_VENV=$?
+    ${VENV_BIN} -p python3 DASHENV ; DASH_VENV=$?
 
     if [[ "$DASH_VENV" != "0" ]]; then
       echo "Something went wrong with either the update or install of the virtualenv."
@@ -153,6 +156,7 @@ while [ "$(sha256sum -c GeoLite2-City.tar.gz.sha256 >/dev/null; echo $?)" != "0"
   wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_LIC}&suffix=tar.gz.sha256" -O GeoLite2-City.tar.gz.sha256
   if [[ $? == 6 ]]; then
     echo "Something is wrong with your License Key, please try entering another one. (You DO NOT need a GeoIP Update key) "
+    echo "If you created the key JUST NOW, it will take a couple of minutes to become active."
     read -p "Please paste your Max Mind License key: " MM_LIC
   fi
   sed -i 's/_.*/.tar.gz/' GeoLite2-City.tar.gz.sha256
