@@ -1,4 +1,6 @@
-import datetime, time
+import datetime
+import time
+from collections import defaultdict
 
 ONE_DAY = 60*60*24
 
@@ -6,7 +8,7 @@ def getZrange(serv_redis_db, keyCateg, date, topNum, endSubkey=""):
     date_str = getDateStrFormat(date)
     keyname = "{}:{}{}".format(keyCateg, date_str, endSubkey)
     data = serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
-    data = [ [record[0].decode('utf8'), record[1]] for record in data ]
+    data = [ [record[0], record[1]] for record in data ]
     return data
 
 def noSpaceLower(text):
@@ -16,7 +18,7 @@ def push_to_redis_zset(serv_redis_db, mainKey, toAdd, endSubkey="", count=1):
     now = datetime.datetime.now()
     today_str = getDateStrFormat(now)
     keyname = "{}:{}{}".format(mainKey, today_str, endSubkey)
-    serv_redis_db.zincrby(keyname, toAdd, count)
+    serv_redis_db.zincrby(keyname, count, toAdd)
 
 def getMonthSpan(date):
     ds = datetime.datetime(date.year, date.month, 1)
@@ -71,3 +73,52 @@ def getDateHoursStrFormat(date):
 
 def getTimestamp(date):
     return int(time.mktime(date.timetuple()))
+
+
+def sortByTrendingScore(toSort, topNum=5):
+    scoredLabels = defaultdict(float)
+    numDay = len(toSort)
+    baseDecay = 1.0
+    decayRate = lambda x: baseDecay*((numDay-x**2)/numDay)
+
+    for i, arr in enumerate(toSort):
+        timestamp = arr[0]
+        dailyData = arr[1]
+        for item in dailyData:
+            label = item[0]
+            occ = item[1]
+            scoredLabels[label] += occ*decayRate(i)
+
+    topList = [[l, s] for l, s in scoredLabels.items()]
+    topList.sort(key=lambda x: x[1], reverse=True)
+    topSet = [ l for l, v in topList[:topNum]]
+
+    # now that we have the top, filter out poor scored elements
+    topArray = []
+    for arr in toSort:
+        timestamp = arr[0]
+        dailyData = arr[1]
+        topDailyArray = list(filter(lambda item: (item[0] in topSet), dailyData))
+        dailyCombi = [timestamp, topDailyArray]
+        topArray.append(dailyCombi)
+
+    return topArray
+
+
+def getFields(obj, fields):
+    jsonWalker = fields.split('.')
+    itemToExplore = obj
+    lastName = ""
+    try:
+        for i in jsonWalker:
+            itemToExplore = itemToExplore[i]
+            lastName = i
+        if type(itemToExplore) is list:
+            return {'name': lastName, 'data': itemToExplore}
+        else:
+            if i == 'timestamp':
+                itemToExplore = datetime.datetime.utcfromtimestamp(
+                    int(itemToExplore)).strftime('%Y-%m-%d %H:%M:%S')
+            return itemToExplore
+    except KeyError as e:
+        return None

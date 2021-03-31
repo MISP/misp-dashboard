@@ -1,6 +1,23 @@
 [Server]
 host = localhost
 port = 8001
+debug = False
+ssl = False
+# If you set SSL to True with a cert/key then an adhoc (self-signed) certificate is created
+# ssl_cert = cert.pem 
+# ssl_key = key.pem
+
+[Auth]
+auth_enabled = False
+misp_fqdn = https://misp.local
+ssl_verify = True
+session_secret = **Change_Me**
+# Only send cookies with requests over HTTPS if the cookie is marked secure.
+session_cookie_secure = True
+# Prevent sending cookies in all external requests including regular links.
+session_cookie_samesite = Strict
+# Expire session cookie after n days.
+permanent_session_lifetime = 1
 
 [Dashboard]
 #hours
@@ -10,12 +27,13 @@ rotation_wait_time = 30
 max_img_rotation = 10
 hours_spanned = 48
 zoomlevel = 15
+maxCacheHistory = 30
 # [1->12]
 size_dashboard_left_width = 5
 size_openStreet_pannel_perc = 55
 size_world_pannel_perc = 35
 item_to_plot = Attribute.category
-fieldname_order=["Event.id", "Attribute.Tag", "Attribute.category", "Attribute.type", ["Attribute.value", "Attribute.comment"]]
+fieldname_order=["Attribute.timestamp", "Event.id", "Attribute.Tag", "Attribute.category", "Attribute.type",  ["Attribute.value", "Attribute.comment"]]
 char_separator=||
 
 [GEO]
@@ -32,15 +50,29 @@ additional_help_text = ["Sightings multiplies earned points by 2", "Editing an a
 
 [Log]
 directory=logs
-filename=logs.log
+dispatcher_filename=zmq_dispatcher.log
+subscriber_filename=zmq_subscriber.log
+helpers_filename=helpers.log
+update_filename=updates.log
 
 [RedisGlobal]
 host=localhost
 port=6250
-#misp_web_url = http://192.168.56.50
-misp_web_url = http://localhost
-#zmq_url=tcp://192.168.56.50:50000
-zmq_url=tcp://localhost:50000
+misp_web_url = http://0.0.0.0
+misp_instances = [{
+    "name": "misp1",
+    "url": "http://localhost",
+    "zmq": "tcp://localhost:50000"}] 
+
+#misp_instances = [{
+#    "name": "misp1",
+#    "url": "http://localhost",
+#    "zmq": "tcp://localhost:50000"},
+#    {
+#    "name": "misp2",
+#    "url": "http://10.0.2.4",
+#    "zmq": "tcp://10.0.2.4:50000"}
+#    ] 
 
 [RedisLIST]
 db=3
@@ -48,6 +80,8 @@ listName=bufferList
 
 [RedisLog]
 db=0
+streamLogCacheKey = streamLogCache
+streamMapCacheKey = streamMapsCache
 channel=1
 channelLastContributor = lastContributor
 channelLastAwards = lastAwards
@@ -61,3 +95,4 @@ path_countrycode_to_coord_JSON=./data/country_code_lat_long.json
 
 [RedisDB]
 db=2
+dbVersion=db_version

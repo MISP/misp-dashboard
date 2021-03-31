@@ -1,8 +1,70 @@
-# MISP-Dashboard
-An experimental dashboard showing live data and statistics from the ZMQ of one or more MISP instances.
+# misp-dashboard
+
+A dashboard showing live data and statistics from the ZMQ feeds of one or more [MISP](https://www.misp-project.org/) instances.
+The dashboard can be used as a real-time situational awareness tool to gather threat intelligence information.
+The misp-dashboard includes a [gamification](https://en.wikipedia.org/wiki/Gamification#Criticism) tool to show the contributions of each organisation and how they are ranked over time.
+The dashboard can be used for SOCs (Security Operation Centers), security teams or during cyber exercises to keep track of what is being processed on your various MISP instances.
+
+# Features
+
+## Live Dashboard
+
+- Possibility to subscribe to multiple ZMQ feeds from different MISP instances
+- Shows immediate contributions made by organisations
+- Displays live resolvable posted geo-locations
+
+![Dashboard live](./screenshots/dashboard-live.png)
+
+## Geolocalisation Dashboard
+
+- Provides historical geolocalised information to support security teams, CSIRTs or SOCs in finding threats within their constituency
+- Possibility to get geospatial information from specific regions
+
+![Dashbaord geo](./screenshots/dashboard-geo.png)
+
+## Contributors Dashboard
+
+__Shows__:
+- The monthly rank of all organisations
+- The last organisation that contributed (dynamic updates)
+- The contribution level of all organisations
+- Each category of contributions per organisation
+- The current ranking of the selected organisation (dynamic updates)
+
+__Includes__:
+
+- [Gamification](https://en.wikipedia.org/wiki/Gamification#Criticism) of the platform:
+  - Two different levels of ranking with unique icons
+  - Exclusive obtainable badges for source code contributors and donator
+
+![Dashboard contributors](./screenshots/dashboard-contributors2.png)
+![Dashboard contributors2](./screenshots/dashboard-contributors3.png)
+
+## Users Dashboard
+
+- Shows when and how the platform is used:
+    - Login punchcard and contributions over time
+    - Contribution vs login
+
+![Dashboard users](./screenshots/dashboard-users.png)
+
+## Trendings Dashboard
+
+- Provides real time information to support security teams, CSIRTs or SOC showing current threats and activity
+    - Shows most active events, categories and tags
+    - Shows sightings and discussion overtime
+
+![Dashboard users](./screenshots/dashboard-trendings.png)
 
 # Installation
-- Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory
+
+Before installing, consider that the only supported system are open source Unix-like operating system such as Linux and others.
+
+1. You will need to [create a free MaxMind account.](https://www.maxmind.com/en/geolite2/signup)
+2. Set your password and [create a license key](https://www.maxmind.com/en/accounts/current/license-key)
+2.1 Make a note of your License Key it's needed during install.
+
+- Launch ```./install_dependencies.sh``` from the MISP-Dashboard directory ([idempotent-ish](https://en.wikipedia.org/wiki/Idempotence))
 - Update the configuration file ```config.cfg``` so that it matches your system
   - Fields that you may change:
     - RedisGlobal -> host
@@ -13,7 +75,7 @@ An experimental dashboard showing live data and statistics from the ZMQ of one o
 
 # Updating by pulling
 - Re-launch ```./install_dependencies.sh``` to fetch new required dependencies
-- Re-update your configuration file ```config.cfg```
+- Re-update your configuration file ```config.cfg``` by comparing eventual changes in ```config.cfg.default```
 
 :warning: Make sure no zmq python3 scripts are running. They block the update.
 
@@ -35,9 +97,10 @@ Traceback (most recent call last):
     with open(dst, 'wb') as fdst:
 OSError: [Errno 26] Text file busy: '/home/steve/code/misp-dashboard/DASHENV/bin/python3'
 ```
+- Restart the System: `./start_all.sh` **OR** `./start_zmq.sh` and `./server.py &`
 
 # Starting the System
-:warning: You do not need to run it as root. Normal privileges are fine.
+:warning: You should not run it as root. Normal privileges are fine.
 
 - Be sure to have a running redis server
     - e.g. ```redis-server --port 6250```
@@ -46,6 +109,12 @@ OSError: [Errno 26] Text file busy: '/home/steve/code/misp-dashboard/DASHENV/bin
 - Start the dispatcher to process received messages ```./zmq_dispatcher.py &```
 - Start the Flask server ```./server.py &```
 - Access the interface at ```http://localhost:8001/```
+
+__Alternatively__, you can run the ```start_all.sh``` script to run the commands described above.
+
+# Authentication
+Authentication can be enable in ``config/config.cfg`` by setting ``auth_enabled = True``.
+Users will be required to login to MISP and will be allowed to proceed if they have the *User Setting*'s ``dashboard_access`` sets to 1 for the MISP user account.
 
 # Debug
 
@@ -60,59 +129,47 @@ export FLASK_APP=server.py
 flask run --host=0.0.0.0 --port=8001 # <- Be careful here, this exposes it on ALL ip addresses. Ideally if run locally --host=127.0.0.1
 ```
 
-OR, just toggle the debug flag in start_all.sh script.
+OR, just toggle the debug flag in start_all.sh or config.cfg.
 
 Happy hacking ;)
 
-# Features
 
-## Live Dashboard
-- Possibility to subscribe to multiple ZMQ feeds
-- Shows direct contribution made by organisations
-- Shows live resolvable posted locations
+## Restart from scratch
 
-![Dashboard live](./screenshots/dashboard-live.png)
+To restart from scratch and empty all data from your dashboard you can use the dedicated cleaning script ``clean.py``
+```usage: clean.py [-h] [-b]
 
-## Geolocalisation Dashboard
+Clean data stored in the redis server specified in the configuration file
 
-- Provides historical geolocalised information to support security teams, CSIRTs or SOC finding threats in their constituency
-- Possibility to get geospatial information from specific regions
+optional arguments:
+  -h, --help    show this help message and exit
+  -b, --brutal  Perfom a FLUSHALL on the redis database. If not set, will use
+                a soft method to delete only keys used by MISP-Dashboard.
+```
 
-![Dashbaord geo](./screenshots/dashboard-geo.png)
+## Notes about ZMQ
+The misp-dashboard being stateless in regards to MISP, it can only process data that it received. Meaning that if your MISP is not publishing all notifications to its ZMQ, the misp-dashboard will not have them.
 
-## Contributors Dashboard
+The most revelant example could be the user login punchcard. If your MISP doesn't have the option ``Plugin.ZeroMQ_audit_notifications_enable`` set to ``true``, the punchcard will be empty.
 
-__Shows__:
-- The monthly rank of all organisation
-- The last organisation that contributed (dynamic updates)
-- The contribution level of all organisation
-- Each category of contribution per organisation
-- The current ranking of the selected organisation (dynamic updates)
+## Dashboard not showing results - No module named zmq
+When the misp-dashboard does not show results then first check if the zmq module within MISP is properly installed. 
 
-__Includes__:
+In **Administration**, **Plugin Settings**, **ZeroMQ** check that **Plugin.ZeroMQ_enable** is set to **True**.
 
-- Gamification of the platform:
-  - Two different levels of ranking with unique icons
-  - Exclusive obtainable badges for source code contributors and donator
+Publish a test event from MISP to ZMQ via **Event Actions**, **Publish event to ZMQ**.
 
-![Dashboard contributor](./screenshots/dashboard-contributors2.png)
-![Dashboard contributor2](./screenshots/dashboard-contributors3.png)
+Verify the logfiles
+```
+${PATH_TO_MISP}/app/tmp/log/mispzmq.error.log
+${PATH_TO_MISP}/app/tmp/log/mispzmq.log
+```
 
-## Users Dashboard
+If there's an error **ModuleNotFoundError: No module named 'zmq'** then install pyzmq.
 
-- Shows when and how the platform is used:
-    - Login punchcard and overtime
-    - Contribution vs login
-
-![Dashboard users](./screenshots/dashboard-users.png)
-
-## Trendings Dashboard
-
-- Provides real time information to support security teams, CSIRTs or SOC showing current threats and activity
-    - Shows most active events, categories and tags
-    - Shows sightings and discussion overtime
-
-![Dashboard users](./screenshots/dashboard-trendings.png)
+```
+$SUDO_WWW ${PATH_TO_MISP}/venv/bin/pip install pyzmq
+```
 
 # zmq_subscriber options
 ```usage: zmq_subscriber.py [-h] [-n ZMQNAME] [-u ZMQURL]
@@ -129,7 +186,7 @@ optional arguments:
 
 # Deploy in production using mod_wsgi
 
-Install Apache's mod-wsgi for Python3
+Install Apache mod-wsgi for Python3
 
 ```bash
 sudo apt-get install libapache2-mod-wsgi-py3
@@ -144,10 +201,10 @@ The following NEW packages will be installed:
   libapache2-mod-wsgi-py3
 ```
 
-Configuration file `/etc/apache2/sites-available/misp-dashboard.conf` assumes that `misp-dashboard` is cloned into `var/www/misp-dashboard`. It runs as user `misp` in this example. Change the permissions to folder and files accordingly.
+Configuration file `/etc/apache2/sites-available/misp-dashboard.conf` assumes that `misp-dashboard` is cloned into `/var/www/misp-dashboard`. It runs as user `misp` in this example. Change the permissions to your custom folder and files accordingly.
 
 ```
-<VirtualHost *:8000>
+<VirtualHost *:8001>
     ServerAdmin admin@misp.local
     ServerName misp.local
 
@@ -191,33 +248,36 @@ Configuration file `/etc/apache2/sites-available/misp-dashboard.conf` assumes th
 ```
 
 # License
+
+~~~~
+    Copyright (C) 2017-2019 CIRCL - Computer Incident Response Center Luxembourg (c/o smile, security made in Lëtzebuerg, Groupement d'Intérêt Economique)
+    Copyright (c) 2017-2019 Sami Mokaddem
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+~~~~
+
 Images and logos are handmade for:
+
 - rankingMISPOrg/
 - rankingMISPMonthly/
 - MISPHonorableIcons/
 
 Note that:
+
 - Part of ```MISPHonorableIcons/1.svg``` comes from [octicons.github.com](https://octicons.github.com/icon/git-pull-request/) (CC0 - No Rights Reserved)
 - Part of ```MISPHonorableIcons/2.svg``` comes from [Zeptozephyr](https://zeptozephyr.deviantart.com/art/Vectored-Portal-Icons-207347804) (CC0 - No Rights Reserved)
 - Part of ```MISPHonorableIcons/3.svg``` comes from [octicons.github.com](https://octicons.github.com/icon/git-pull-request/) (CC0 - No Rights Reserved)
 - Part of ```MISPHonorableIcons/4.svg``` comes from [Zeptozephyr](https://zeptozephyr.deviantart.com/art/Vectored-Portal-Icons-207347804) & [octicons.github.com](https://octicons.github.com/icon/git-pull-request/) (CC0 - No Rights Reserved)
 - Part of ```MISPHonorableIcons/5.svg``` comes from [Zeptozephyr](https://zeptozephyr.deviantart.com/art/Vectored-Portal-Icons-207347804) & [octicons.github.com](https://octicons.github.com/icon/git-pull-request/) (CC0 - No Rights Reserved)
 
-```
-Copyright (C) 2017 CIRCL - Computer Incident Response Center Luxembourg (c/o smile, security made in Lëtzebuerg, Groupement d'Intérêt Economique)
-Copyright (c) 2017 Sami Mokaddem
-
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-```

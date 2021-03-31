@@ -1,10 +1,33 @@
 #!/usr/bin/env bash
 
-set -x
+#set -x
 
 GREEN="\\033[1;32m"
 DEFAULT="\\033[0;39m"
 RED="\\033[1;31m"
+
+function wait_until_redis_is_ready {
+    redis_not_ready=true
+    while $redis_not_ready; do
+        if checking_redis; then
+            redis_not_ready=false;
+        else
+            sleep 1
+        fi
+    done
+    echo -e $GREEN"* Redis 6250 is running"$DEFAULT
+}
+
+function checking_redis {
+    flag_redis=0
+    bash -c 'redis-cli -p 6250 PING | grep "PONG" &> /dev/null'
+    if [ ! $? == 0 ]; then
+        echo -e $RED"Redis 6250 not ready"$DEFAULT
+        flag_redis=1
+    fi
+    sleep 0.1
+    return $flag_redis;
+}
 
 # Getting CWD where bash script resides
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -20,12 +43,25 @@ else
     exit 1
 fi
 
-[ ! -f "`which redis-server`" ] && echo "'redis-server' is not installed/not on PATH. Please fix and run again." && exit 1
+if [[ -f "/etc/redhat-release" ]]; then
+  echo "You are running a RedHat flavour. Detecting scl potential..."
+  if [[ -f "/usr/bin/scl" ]]; then
+    echo "scl detected, checking for redis-server"
+    SCL_REDIS=$(scl -l|grep rh-redis)
+    if [[ ! -z $SCL_REDIS ]]; then
+      echo "We detected: ${SCL_REDIS} acting accordingly"
+      REDIS_RUN="/usr/bin/scl enable ${SCL_REDIS}"
+    fi
+  else
+    echo "redis-server seems not to be install in scl, perhaps system-wide, testing."
+    [ ! -f "`which redis-server`" ] && echo "'redis-server' is not installed/not on PATH. Please fix and run again." && exit 1
+  fi
+else
+  [ ! -f "`which redis-server`" ] && echo "'redis-server' is not installed/not on PATH. Please fix and run again." && exit 1
+fi
 
 netstat -an |grep LISTEN |grep 6250 |grep -v tcp6 ; check_redis_port=$?
 netstat -an |grep LISTEN |grep 8001 |grep -v tcp6 ; check_dashboard_port=$?
-ps auxw |grep zmq_subscriber.py |grep -v grep ; check_zmq_subscriber=$?
-ps auxw |grep zmq_dispatcher.py |grep -v grep ; check_zmq_dispatcher=$?
 
 # Configure accordingly, remember: 0.0.0.0 exposes to every active IP interface, play safe and bind it to something you trust and know
 export FLASK_APP=server.py
@@ -37,32 +73,25 @@ conf_dir="config/"
 
 sleep 0.1
 if [ "${check_redis_port}" == "1" ]; then
-    echo -e $GREEN"\t* Launching Redis servers"$DEFAULT
-    redis-server ${conf_dir}6250.conf &
+  echo -e $GREEN"\t* Launching Redis servers"$DEFAULT
+    if [[ ! -z $REDIS_RUN ]]; then
+      $REDIS_RUN "redis-server ${conf_dir}6250.conf" &
+    else
+      redis-server ${conf_dir}6250.conf &
+    fi
 else
     echo -e $RED"\t* NOT starting Redis server, made a very unrealiable check on port 6250, and something seems to be there… please double check if this is good!"$DEFAULT
 fi
 
 sleep 0.1
-if [ "${check_zmq_subscriber}" == "1" ]; then
-    echo -e $GREEN"\t* Launching zmq subscriber"$DEFAULT
-    ${ENV_PY} ./zmq_subscriber.py &
-else
-    echo -e $RED"\t* NOT starting zmq subscriber, made a rather unrealiable ps -auxw | grep for zmq_subscriber.py, and something seems to be there… please double check if this is good!"$DEFAULT
-fi
+wait_until_redis_is_ready;
 
-sleep 0.1
-if [ "${check_zmq_dispatcher}" == "1" ]; then
-    echo -e $GREEN"\t* Launching zmq dispatcher"$DEFAULT
-    ${ENV_PY} ./zmq_dispatcher.py &
-else
-    echo -e $RED"\t* NOT starting zmq dispatcher, made a rather unrealiable ps -auxw | grep for zmq_dispatcher.py, and something seems to be there… please double check if this is good!"$DEFAULT
-fi
-
-sleep 0.1
 if [ "${check_dashboard_port}" == "1" ]; then
     echo -e $GREEN"\t* Launching flask server"$DEFAULT
     ${ENV_PY} ./server.py &
 else
     echo -e $RED"\t* NOT starting flask server, made a very unrealiable check on port 8001, and something seems to be there… please double check if this is good!"$DEFAULT
 fi
+
+sleep 0.1
+sudo -u zmqs /bin/bash ${DIR}/start_zmq.sh &

@@ -1,0 +1,13 @@
+argparse
+flask
+flask-login
+wtforms
+geoip2
+redis
+phonenumbers
+pip
+pycountry
+zmq
+requests
+halo
+pyopenssl

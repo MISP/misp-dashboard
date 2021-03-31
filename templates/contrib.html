@@ -120,7 +120,7 @@
                                 <tbody id='bodyTablerankingModal'>
                                       {% for item in org_rank_list %}
                                           <tr data-rank={{ loop.index }}>
-                                              <td style='padding: 0px; text-align: right;'><img height='35px' width='70px' style="margin-right: 20px;" src="{{ url_for('static', filename='pics/rankingMISPOrg/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img></td>
+                                              <td style='padding: 0px; text-align: right;'><img height='35px' width='70px' style="margin-right: 20px;" src="{{ url_for('static', filename='pics/rankingMISPOrg/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;" onerror="this.style.display='none'"</img></td>
                                               <td>{{ item[1] }}</td>
                                               <td>{{ item[2] }}</td>
                                               <td>{{ item[3] }}</td>
@@ -148,7 +148,7 @@
 
     <!-- Modal trophy -->
     <div id="myModalTrophy" class="modal fade" role="dialog">
-        <div class="modal-dialog modal-lg" style="width: 1500px;">
+        <div class="modal-dialog modal-xl">
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -172,7 +172,7 @@
                                     <tr>
                                         <td>
                                             <div id="divBadge_{{ loop.index }}" class="circleBadgeSmall circlBadgeNotAcquired">
-                                                <img height='48px' width='48' class="" style="margin-top: 3px;" src="{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;"</img>
+                                                <img height='48px' width='48' class="" style="margin-top: 3px;" src="{{ url_for('static', filename='pics/MISPHonorableIcons/1.svg')[:-5]}}{{ item[0] }}.svg" type='image/svg' style="margin: auto;" onerror="this.style.display='none'"</img>
                                             </div>
                                         </td>
                                         <td style="padding-left: 15px;">{{ item[1] }}</td>
@@ -181,32 +181,35 @@
                             </tbody>
                         </table>
                     </div>
-                    <p style="font-size: 18px; display: inline;">Trophies: </p><p style="display: inline;">Shows your skills in information sharing </p><i> (earned via upvotes or sightings from other organisation)</i>
 
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered">
-                            <thead>
-                                <tr>
-                                    {% for title in trophy_title_str %}
-                                            <th class="centerCell">{{ title }}</th>
-                                    {% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody id='bodyTableTrophyModal'>
-                                <tr>
-                                    {% for perc in trophy_mapping %}
-                                            <td class="centerCell">{{ perc }}</td>
-                                    {% endfor %}
-                                </tr>
-                                <tr>
-                                    {% for title in trophy_title_str %}
-                                            <td>
-                                                <input type='image' style="display: block; margin-left: auto; margin-right: auto;" height="64" width="64" src="{{ url_for('static', filename='pics/MISPTrophy/'+loop.index0|string+'.png') }}">
-                                            </td>
-                                    {% endfor %}
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div>
+                        <p style="font-size: 18px; display: inline;">Trophies: </p><a style="display: inline;" class="collapsed" data-toggle="collapse" href="#collapsibleTrophyInfo" aria-expanded="false">Shows your skills in information sharing <span class="fa fa-caret-down"></span></a><i> (earned via upvotes or sightings from other organisation)</i>
+
+                        <div id="collapsibleTrophyInfo" class="table-responsive collapse">
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        {% for title in trophy_title_str %}
+                                                <th class="centerCell">{{ title }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody id='bodyTableTrophyModal'>
+                                    <tr>
+                                        {% for perc in trophy_mapping %}
+                                                <td class="centerCell">{{ perc }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                    <tr>
+                                        {% for title in trophy_title_str %}
+                                                <td>
+                                                    <input type='image' style="display: block; margin-left: auto; margin-right: auto;" height="64" width="64" src="{{ url_for('static', filename='pics/MISPTrophy/'+loop.index0|string+'.png') }}">
+                                                </td>
+                                        {% endfor %}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <p style="font-size: 18px; display: inline;">Acquired trophies: </p>
@@ -219,14 +222,30 @@
                                     {% endfor %}
                                 </tr>
                             </thead>
-                            <tbody id='bodyTableTrophyModal'>
+                            <tbody id='bodyTableTrophyModalOrg'>
                                 <tr>
                                     {% for categ in trophy_categ_list_id %}
                                             <td>
-                                                <input type='image' id='trophy_{{categ}}' style="display: block; margin-left: auto; margin-right: auto;" height="64" width="64" src="{{ url_for('static', filename='pics/MISPTrophy/0.png') }}">
+                                                <input type='image' id='trophy_{{categ}}' data-category='{{categ}}' style="display: block; margin-left: auto; margin-right: auto;" height="64" width="64" src="{{ url_for('static', filename='pics/MISPTrophy/0.png') }}">
                                             </td>
                                     {% endfor %}
                                     </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class='allOrgRankingDiv'>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Trophy</th>
+                                    <th>Points</th>
+                                    <th>Org</th>
+                                </tr>
+                            </thead>
+                            <tbody id='bodyTableThropyAllOrgRankingModal'>
+                                <tr><td>Click on a category to view the global ranking</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -510,6 +529,7 @@
         var url_getContributionOrgStatus = "{{ url_for('getContributionOrgStatus') }}";
         var url_getHonorBadges = "{{ url_for('getHonorBadges') }}";
         var url_getTrophies = "{{ url_for('getTrophies')}}"
+        var url_getAllOrgsTrophyRanking = "{{ url_for('getAllOrgsTrophyRanking')}}"
 
         var url_baseRankMonthlyLogo =     "{{ url_for('static', filename='pics/rankingMISPMonthly/1.svg') }}";
         url_baseRankMonthlyLogo = url_baseRankMonthlyLogo.substring(0, url_baseRankMonthlyLogo.length-5);

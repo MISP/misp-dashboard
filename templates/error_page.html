@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />    <meta name="viewport" content="width=device-width" />
+    <title>
+        Users - MISP
+    </title>
+
+    <!-- jQuery -->
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- Bootstrap Core CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/sb-admin-2.css') }}" rel="stylesheet">
+    <!-- Bootstrap Core JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="text/css">
+
+</head>
+<body>
+    <div id="flashContainer" style="padding-top:50px; !important;">
+        <div id="main-view-container" class="container-fluid ">
+        </div>
+    </div>
+
+    <div style="width:100%;">
+        <table style="margin-left:auto;margin-right:auto;">
+            <tr>
+                <td style="text-align:right;width:250px;padding-right:50px"></td>
+                <td style="width:460px">
+                    <div>
+                        <img src="{{ url_for('static', filename='pics/misp-logo.png') }}" style="display:block; margin-left: auto; margin-right: auto;"/>
+                    </div>
+                    <div class="alert alert-danger" style="margin-top: 15px;">
+                        {{ error_message }}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

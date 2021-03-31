@@ -1,17 +1,59 @@
 #!/bin/bash
 
-set -e
-set -x
+## disable -e for production systems
+#set -e
 
-sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip -y
+## Debug mode
+#set -x
+
+# Functions
+
+get_distribution() {
+  lsb_dist=""
+  # Every system that we officially support has /etc/os-release
+  if [ -r /etc/os-release ]; then
+    lsb_dist="$(. /etc/os-release && echo "$ID")"
+  fi
+  # Returning an empty string here should be alright since the
+  # case statements don't act unless you provide an actual value
+  echo "$lsb_dist" | tr '[:upper:]' '[:lower:]'
+}
+
+sudo chmod -R g+w . 
+
+if ! id zmqs >/dev/null 2>&1; then
+
+  if [ "$(get_distribution)" == "rhel" ] || [ "${get_distribution}" == "centos" ]; then
+    # Create zmq user
+    sudo useradd -U -G apache -m -s /usr/bin/bash zmqs
+    # Adds right to www-data to run ./start-zmq as zmq
+    echo "apache ALL=(zmqs) NOPASSWD:/bin/bash /var/www/misp-dashboard/start_zmq.sh" |sudo tee /etc/sudoers.d/apache
+    VENV_BIN="/usr/local/bin/virtualenv"
+  else
+    # Create zmq user
+    sudo useradd -U -G www-data -m -s /bin/bash zmqs
+    # Adds right to www-data to run ./start-zmq as zmq
+    echo "www-data ALL=(zmqs) NOPASSWD:/bin/bash /var/www/misp-dashboard/start_zmq.sh" |sudo tee /etc/sudoers.d/www-data
+    VENV_BIN="virtualenv"
+  fi
+fi
+VENV_BIN="${VENV_BIN:-virtualenv}"
+
+sudo apt-get install python3-virtualenv virtualenv screen redis-server unzip net-tools -y
 
 if [ -z "$VIRTUAL_ENV" ]; then
-    virtualenv -p python3 DASHENV
+    ${VENV_BIN} -p python3 DASHENV ; DASH_VENV=$?
+
+    if [[ "$DASH_VENV" != "0" ]]; then
+      echo "Something went wrong with either the update or install of the virtualenv."
+      echo "Please investigate manually."
+      exit $DASH_VENV
+    fi
 
     . ./DASHENV/bin/activate
 fi
 
-pip3 install -U pip argparse redis zmq geoip2 flask phonenumbers pycountry
+pip3 install -U -r requirements.txt
 
 ## config
 if [ -e "config/config.cfg" ]; then
@@ -35,7 +77,14 @@ mkdir -p css fonts js
 popd
 mkdir -p temp
 
-wget http://www.misp-project.org/assets/images/misp-small.png -O static/pics/MISP.png
+NET_WGET=$(wget --no-cache -q https://www.misp-project.org/assets/images/misp-small.png -O static/pics/MISP.png; echo $?)
+
+if [[ "$NET_WGET" != "0" ]]; then
+  echo "The first wget we tried failed, please investigate manually."
+  exit $NET_WGET
+fi
+
+wget https://www.misp-project.org/favicon.ico -O static/favicon.ico
 
 # jquery
 JQVERSION="3.2.1"
@@ -98,10 +147,24 @@ wget http://jvectormap.com/js/jquery-jvectormap-world-mill.js -O ./static/js/jqu
 rm -rf data/GeoLite2-City*
 mkdir -p data
 pushd data
-wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz -O GeoLite2-City.tar.gz
+# The following lines do not work any more, see: https://blog.maxmind.com/2019/12/18/significant-changes-to-accessing-and-using-geolite2-databases/
+#wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz -O GeoLite2-City.tar.gz
+read -p "Please paste your Max Mind License key: " MM_LIC
+while [ "$(sha256sum -c GeoLite2-City.tar.gz.sha256 >/dev/null; echo $?)" != "0" ]; do
+  echo "Redownloading GeoLite Assets, if this loops, CTRL-C and investigate"
+  wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_LIC}&suffix=tar.gz" -O GeoLite2-City.tar.gz
+  wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_LIC}&suffix=tar.gz.sha256" -O GeoLite2-City.tar.gz.sha256
+  if [[ $? == 6 ]]; then
+    echo "Something is wrong with your License Key, please try entering another one. (You DO NOT need a GeoIP Update key) "
+    echo "If you created the key JUST NOW, it will take a couple of minutes to become active."
+    read -p "Please paste your Max Mind License key: " MM_LIC
+  fi
+  sed -i 's/_.*/.tar.gz/' GeoLite2-City.tar.gz.sha256
+  sleep 3
+done
 tar xvfz GeoLite2-City.tar.gz
 ln -s GeoLite2-City_* GeoLite2-City
-rm -rf GeoLite2-City.tar.gz
+rm -rf GeoLite2-City.tar.gz*
 popd
 
 # DataTable

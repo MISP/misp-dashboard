@@ -9,6 +9,8 @@ var sec_before_reload = refresh_speed;
 var plotLineChart;
 var source_awards;
 var source_lastContrib;
+var last_added_contrib;
+var timeout_last_added_contrib;
 
 /* CONFIG */
 var maxRank = 16;
@@ -150,6 +152,7 @@ function getMonthlyRankIcon(rank, size, header) {
             img.width = size;
         }
     }
+    img.setAttribute('onerror', "this.style.display='none'");
     return img.outerHTML;
 }
 
@@ -165,7 +168,8 @@ function getOrgRankIcon(rank, size) {
     obj.src = rankLogoPath;
     obj.type = "image/svg"
     obj.title = org_rank_obj[rank];
-    obj.classList.add('orgRankClass')
+    obj.classList.add('orgRankClass');
+    obj.setAttribute('onerror', "this.style.display='none'");
     return obj.outerHTML;
 }
 
@@ -175,8 +179,9 @@ function createImg(source, size) {
     obj.width = size;
     obj.style.margin = 'auto';
     obj.src = source;
-    obj.type = "image/png"
-    obj.alt = ""
+    obj.type = "image/png";
+    obj.alt = "";
+    obj.setAttribute('onerror', "this.style.display='none'");
     return obj.outerHTML;
 }
 
@@ -185,10 +190,11 @@ function createTrophyImg(rank, size, categ) {
     obj.height = size;
     obj.width = size;
     obj.style.margin = 'auto';
-    obj.src = url_baseTrophyLogo+rank+'.png';;
+    obj.src = url_baseTrophyLogo+rank+'.png';
     obj.title = trophy_title[rank] + " in " + categ;
-    obj.type = "image/png"
-    obj.alt = ""
+    obj.type = "image/png";
+    obj.alt = "";
+    obj.setAttribute('onerror', "this.style.display='none'");
     return obj.outerHTML;
 }
 
@@ -206,6 +212,7 @@ function createHonorImg(array, size) {
         obj.style.margin = 'auto';
         obj.title = org_honor_badge_title[badgeNum];
         obj.src = url_baseHonorLogo+badgeNum+'.svg';
+        obj.setAttribute('onerror', "this.style.display='none'");
         div.appendChild(obj);
     }
     div.style.width = 32*array.length+'px';
@@ -336,39 +343,40 @@ function addLastFromJson(datatable, url) {
 }
 
 function addLastContributor(datatable, data, update) {
-    var date = new Date(data.epoch*1000);
-    date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
-    var to_add = [
-        date,
-        data.pnts,
-        getMonthlyRankIcon(data.rank),
-        getOrgRankIcon(data.orgRank, 60),
-        createHonorImg(data.honorBadge, 20),
-        createImg(data.logo_path, 32),
-        createOrgLink(data.org),
-    ];
-    if (update == undefined || update == false) {
-        datatable.row.add(to_add);
-        datatable.draw();
-    } else if(update == true) {
-        var row_added = false;
-        datatable.rows().every( function() {
-            if($(this.data()[6])[0].text == data.org) {
-                var node = $(datatable.row( this ).node());
-                datatable.row( this ).data( to_add );
-                if(next_effect <= new Date()) {
-                    node.effect("slide", 500);
-                    next_effect.setSeconds((new Date()).getSeconds() + 5);
-                }
-                row_added = true;
-            }
+    var org = data.org;
+    if (org == last_added_contrib) {
+        let node = $('#lastTable > tbody tr:eq(0)');
+        node.addClass('higlightRowInTable');
+        update_timeout_last_added_contrib();
+    } else {
+        last_added_contrib = org;
+        var date = new Date(data.epoch*1000);
+        //date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
+        date = date.getFullYear() + "-" + String(date.getMonth()+1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0") + "@" + String(date.getHours()).padStart(2, "0") + ":" + String(date.getMinutes()).padStart(2, "0");
+        var to_add = [
+            date,
+            data.pnts,
+            getMonthlyRankIcon(data.rank),
+            getOrgRankIcon(data.orgRank, 60),
+            createHonorImg(data.honorBadge, 20),
+            createImg(data.logo_path, 32),
+            createOrgLink(data.org),
+        ];
+        if (update === undefined || update === false) {
+            datatable.row.add(to_add);
             datatable.draw();
-        });
-        if (!row_added) {
-            var node = $(datatable.row.add(to_add).draw().node());
-            node.effect("slide", 700);
+        } else if(update == true) {
+            datatable.rows().every( function() {
+                if($(this.data()[6])[0].text == data.org) {
+                    var node = $(datatable.row( this ).node());
+                    datatable.row( this ).data( to_add );
+                    node.effect("slide", 500);
+                }
+                datatable.draw();
+            });
         }
     }
+
 }
 
 function addAwards(datatableAwards, json, playAnim) {
@@ -381,7 +389,8 @@ function addAwards(datatableAwards, json, playAnim) {
         var award = createTrophyImg(json.award[1][1], 40, categ);
     }
     var date = new Date(json.epoch*1000);
-    date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
+    //date.toString = function() {return this.toTimeString().slice(0,-15) +' '+ this.toLocaleDateString(); };
+    date = date.getFullYear() + "-" + String(date.getMonth()+1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0") + "@" + String(date.getHours()).padStart(2, "0") + ":" + String(date.getMinutes()).padStart(2, "0");
     var to_add = [
         date,
         createImg(json.logo_path, 32),
@@ -549,6 +558,36 @@ function updateProgressHeader(org) {
     updateOvertakePnts();
 }
 
+function generate_table_ranking_on_category(categ) {
+    $.getJSON( url_getAllOrgsTrophyRanking+'/'+categ, function( data ) {
+        var body = $('#bodyTableThropyAllOrgRankingModal');
+        body.empty();
+        data.forEach(function(arr, i) {
+            var org = arr[0];
+            var points = arr[1];
+            var rank = arr[2];
+            var tr = $('<tr></tr>');
+            tr.append($('<td style="width: 100px;">'+i+'</td>'));
+            tr.append($('<td style="width: 100px;"><img src="'+url_baseTrophyLogo+rank+'.png" width="30" height="30"  onerror="this.style.display=\'none\'"></td>'));
+            tr.append($('<td style="width: 200px;">'+points+'</td>'));
+            tr.append($('<td><a href="?org='+org+'">'+org+'</a></td>'));
+            if (currOrg == org) {
+                tr.addClass('selectedOrgInTable');
+            }
+            body.append(tr);
+        });
+    })
+}
+
+function update_timeout_last_added_contrib() {
+    clearTimeout(timeout_last_added_contrib);
+    timeout_last_added_contrib = setTimeout(function() {
+        let node = $('#lastTable > tbody tr:eq(0)');
+        node.removeClass('higlightRowInTable');
+        last_added_contrib = null;
+    }, 5000);
+}
+
 function showOnlyOrg() {
     datatableCateg.search( $('#orgText').text() ).draw();
 }
@@ -650,4 +689,13 @@ $(document).ready(function() {
         addAwards(datatableAwards, json, true);
         updateProgressHeader(currOrg);
     };
+
+
+    $('#bodyTableTrophyModalOrg input').off('click').on('click', function(e) {
+        var categ = $(this).data('category');
+        var tds = $('#bodyTableTrophyModalOrg td');
+        tds.removeClass('success');
+        $(this).parent().addClass('success');
+        generate_table_ranking_on_category(categ);
+    });
 });

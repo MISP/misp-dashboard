@@ -1,20 +1,26 @@
-import math, random
-import os
+import datetime
 import json
-import datetime, time
 import logging
-import json
-import redis
+import math
+import os
+import random
+import sys
+import time
 from collections import OrderedDict
 
+import redis
+
 import geoip2.database
-import phonenumbers, pycountry
+import phonenumbers
+import pycountry
+import util
+from helpers import live_helper
 from phonenumbers import geocoder
 
-import util
 
 class InvalidCoordinate(Exception):
     pass
+
 
 class Geo_helper:
     def __init__(self, serv_redis_db, cfg):
@@ -24,15 +30,25 @@ class Geo_helper:
                 host=cfg.get('RedisGlobal', 'host'),
                 port=cfg.getint('RedisGlobal', 'port'),
                 db=cfg.getint('RedisMap', 'db'))
+        self.live_helper = live_helper.Live_helper(serv_redis_db, cfg)
 
         #logger
         logDir = cfg.get('Log', 'directory')
-        logfilename = cfg.get('Log', 'filename')
+        logfilename = cfg.get('Log', 'helpers_filename')
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        try:
+            handler = logging.FileHandler(logPath)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
+        formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+        handler.setFormatter(formatter)
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        self.logger.addHandler(handler)
 
         self.keyCategCoord = "GEO_COORD"
         self.keyCategCountry = "GEO_COUNTRY"
@@ -41,8 +57,18 @@ class Geo_helper:
         self.PATH_TO_JSON = cfg.get('RedisMap', 'path_countrycode_to_coord_JSON')
         self.CHANNELDISP = cfg.get('RedisMap', 'channelDisp')
 
-        self.reader = geoip2.database.Reader(self.PATH_TO_DB)
-        self.country_to_iso = { country.name: country.alpha_2 for country in pycountry.countries}
+        try:
+            self.reader = geoip2.database.Reader(self.PATH_TO_DB)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
+        self.country_to_iso = {}
+        for country in pycountry.countries:
+            try:
+                self.country_to_iso[country.name] = country.alpha_2
+            except AttributeError:
+                pass
         with open(self.PATH_TO_JSON) as f:
             self.country_code_to_coord = json.load(f)
 
@@ -104,7 +130,9 @@ class Geo_helper:
             if not self.coordinate_list_valid(coord_list):
                 raise InvalidCoordinate("Coordinate do not match EPSG:900913 / EPSG:3785 / OSGEO:41001")
             self.push_to_redis_zset(self.keyCategCoord, json.dumps(ordDic))
-            self.push_to_redis_zset(self.keyCategCountry, rep['full_rep'].country.iso_code)
+            iso_code = rep['full_rep'].country.iso_code if rep['full_rep'].country.iso_code is not None else rep['full_rep'].registered_country.iso_code
+            country_name = rep['full_rep'].country.name if rep['full_rep'].country.name is not None else rep['full_rep'].registered_country.name
+            self.push_to_redis_zset(self.keyCategCountry, iso_code)
             ordDic = OrderedDict() #keep fields with the same layout in redis
             ordDic['categ'] = categ
             ordDic['value'] = supposed_ip
@@ -113,15 +141,17 @@ class Geo_helper:
                     "coord": coord,
                     "categ": categ,
                     "value": supposed_ip,
-                    "country": rep['full_rep'].country.name,
+                    "country": country_name,
                     "specifName": rep['full_rep'].subdivisions.most_specific.name,
                     "cityName": rep['full_rep'].city.name,
-                    "regionCode": rep['full_rep'].country.iso_code,
+                    "regionCode": iso_code,
                     }
-            self.serv_coord.publish(self.CHANNELDISP, json.dumps(to_send))
+            j_to_send = json.dumps(to_send)
+            self.serv_coord.publish(self.CHANNELDISP, j_to_send)
+            self.live_helper.add_to_stream_log_cache('Map', j_to_send)
             self.logger.info('Published: {}'.format(json.dumps(to_send)))
         except ValueError:
-            self.logger.warning("can't resolve ip")
+            self.logger.warning("Can't resolve IP: " + str(supposed_ip))
         except geoip2.errors.AddressNotFoundError:
             self.logger.warning("Address not in Database")
         except InvalidCoordinate:
@@ -163,7 +193,9 @@ class Geo_helper:
                     "cityName": "",
                     "regionCode": country_code,
                     }
-            self.serv_coord.publish(self.CHANNELDISP, json.dumps(to_send))
+            j_to_send = json.dumps(to_send)
+            self.serv_coord.publish(self.CHANNELDISP, j_to_send)
+            self.live_helper.add_to_stream_log_cache('Map', j_to_send)
             self.logger.info('Published: {}'.format(json.dumps(to_send)))
         except phonenumbers.NumberParseException:
             self.logger.warning("Can't resolve phone number country")
@@ -175,13 +207,22 @@ class Geo_helper:
         now = datetime.datetime.now()
         today_str = util.getDateStrFormat(now)
         keyname = "{}:{}".format(keyCateg, today_str)
-        self.serv_redis_db.geoadd(keyname, lon, lat, content)
+        try:
+            self.serv_redis_db.geoadd(keyname, lon, lat, content)
+        except redis.exceptions.ResponseError as error:
+            print(error)
+            print("Please fix the above, and make sure you use a redis version that supports the GEOADD command.")
+            print("To test for support: echo \"help GEOADD\"| redis-cli")
         self.logger.debug('Added to redis: keyname={}, lon={}, lat={}, content={}'.format(keyname, lon, lat, content))
+
     def push_to_redis_zset(self, keyCateg, toAdd, endSubkey="", count=1):
+        if not isinstance(toAdd, str):
+            self.logger.warning('Can\'t add to redis, element is not of type String. {}'.format(type(toAdd)))
+            return
         now = datetime.datetime.now()
         today_str = util.getDateStrFormat(now)
         keyname = "{}:{}{}".format(keyCateg, today_str, endSubkey)
-        self.serv_redis_db.zincrby(keyname, toAdd, count)
+        self.serv_redis_db.zincrby(keyname, count, toAdd)
         self.logger.debug('Added to redis: keyname={}, toAdd={}, count={}'.format(keyname, toAdd, count))
 
     def ip_to_coord(self, ip):

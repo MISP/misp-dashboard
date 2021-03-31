@@ -187,29 +187,90 @@ function queryAndAddMarkers() {
     var coord = circleRadius._latlng;
     var dateStart = datePickersRadiusWidgetFrom.datepicker("getDate").getTime() / 1000;
     var dateEnd = datePickersRadiusWidgetTo.datepicker("getDate").getTime() / 1000;
-    $.getJSON(urlCoordsByRadius+"?dateStart="+dateStart+"&dateEnd="+dateEnd+"&centerLat="+coord.lat+"&centerLon="+coord.lng+"&radius="+radius_km, function(allList){
-        // remove old markers
-        for (var i in savedMarkerRadius) {
-            savedMarkerRadius[i].remove(); // remove marker
-        }
+    var geo_param = {
+        dateStart: dateStart,
+        dateEnd: dateEnd,
+        centerLat: coord.lat,
+        centerLon: coord.lng,
+        radius: radius_km
+    };
 
-        for (var listIndex in allList) {
-            var curMarker = allList[listIndex];
-            var dataText = "";
-            var coordJson = curMarker[1];
-            for (var dataI in curMarker[0]) {
-                var jsonData = JSON.parse(curMarker[0][dataI])
-                dataText += '<strong>'+jsonData.categ+': </strong> '+jsonData.value + "<br>"
+    $.ajax({
+        data: geo_param,
+        cache: false,
+        beforeSend: function(XMLHttpRequest) {
+            //$('.loading').show();
+            set_loading_status($('#geo_info_qry_btn'), true, 'Querying and fetching', 1);
+        },
+        success: function(data, textStatus) {
+            var allList = data;
+            set_loading_status($('#geo_info_qry_btn'), true, 'Drawing '+allList.length + ' results', 2);
+            // remove old markers
+            for (var i in savedMarkerRadius) {
+                savedMarkerRadius[i].remove(); // remove marker
             }
-            var marker = L.marker([coordJson[1], coordJson[0]]).addTo(radiusOpenStreetMap);
-            savedMarkerRadius.push(marker);
-            marker.bindPopup(dataText, {autoClose:false}).openPopup();
-        }
+
+            for (var listIndex in allList) {
+                var curMarker = allList[listIndex];
+                var dataText = "";
+                var coordJson = curMarker[1];
+                for (var dataI in curMarker[0]) {
+                    var jsonData = JSON.parse(curMarker[0][dataI])
+                    dataText += '<strong>'+jsonData.categ+': </strong> '+jsonData.value + "<br>"
+                }
+                var marker = L.marker([coordJson[1], coordJson[0]]).addTo(radiusOpenStreetMap);
+                savedMarkerRadius.push(marker);
+                marker.bindPopup(dataText, {autoClose:false}).openPopup();
+            }
+            set_loading_status($('#geo_info_qry_btn'), false, allList.length + ' results');
+        },
+        error: function( jqXhr, textStatus, errorThrown ){
+            set_loading_status($('#geo_info_qry_btn'), false, 'Error: '+ errorThrown);
+        },
+        type: 'get',
+        url: urlCoordsByRadius
     });
 }
 
 
 /* UTIL */
+
+function set_loading_status(jhtml, is_loading, text, loading_state) {
+    text = text === undefined || text === null ? '' : text;
+    if (is_loading) {
+        if (jhtml.data('default-text') === undefined) {
+            jhtml.data('default-text', jhtml.text());
+        }
+        var loading_icon = ''
+        switch(loading_state) {
+            case 1:
+                loading_icon = 'fa-spinner';
+                break;
+
+            case 2:
+                loading_icon = 'fa-circle-o-notch';
+                break;
+
+            case 3:
+                loading_icon = 'fa-refresh';
+                break;
+
+            default:
+                loading_icon = 'fa-circle-o-notch';
+                break;
+        }
+        var loadingIcon = $('<i class="fa fa-spin '+loading_icon+'"></i>');
+        jhtml.text(' '+text);
+        jhtml.prepend(loadingIcon);
+    } else {
+        jhtml.empty();
+        jhtml.text(text);
+        setTimeout(function() {
+            let old_text = jhtml.data('default-text');
+            jhtml.text(old_text);
+        }, 5000);
+    }
+}
 
 function days_between(date1, date2) {
     var ONEDAY = 60*60*24*1000;

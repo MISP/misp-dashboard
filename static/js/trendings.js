@@ -145,7 +145,7 @@ function getTextColour(rgb) {
     }
 }
 
-// If json (from tag), only retreive the name> otherwise return the supplied arg.
+// If json (from tag), only retrieve the name> otherwise return the supplied arg.
 function getOnlyName(potentialJson) {
     try {
         jsonLabel = JSON.parse(potentialJson);

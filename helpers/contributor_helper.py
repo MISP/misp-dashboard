@@ -1,16 +1,20 @@
-import util
-from util import getZrange
-import math, random
-import time
-import os
 import configparser
-import json
 import datetime
+import json
 import logging
+import math
+import os
+import random
+import sys
+import time
+
 import redis
 
 import util
+from util import getZrange
+
 from . import users_helper
+
 KEYDAY = "CONTRIB_DAY" # To be used by other module
 KEYALLORG = "CONTRIB_ALL_ORG" # To be used by other module
 
@@ -30,12 +34,21 @@ class Contributor_helper:
 
         #logger
         logDir = cfg.get('Log', 'directory')
-        logfilename = cfg.get('Log', 'filename')
+        logfilename = cfg.get('Log', 'helpers_filename')
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        try:
+            handler = logging.FileHandler(logPath)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
+        formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+        handler.setFormatter(formatter)
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        self.logger.addHandler(handler)
 
         #honorBadge
         self.honorBadgeNum = len(self.cfg_org_rank.options('HonorBadge'))
@@ -48,6 +61,7 @@ class Contributor_helper:
             self.org_honor_badge_title[badgeNum] = self.cfg_org_rank.get('HonorBadge', str(badgeNum))
 
         self.trophyMapping = json.loads(self.cfg_org_rank.get('TrophyDifficulty', 'trophyMapping'))
+        self.trophyMappingIncremental = [sum(self.trophyMapping[:i]) for i in range(len(self.trophyMapping)+1)]
         self.trophyNum = len(self.cfg_org_rank.options('HonorTrophy'))-1 #0 is not a trophy
         self.categories_in_trophy = json.loads(self.cfg_org_rank.get('HonorTrophyCateg', 'categ'))
         self.trophy_title = {}
@@ -86,7 +100,7 @@ class Contributor_helper:
                 self.DICO_PNTS_REWARD[categ] = self.default_pnts_per_contribution
 
         self.rankMultiplier = self.cfg_org_rank.getfloat('monthlyRanking' ,'rankMultiplier')
-        self.levelMax = self.cfg_org_rank.getint('monthlyRanking' ,'levelMax')
+        self.levelMax = self.cfg_org_rank.getint('monthlyRanking', 'levelMax')
 
         # REDIS KEYS
         self.keyDay         = KEYDAY
@@ -97,7 +111,6 @@ class Contributor_helper:
         self.keyTrophy      = "CONTRIB_TROPHY"
         self.keyLastAward   = "CONTRIB_LAST_AWARDS"
 
-
     ''' HELPER '''
     def getOrgLogoFromMISP(self, org):
         return "{}/img/orgs/{}.png".format(self.misp_web_url, org)
@@ -105,11 +118,11 @@ class Contributor_helper:
     def addContributionToCateg(self, date, categ, org, count=1):
         today_str = util.getDateStrFormat(date)
         keyname = "{}:{}:{}".format(self.keyCateg, today_str, categ)
-        self.serv_redis_db.zincrby(keyname, org, count)
+        self.serv_redis_db.zincrby(keyname, count, org)
         self.logger.debug('Added to redis: keyname={}, org={}, count={}'.format(keyname, org, count))
 
     def publish_log(self, zmq_name, name, content, channel=""):
-        to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
+        to_send = {'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
         self.serv_log.publish(channel, json.dumps(to_send))
         self.logger.debug('Published: {}'.format(json.dumps(to_send)))
 
@@ -119,14 +132,14 @@ class Contributor_helper:
         if action in ['edit', None]:
             pass
             #return #not a contribution?
-    
+
         now = datetime.datetime.now()
         nowSec = int(time.time())
         pnts_to_add = self.default_pnts_per_contribution
-    
+
         # Do not consider contribution as login anymore
         #self.users_helper.add_user_login(nowSec, org)
-    
+
         # is a valid contribution
         if categ is not None:
             try:
@@ -134,27 +147,27 @@ class Contributor_helper:
             except KeyError:
                 pnts_to_add = self.default_pnts_per_contribution
             pnts_to_add *= pntMultiplier
-    
+
             util.push_to_redis_zset(self.serv_redis_db, self.keyDay, org, count=pnts_to_add)
             #CONTRIB_CATEG retain the contribution per category, not the point earned in this categ
             util.push_to_redis_zset(self.serv_redis_db, self.keyCateg, org, count=1, endSubkey=':'+util.noSpaceLower(categ))
             self.publish_log(zmq_name, 'CONTRIBUTION', {'org': org, 'categ': categ, 'action': action, 'epoch': nowSec }, channel=self.CHANNEL_LASTCONTRIB)
         else:
             categ = ""
-    
+
         self.serv_redis_db.sadd(self.keyAllOrg, org)
-    
+
         keyname = "{}:{}".format(self.keyLastContrib, util.getDateStrFormat(now))
-        self.serv_redis_db.zadd(keyname, nowSec, org)
+        self.serv_redis_db.zadd(keyname, {org: nowSec})
         self.logger.debug('Added to redis: keyname={}, nowSec={}, org={}'.format(keyname, nowSec, org))
         self.serv_redis_db.expire(keyname, util.ONE_DAY*7) #expire after 7 day
-    
+
         awards_given = self.updateOrgContributionRank(org, pnts_to_add, action, contribType, eventTime=datetime.datetime.now(), isLabeled=isLabeled, categ=util.noSpaceLower(categ))
-    
+
         for award in awards_given:
             # update awards given
             keyname = "{}:{}".format(self.keyLastAward, util.getDateStrFormat(now))
-            self.serv_redis_db.zadd(keyname, nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec }))
+            self.serv_redis_db.zadd(keyname, {json.dumps({'org': org, 'award': award, 'epoch': nowSec }): nowSec})
             self.logger.debug('Added to redis: keyname={}, nowSec={}, content={}'.format(keyname, nowSec, json.dumps({'org': org, 'award': award, 'epoch': nowSec })))
             self.serv_redis_db.expire(keyname, util.ONE_DAY*7) #expire after 7 day
             # publish
@@ -167,7 +180,7 @@ class Contributor_helper:
         if pnts is None:
             pnts = 0
         else:
-            pnts = int(pnts.decode('utf8'))
+            pnts = int(pnts)
         return pnts
 
     # return: [final_rank, requirement_fulfilled, requirement_not_fulfilled]
@@ -352,7 +365,6 @@ class Contributor_helper:
 
     ''' TROPHIES '''
     def getOrgTrophies(self, org):
-        self.getAllOrgsTrophyRanking()
         keyname = '{mainKey}:{orgCateg}'
         trophy = []
         for categ in self.categories_in_trophy:
@@ -360,50 +372,53 @@ class Contributor_helper:
             totNum = self.serv_redis_db.zcard(key)
             if totNum == 0:
                 continue
-            pos = self.serv_redis_db.zrank(key, org)
+            pos = self.serv_redis_db.zrevrank(key, org)
             if pos is None:
                 continue
+
             trophy_rank = self.posToRankMapping(pos, totNum)
             trophy_Pnts = self.serv_redis_db.zscore(key, org)
-            trophy.append({ 'categ': categ, 'trophy_points': trophy_Pnts, 'trophy_rank': trophy_rank, 'trophy_true_rank': trophy_rank, 'trophy_title': self.trophy_title[trophy_rank]})
+            trophy.append({ 'categ': categ, 'trophy_points': trophy_Pnts, 'trophy_rank': trophy_rank, 'trophy_true_rank': self.trophyNum-trophy_rank, 'trophy_title': self.trophy_title[trophy_rank]})
         return trophy
 
     def getOrgsTrophyRanking(self, categ):
         keyname = '{mainKey}:{orgCateg}'
         res = self.serv_redis_db.zrange(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), 0, -1, withscores=True, desc=True)
-        res = [[org.decode('utf8'), score] for org, score in res]
+        res = [[org, score] for org, score in res]
         return res
 
-    def getAllOrgsTrophyRanking(self):
+    def getAllOrgsTrophyRanking(self, category=None):
+        concerned_categ = self.categories_in_trophy if category is None else category
         dico_categ = {}
-        for categ in self.categories_in_trophy:
+        for categ in [concerned_categ]:
             res = self.getOrgsTrophyRanking(categ)
+            # add ranking info
+            tot = len(res)
+            for pos in range(tot):
+                res[pos].append(self.trophyNum-self.posToRankMapping(pos, tot))
             dico_categ[categ] = res
+        toret = dico_categ if category is None else dico_categ.get(category, [])
+        return toret
 
     def posToRankMapping(self, pos, totNum):
-        mapping = self.trophyMapping
-        mapping_num = [math.ceil(float(float(totNum*i)/float(100))) for i in mapping]
-        if pos == 0: #first
-            position = 1
+        ratio = pos/totNum*100
+        rank = 0
+        if pos == totNum:
+            return 0
         else:
-            temp_pos = pos
-            counter = 1
-            for num in mapping_num:
-                if temp_pos < num:
-                    position = counter
-                else:
-                    temp_pos -= num
-                    counter += 1
-        return self.trophyNum+1 - position
+            for i in range(len(self.trophyMappingIncremental)):
+                if self.trophyMappingIncremental[i] < ratio <= self.trophyMappingIncremental[i+1]:
+                    rank = i+1
+        return rank
 
     def giveTrophyPointsToOrg(self, org, categ, points):
         keyname = '{mainKey}:{orgCateg}'
-        self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), org, points)
+        self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), points, org)
         self.logger.debug('Giving {} trophy points to {} in {}'.format(points, org, categ))
 
     def removeTrophyPointsFromOrg(self, org, categ, points):
         keyname = '{mainKey}:{orgCateg}'
-        self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), org, -points)
+        self.serv_redis_db.zincrby(keyname.format(mainKey=self.keyTrophy, orgCateg=categ), -points, org)
         self.logger.debug('Removing {} trophy points from {} in {}'.format(points, org, categ))
 
     ''' AWARDS HELPER '''
@@ -550,7 +565,7 @@ class Contributor_helper:
 
     def getAllOrgFromRedis(self):
         data = self.serv_redis_db.smembers(self.keyAllOrg)
-        data = [x.decode('utf8') for x in data]
+        data = [x for x in data]
         return data
 
     def getCurrentOrgRankFromRedis(self, org):
@@ -586,4 +601,3 @@ class Contributor_helper:
                 return { 'remainingPts': i-points, 'stepPts': prev }
             prev = i
         return { 'remainingPts': 0, 'stepPts': self.rankMultiplier**self.levelMax }
-

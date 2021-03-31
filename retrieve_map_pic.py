@@ -1,13 +1,15 @@
 #!/usr/bin/env python3.5
-import redis
-import requests
-import shutil
 import json
 import math
-import sys, os
+import os
+import shlex
+import shutil
+import sys
 import time
 from subprocess import PIPE, Popen
-import shlex
+
+import redis
+import requests
 
 URL_OPEN_MAP = "http://tile.openstreetmap.org/{zoom}/{x}/{y}.png"
 MAP_DIR = "static/maps/"

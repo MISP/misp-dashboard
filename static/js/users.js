@@ -79,15 +79,21 @@ function updateDatePunch(ignore1, igonre2, org) { //date picker sets ( String da
             punchcardWidget.refresh();
             highlight_punchDay();
         } else {
-            punchcardWidget = $('#punchcard').punchcard({
-                data: data,
-                singular: 'login',
-                plural: 'logins',
-                timezones: ['local'],
-                timezoneIndex:0
-            });
-            punchcardWidget = punchcardWidget.data("plugin_" + "punchcard");
-            highlight_punchDay();
+            var data_max = Math.max.apply(Math, data.flat());
+            if (data_max === 0) { // no data, MISP's audit notification could be disabled
+                $('#punchcard').text('No login or MISP\'s audit notification is disabled.');
+            } else {
+                $('#punchcard').empty();
+                punchcardWidget = $('#punchcard').punchcard({
+                    data: data,
+                    singular: 'login',
+                    plural: 'logins',
+                    timezones: ['local'],
+                    timezoneIndex:0
+                });
+                punchcardWidget = punchcardWidget.data("plugin_" + "punchcard");
+                highlight_punchDay();
+            }
         }
     });
 }

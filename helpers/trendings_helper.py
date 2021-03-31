@@ -1,12 +1,16 @@
-import math, random
-import os
-import json
 import copy
-import datetime, time
+import datetime
+import json
 import logging
+import math
+import os
+import random
+import sys
+import time
 from collections import OrderedDict
 
 import util
+
 
 class Trendings_helper:
     def __init__(self, serv_redis_db, cfg):
@@ -23,12 +27,21 @@ class Trendings_helper:
 
         #logger
         logDir = cfg.get('Log', 'directory')
-        logfilename = cfg.get('Log', 'filename')
+        logfilename = cfg.get('Log', 'helpers_filename')
         logPath = os.path.join(logDir, logfilename)
         if not os.path.exists(logDir):
             os.makedirs(logDir)
-        logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+        try:
+            handler = logging.FileHandler(logPath)
+        except PermissionError as error:
+            print(error)
+            print("Please fix the above and try again.")
+            sys.exit(126)
+        formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+        handler.setFormatter(formatter)
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        self.logger.addHandler(handler)
 
     ''' SETTER '''
 
@@ -40,7 +53,7 @@ class Trendings_helper:
             to_save = json.dumps(data)
         else:
             to_save = data
-        self.serv_redis_db.zincrby(keyname, to_save, 1)
+        self.serv_redis_db.zincrby(keyname, 1, to_save)
         self.logger.debug('Added to redis: keyname={}, content={}'.format(keyname, to_save))
 
     def addTrendingEvent(self, eventName, timestamp):
@@ -76,15 +89,16 @@ class Trendings_helper:
 
     ''' GETTER '''
 
-    def getGenericTrending(self, trendingType, dateS, dateE, topNum=0):
+    def getGenericTrending(self, trendingType, dateS, dateE, topNum=10):
         to_ret = []
         prev_days = (dateE - dateS).days
         for curDate in util.getXPrevDaysSpan(dateE, prev_days):
             keyname = "{}:{}".format(trendingType, util.getDateStrFormat(curDate))
-            data = self.serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
-            data = [ [record[0].decode('utf8'), record[1]] for record in data ]
+            data = self.serv_redis_db.zrange(keyname, 0, -1, desc=True, withscores=True)
+            data = [ [record[0], record[1]] for record in data ]
             data = data if data is not None else []
             to_ret.append([util.getTimestamp(curDate), data])
+        to_ret = util.sortByTrendingScore(to_ret, topNum=topNum)
         return to_ret
 
     def getSpecificTrending(self, trendingType, dateS, dateE, specificLabel=''):
@@ -97,15 +111,15 @@ class Trendings_helper:
             to_ret.append([util.getTimestamp(curDate), data])
         return to_ret
 
-    def getTrendingEvents(self, dateS, dateE, specificLabel=None):
+    def getTrendingEvents(self, dateS, dateE, specificLabel=None, topNum=None):
         if specificLabel is None:
-            return self.getGenericTrending(self.keyEvent, dateS, dateE)
+            return self.getGenericTrending(self.keyEvent, dateS, dateE, topNum=topNum)
         else:
             specificLabel = specificLabel.replace('\\n', '\n'); # reset correctly label with their \n (CR) instead of their char value
             return self.getSpecificTrending(self.keyEvent, dateS, dateE, specificLabel)
 
-    def getTrendingCategs(self, dateS, dateE):
-        return self.getGenericTrending(self.keyCateg, dateS, dateE)
+    def getTrendingCategs(self, dateS, dateE, topNum=None):
+        return self.getGenericTrending(self.keyCateg, dateS, dateE, topNum=topNum)
 
     # FIXME: Construct this when getting data
     def getTrendingTags(self, dateS, dateE, topNum=12):
@@ -114,7 +128,7 @@ class Trendings_helper:
         for curDate in util.getXPrevDaysSpan(dateE, prev_days):
             keyname = "{}:{}".format(self.keyTag, util.getDateStrFormat(curDate))
             data = self.serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
-            data = [ [record[0].decode('utf8'), record[1]] for record in data ]
+            data = [ [record[0], record[1]] for record in data ]
             data = data if data is not None else []
             temp = []
             for jText, score in data:
@@ -129,15 +143,15 @@ class Trendings_helper:
         for curDate in util.getXPrevDaysSpan(dateE, prev_days):
             keyname = "{}:{}".format(self.keySigh, util.getDateStrFormat(curDate))
             sight = self.serv_redis_db.get(keyname)
-            sight = 0 if sight is None else int(sight.decode('utf8'))
+            sight = 0 if sight is None else int(sight)
             keyname = "{}:{}".format(self.keyFalse, util.getDateStrFormat(curDate))
             fp = self.serv_redis_db.get(keyname)
-            fp = 0 if fp is None else int(fp.decode('utf8'))
+            fp = 0 if fp is None else int(fp)
             to_ret.append([util.getTimestamp(curDate), { 'sightings': sight, 'false_positive': fp}])
         return to_ret
 
-    def getTrendingDisc(self, dateS, dateE):
-        return self.getGenericTrending(self.keyDisc, dateS, dateE)
+    def getTrendingDisc(self, dateS, dateE, topNum=None):
+        return self.getGenericTrending(self.keyDisc, dateS, dateE, topNum=topNum)
 
     def getTypeaheadData(self, dateS, dateE):
         to_ret = {}
@@ -148,7 +162,7 @@ class Trendings_helper:
                 keyname = "{}:{}".format(trendingType, util.getDateStrFormat(curDate))
                 data = self.serv_redis_db.zrange(keyname, 0, -1, desc=True)
                 for elem in data:
-                    allSet.add(elem.decode('utf8'))
+                    allSet.add(elem)
             to_ret[trendingType] = list(allSet)
         tags = self.getTrendingTags(dateS, dateE)
         tagSet = set()
@@ -177,7 +191,7 @@ class Trendings_helper:
         for curDate in util.getXPrevDaysSpan(dateE, prev_days):
             keyname = "{}:{}".format(trendingType, util.getDateStrFormat(curDate))
             data = self.serv_redis_db.zrange(keyname, 0, topNum-1, desc=True, withscores=True)
-            data = [ [record[0].decode('utf8'), record[1]] for record in data ]
+            data = [ [record[0], record[1]] for record in data ]
             data = data if data is not None else []
             to_format.append([util.getTimestamp(curDate), data])
 

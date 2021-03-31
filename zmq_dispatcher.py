@@ -1,84 +1,91 @@
 #!/usr/bin/env python3
 
-import time, datetime
-import copy
-import logging
-import zmq
-import redis
-import random
-import configparser
 import argparse
-import os
-import sys
+import configparser
+import copy
+import datetime
 import json
+import logging
+import os
+import random
+import sys
+import time
+
+import redis
+import zmq
 
 import util
-from helpers import geo_helper
-from helpers import contributor_helper
-from helpers import users_helper
-from helpers import trendings_helper
+import updates
+from helpers import (contributor_helper, geo_helper, live_helper,
+                     trendings_helper, users_helper)
 
 configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
 cfg = configparser.ConfigParser()
 cfg.read(configfile)
 
 logDir = cfg.get('Log', 'directory')
-logfilename = cfg.get('Log', 'filename')
+logfilename = cfg.get('Log', 'dispatcher_filename')
 logPath = os.path.join(logDir, logfilename)
 if not os.path.exists(logDir):
     os.makedirs(logDir)
-logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+try:
+    logging.basicConfig(filename=logPath, filemode='a', level=logging.INFO)
+except PermissionError as error:
+    print(error)
+    print("Please fix the above and try again.")
+    sys.exit(126)
 logger = logging.getLogger('zmq_dispatcher')
 
-CHANNEL = cfg.get('RedisLog', 'channel')
 LISTNAME = cfg.get('RedisLIST', 'listName')
 
 serv_log = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisLog', 'db'))
+        db=cfg.getint('RedisLog', 'db'),
+        decode_responses=True)
 serv_redis_db = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisDB', 'db'))
+        db=cfg.getint('RedisDB', 'db'),
+        decode_responses=True)
 serv_list = redis.StrictRedis(
         host=cfg.get('RedisGlobal', 'host'),
         port=cfg.getint('RedisGlobal', 'port'),
-        db=cfg.getint('RedisLIST', 'db'))
+        db=cfg.getint('RedisLIST', 'db'),
+        decode_responses=True)
 
+live_helper = live_helper.Live_helper(serv_redis_db, cfg)
 geo_helper = geo_helper.Geo_helper(serv_redis_db, cfg)
 contributor_helper = contributor_helper.Contributor_helper(serv_redis_db, cfg)
 users_helper = users_helper.Users_helper(serv_redis_db, cfg)
 trendings_helper = trendings_helper.Trendings_helper(serv_redis_db, cfg)
 
 
-def publish_log(zmq_name, name, content, channel=CHANNEL):
-    to_send = { 'name': name, 'log': json.dumps(content), 'zmqName': zmq_name }
-    serv_log.publish(channel, json.dumps(to_send))
-    logger.debug('Published: {}'.format(json.dumps(to_send)))
-
-def getFields(obj, fields):
-    jsonWalker = fields.split('.')
-    itemToExplore = obj
-    lastName = ""
-    try:
-        for i in jsonWalker:
-            itemToExplore = itemToExplore[i]
-            lastName = i
-        if type(itemToExplore) is list:
-            return { 'name': lastName , 'data': itemToExplore }
-        else:
-            return itemToExplore
-    except KeyError as e:
-        return ""
-
 ##############
 ## HANDLERS ##
 ##############
 
-def handler_log(zmq_name, jsonevent):
+def handler_skip(zmq_name, jsonevent):
     logger.info('Log not processed')
     return
+
+def handler_audit(zmq_name, jsondata):
+    action = jsondata.get('action', None)
+    jsonlog = jsondata.get('Log', None)
+
+    if action is None or jsonlog is None:
+        return
+
+    # consider login operations
+    if action == 'log': # audit is related to log
+        logAction = jsonlog.get('action', None)
+        if logAction == 'login': # only consider user login
+            timestamp = int(time.time())
+            email = jsonlog.get('email', '')
+            org = jsonlog.get('org', '')
+            users_helper.add_user_login(timestamp, org, email)
+    else:
+        pass
 
 def handler_dispatcher(zmq_name, jsonObj):
     if "Event" in jsonObj:
@@ -87,17 +94,17 @@ def handler_dispatcher(zmq_name, jsonObj):
 def handler_keepalive(zmq_name, jsonevent):
     logger.info('Handling keepalive')
     to_push = [ jsonevent['uptime'] ]
-    publish_log(zmq_name, 'Keepalive', to_push)
+    live_helper.publish_log(zmq_name, 'Keepalive', to_push)
 
+# Login are no longer pushed by `misp_json_user`, but by `misp_json_audit`
 def handler_user(zmq_name, jsondata):
     logger.info('Handling user')
     action = jsondata['action']
     json_user = jsondata['User']
     json_org = jsondata['Organisation']
     org = json_org['name']
-    if action == 'login': #only consider user login
-        timestamp = int(time.time())
-        users_helper.add_user_login(timestamp, org)
+    if action == 'edit': #only consider user login
+        pass
     else:
         pass
 
@@ -123,7 +130,16 @@ def handler_conversation(zmq_name, jsonevent):
 
 def handler_object(zmq_name, jsondata):
     logger.info('Handling object')
-    return
+    # check if jsonattr is an mispObject object
+    if 'Object' in jsondata:
+        jsonobj = jsondata['Object']
+        soleObject = copy.deepcopy(jsonobj)
+        del soleObject['Attribute']
+        for jsonattr in jsonobj['Attribute']:
+            jsonattrcpy = copy.deepcopy(jsonobj)
+            jsonattrcpy['Event'] = jsondata['Event']
+            jsonattrcpy['Attribute'] = jsonattr
+            handler_attribute(zmq_name, jsonattrcpy, False, parentObject=soleObject)
 
 def handler_sighting(zmq_name, jsondata):
     logger.info('Handling sighting')
@@ -151,11 +167,8 @@ def handler_event(zmq_name, jsonobj):
     timestamp = jsonevent['timestamp']
     trendings_helper.addTrendingEvent(eventName, timestamp)
     tags = []
-    for tag in jsonobj.get('EventTag', []):
-        try:
-            tags.append(tag['Tag'])
-        except KeyError:
-            pass
+    for tag in jsonevent.get('Tag', []):
+        tags.append(tag)
     trendings_helper.addTrendingTags(tags, timestamp)
 
     #redirect to handler_attribute
@@ -169,6 +182,16 @@ def handler_event(zmq_name, jsonobj):
         else:
             handler_attribute(zmq_name, attributes)
 
+    if 'Object' in jsonevent:
+        objects = jsonevent['Object']
+        if type(objects) is list:
+            for obj in objects:
+                jsoncopy = copy.deepcopy(jsonobj)
+                jsoncopy['Object'] = obj
+                handler_object(zmq_name, jsoncopy)
+        else:
+            handler_object(zmq_name, objects)
+
     action = jsonobj.get('action', None)
     eventLabeled = len(jsonobj.get('EventTag', [])) > 0
     org = jsonobj.get('Orgc', {}).get('name', None)
@@ -180,11 +203,15 @@ def handler_event(zmq_name, jsonobj):
                         action,
                         isLabeled=eventLabeled)
 
-def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
+def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False, parentObject=False):
     logger.info('Handling attribute')
     # check if jsonattr is an attribute object
     if 'Attribute' in jsonobj:
         jsonattr = jsonobj['Attribute']
+    else:
+        jsonattr = jsonobj
+
+    attributeType = 'Attribute' if jsonattr['object_id'] == '0' else 'ObjectAttribute'
 
     #Add trending
     categName = jsonattr['category']
@@ -192,22 +219,9 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
     trendings_helper.addTrendingCateg(categName, timestamp)
     tags = []
     for tag in jsonattr.get('Tag', []):
-        try:
-            tags.append(tag)
-        except KeyError:
-            pass
+        tags.append(tag)
     trendings_helper.addTrendingTags(tags, timestamp)
 
-    to_push = []
-    for field in json.loads(cfg.get('Dashboard', 'fieldname_order')):
-        if type(field) is list:
-            to_join = []
-            for subField in field:
-                to_join.append(str(getFields(jsonobj, subField)))
-            to_add = cfg.get('Dashboard', 'char_separator').join(to_join)
-        else:
-            to_add = getFields(jsonobj, field)
-        to_push.append(to_add)
 
     #try to get coord from ip
     if jsonattr['category'] == "Network activity":
@@ -221,13 +235,19 @@ def handler_attribute(zmq_name, jsonobj, hasAlreadyBeenContributed=False):
         eventLabeled = len(jsonobj.get('EventTag', [])) > 0
         action = jsonobj.get('action', None)
         contributor_helper.handleContribution(zmq_name, jsonobj['Event']['Orgc']['name'],
-                            'Attribute',
+                            attributeType,
                             jsonattr['category'],
                             action,
                             isLabeled=eventLabeled)
     # Push to log
-    publish_log(zmq_name, 'Attribute', to_push)
+    live_helper.publish_log(zmq_name, attributeType, jsonobj)
 
+def handler_diagnostic_tool(zmq_name, jsonobj):
+    try:
+        res = time.time() - float(jsonobj['content'])
+    except Exception as e:
+        logger.error(e)
+    serv_list.set('diagnostic_tool_response', str(res))
 
 ###############
 ## MAIN LOOP ##
@@ -243,15 +263,18 @@ def process_log(zmq_name, event):
 
 
 def main(sleeptime):
+    updates.check_for_updates()
+
     numMsg = 0
     while True:
         content = serv_list.rpop(LISTNAME)
         if content is None:
-            logger.debug('Processed {} message(s) since last sleep.'.format(numMsg))
+            log_text = 'Processed {} message(s) since last sleep.'.format(numMsg)
+            logger.info(log_text)
             numMsg = 0
             time.sleep(sleeptime)
             continue
-        content = content.decode('utf8')
+        content = content
         the_json = json.loads(content)
         zmqName = the_json['zmq_name']
         content = the_json['content']
@@ -266,17 +289,22 @@ dico_action = {
         "misp_json_attribute":      handler_attribute,
         "misp_json_object":         handler_object,
         "misp_json_sighting":       handler_sighting,
-        "misp_json_organisation":   handler_log,
+        "misp_json_organisation":   handler_skip,
         "misp_json_user":           handler_user,
         "misp_json_conversation":   handler_conversation,
-        "misp_json_object_reference": handler_log,
+        "misp_json_object_reference": handler_skip,
+        "misp_json_audit": handler_audit,
+        "diagnostic_channel":       handler_diagnostic_tool
         }
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='The ZMQ dispatcher. It pops from the redis buffer then redispatch it to the correct handlers')
-    parser.add_argument('-s', '--sleep', required=False, dest='sleeptime', type=int, help='The number of second to wait before checking redis list size', default=5)
+    parser.add_argument('-s', '--sleep', required=False, dest='sleeptime', type=int, help='The number of second to wait before checking redis list size', default=1)
     args = parser.parse_args()
 
-    main(args.sleeptime)
+    try:
+        main(args.sleeptime)
+    except (redis.exceptions.ResponseError, KeyboardInterrupt) as error:
+        print(error)
