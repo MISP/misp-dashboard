@@ -250,8 +250,8 @@ Configuration file `/etc/apache2/sites-available/misp-dashboard.conf` assumes th
 # License
 
 ~~~~
-    Copyright (C) 2017-2019 CIRCL - Computer Incident Response Center Luxembourg (c/o smile, security made in Lëtzebuerg, Groupement d'Intérêt Economique)
-    Copyright (c) 2017-2019 Sami Mokaddem
+    Copyright (C) 2017-2021 CIRCL - Computer Incident Response Center Luxembourg (c/o smile, security made in Lëtzebuerg, Groupement d'Intérêt Economique)
+    Copyright (c) 2017-2020 Sami Mokaddem
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published by
