@@ -208,8 +208,12 @@ class Geo_helper:
         today_str = util.getDateStrFormat(now)
         keyname = "{}:{}".format(keyCateg, today_str)
         try:
-            self.serv_redis_db.geoadd(keyname, lon, lat, content)
+            self.serv_redis_db.geoadd(keyname, [lon, lat, content])
         except redis.exceptions.ResponseError as error:
+            print(error)
+            print("Please fix the above, and make sure you use a redis version that supports the GEOADD command.")
+            print("To test for support: echo \"help GEOADD\"| redis-cli")
+        except redis.exceptions.DataError as error:
             print(error)
             print("Please fix the above, and make sure you use a redis version that supports the GEOADD command.")
             print("To test for support: echo \"help GEOADD\"| redis-cli")
