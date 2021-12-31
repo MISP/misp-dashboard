@@ -748,8 +748,12 @@ $(document).ready(function() {
         'Attribute.type',
         'Attribute.uuid',
         'Attribute.value',
-        'Event.Org',
-        'Event.Orgc',
+        'Event.Org.id',
+        'Event.Org.name',
+        'Event.Org.uuid',
+        'Event.Orgc.id',
+        'Event.Orgc.name',
+        'Event.Orgc.uuid',
         'Event.analysis',
         'Event.attribute_count',
         'Event.date',
@@ -760,8 +764,6 @@ $(document).ready(function() {
         'Event.id',
         'Event.info',
         'Event.locked',
-        'Event.org_id',
-        'Event.orgc_id',
         'Event.proposal_email_lock',
         'Event.publish_timestamp',
         'Event.published',
@@ -769,13 +771,7 @@ $(document).ready(function() {
         'Event.threat_level_id',
         'Event.Tag.name',
         'Event.timestamp',
-        'Event.uuid',
-        'Org.id',
-        'Org.name',
-        'Org.uuid',
-        'Orgc.id',
-        'Orgc.name',
-        'Orgc.uuid'
+        'Event.uuid'
     ].forEach(function(field) {
         var tempFilter = {
             "input": "text",

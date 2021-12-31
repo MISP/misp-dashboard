@@ -12,6 +12,9 @@ config/config.cfg
 # ignore GeoLite DB
 data/GeoLite2-City*
 
+# ignore redis database dump
+data/dump.rdb
+
 # Created by https://www.gitignore.io/api/python
 # Edit at https://www.gitignore.io/?templates=python
 

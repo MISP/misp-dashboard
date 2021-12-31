@@ -304,7 +304,7 @@ class LogItem():
     def pass_filter(self):
         for filter, filterValue in self.filters.items():
             jsonValue = util.getFields(self.feed, filter)
-            if jsonValue is None or jsonValue != filterValue:
+            if jsonValue is None or ("!" not in filterValue and jsonValue != filterValue) or ("!" in filterValue and jsonValue == filterValue.strip("!")):
                 return False
         return True
 
