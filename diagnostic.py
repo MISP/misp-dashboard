@@ -40,6 +40,8 @@ Steps:
 - check log dynamic endpoint
 '''
 
+MISP_USER = 'admin@admin.test'
+MISP_PASSWD = 'Password1234'
 HOST = 'http://127.0.0.1'
 PORT = 8001  # overriden by configuration file
 configuration_file = {}
@@ -417,8 +419,8 @@ def check_server_listening(spinner):
 @add_spinner
 def check_server_dynamic_enpoint(spinner):
     payload = {
-        'username': 'admin@admin.test',
-        'password': 'Password1234',
+        'username': MISP_USER,
+        'password': MISP_PASSWD,
         'submit': 'Sign In'
     }
     sleep_max = 15
