@@ -121,7 +121,7 @@ def check_virtual_environment_and_packages(spinner):
 
 @add_spinner
 def check_configuration(spinner):
-    global configuration_file, port
+    global configuration_file, PORT, HOST
     configfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config/config.cfg')
     cfg = configparser.ConfigParser()
     cfg.read(configfile)
@@ -135,7 +135,14 @@ def check_configuration(spinner):
     # Check if all fields from config.default exists in config
     result, faulties = diagnostic_util.dict_compare(cfg_default, cfg)
     if result:
-        port = configuration_file.get("Server", "port")
+        PORT = configuration_file.get("Server", "port")
+        host = configuration_file.get("Server", "host")
+        if not (host == "localhost" or host == "127.0.0.1"):
+            if configuration_file.getboolean("Server", "ssl"):
+                http = "https://"
+            else:
+                http = "http://"
+            HOST = http+host
         return (True, '')
     else:
         return_text = '''Configuration incomplete.
@@ -388,7 +395,7 @@ def check_server_listening(spinner):
     try:
         r = requests.get(url)
     except requests.exceptions.ConnectionError:
-        return (False, 'Can\'t connect to {}').format(url)
+        return (False, 'Can\'t connect to {}'.format(url))
     
     if '/error_page' in r.url:
         o = urlparse(r.url)
