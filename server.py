@@ -328,9 +328,13 @@ class EventMessage():
         if self.name == 'Attribute':
             self.feed = jsonMsg['log']
             self.feed = LogItem(self.feed, filters).get_row()
+            if (self.feed[2]):
+                self.feed[2]['data'] = json.dumps(self.feed[2]['data'])
         elif self.name == 'ObjectAttribute':
             self.feed = jsonMsg['log']
             self.feed = LogItem(self.feed, filters).get_row()
+            if (self.feed[2]):
+                self.feed[2]['data'] = json.dumps(self.feed[2]['data'])
         else:
             self.feed = jsonMsg['log']
 

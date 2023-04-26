@@ -174,7 +174,7 @@ $(document).ready(function () {
         livelog = new $.livelog($("#divLogTable"), {
             pollingFrequency: 5000,
             tableHeader: head,
-            tableMaxEntries: 50,
+            tableMaxEntries: 300,
             // animate: false,
             preDataURL: urlForLogs,
             endpoint: urlForLogs
@@ -194,9 +194,9 @@ function updateLogTable(name, log, zmqName, ignoreLed) {
         ledmanager.updateKeepAlive(zmqName);
     }
 
-    // only add row for attribute
-    if (name == "Attribute" ) {
-        var categName = log[toPlotLocationLog];
+    // add row for attribute and Object attribute
+    if (name == "Attribute" || name == "ObjectAttribute") {
+        var categName = log[3];
         sources.addIfNotPresent(categName);
         sources.incCountOnSource(categName);
         sources.incCountOnSource('global');
@@ -208,6 +208,7 @@ function updateLogTable(name, log, zmqName, ignoreLed) {
     }
 
 }
+
 
 function slideAndMax(orig, newData) {
     var slided = [];
@@ -335,7 +336,8 @@ function createHead(callback) {
                             var $toRet;
                             if (typeof data === 'object') {
                                 $toRet = $('<span></span>');
-                                data.data.forEach(function(cur, i) {
+				let tagList = JSON.parse(data.data);
+                                tagList.forEach(function(cur, i) {
                                     switch (data.name) {
                                         case 'Tag':
                                             var $tag = $('<a></a>');
@@ -841,7 +843,7 @@ $(document).ready(function() {
             $panel.removeClass('liveLogFullScreen');
             $this.data('isfullscreen', false);
             $panel.find('#divLogTable').css({'overflow': 'hidden'});
-            livelog.changeOptions({tableMaxEntries: 50});
+            livelog.changeOptions({tableMaxEntries: 300});
         }
     });
 
