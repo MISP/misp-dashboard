@@ -388,7 +388,7 @@ def check_server_listening(spinner):
     try:
         r = requests.get(url)
     except requests.exceptions.ConnectionError:
-        return (False, 'Can\'t connect to {}').format(url)
+        return (False, 'Can\'t connect to {}'.format(url))
     
     if '/error_page' in r.url:
         o = urlparse(r.url)
