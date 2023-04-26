@@ -127,7 +127,7 @@ mv temp/startbootstrap-sb-admin-2-${SBADMIN_VERSION}/bower_components/font-aweso
 mv temp/startbootstrap-sb-admin-2-${SBADMIN_VERSION}/bower_components/bootstrap/fonts/* ./static/fonts
 
 # leaflet
-LEAFLET_VERSION="1.2.0"
+LEAFLET_VERSION="1.9.3"
 wget http://cdn.leafletjs.com/leaflet/v${LEAFLET_VERSION}/leaflet.zip -O temp/leaflet.zip
 unzip -o temp/leaflet.zip -d temp/
 

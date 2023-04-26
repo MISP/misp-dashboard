@@ -93,5 +93,12 @@ else
     echo -e $RED"\t* NOT starting flask server, made a very unrealiable check on port 8001, and something seems to be there… please double check if this is good!"$DEFAULT
 fi
 
+ps auxw |grep mispzmq.py        |grep -v grep ; check_zmq_tool=$?
+
 sleep 0.1
-sudo -u zmqs /bin/bash ${DIR}/start_zmq.sh &
+if [ "${check_zmq_tool}" == "1" ]; then
+    echo -e "MISP zmq tool is not currently running"
+    sudo -b su -c "/var/www/MISP/venv/bin/python /var/www/MISP/app/files/scripts/mispzmq/mispzmq.py"
+fi
+sleep 0.1
+${DIR}/start_zmq.sh &
